@@ -8,6 +8,7 @@ use any consistent length unit.  Forces and moments must use matching units.
 from __future__ import annotations
 
 import argparse
+import copy
 import csv
 import json
 import math
@@ -65,6 +66,33 @@ def unit(vector: Vector, label: str) -> Vector:
     if length <= 1e-12:
         raise ValueError(f"{label} has zero length")
     return scale(1.0 / length, vector)
+
+
+def rotate_about_axis(point: Vector, axis_a: Vector, axis_b: Vector, angle: float) -> Vector:
+    """Rotate a point about an arbitrary fixed axis using Rodrigues' formula."""
+    axis = unit(subtract(axis_b, axis_a), "rotation axis")
+    relative = subtract(point, axis_a)
+    cosine = math.cos(angle)
+    sine = math.sin(angle)
+    rotated = add(
+        add(scale(cosine, relative), scale(sine, cross(axis, relative))),
+        scale((1.0 - cosine) * dot(axis, relative), axis),
+    )
+    return add(axis_a, rotated)
+
+
+def rotate_by_vector(point: Vector, rotation: Vector) -> Vector:
+    """Apply a rotation-vector (axis times radians) about the origin."""
+    angle = magnitude(rotation)
+    if angle <= 1e-14:
+        return point[:]
+    axis = scale(1.0 / angle, rotation)
+    cosine = math.cos(angle)
+    sine = math.sin(angle)
+    return add(
+        add(scale(cosine, point), scale(sine, cross(axis, point))),
+        scale((1.0 - cosine) * dot(axis, point), axis),
+    )
 
 
 def solve_square(matrix: Matrix, rhs: Vector) -> Vector:
@@ -223,7 +251,8 @@ def solve_rocker(
     }
 
 
-def solve_assembly(assembly: dict[str, Any]) -> dict[str, Any]:
+def solve_case(assembly: dict[str, Any], load_case: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, Any]], float]:
+    """Solve one load case at the geometry currently stored in assembly."""
     name = str(assembly["name"])
     contact_patch = _vec(assembly["contact_patch"], f"{name}.contact_patch")
     reference = _vec(assembly.get("moment_reference", contact_patch), f"{name}.moment_reference")
@@ -243,36 +272,187 @@ def solve_assembly(assembly: dict[str, Any]) -> dict[str, Any]:
             f"{name} pushrod member anchor and rocker pushrod_pickup must be the same point"
         )
 
-    case_results = []
-    for load_case in assembly["load_cases"]:
-        wrench = external_wrench(load_case, contact_patch, reference)
-        rhs = scale(-1.0, wrench)
-        forces = solve_square(matrix, rhs)
-        residual = subtract(mat_vec(matrix, forces), rhs)
-        member_results = []
-        for item, force in zip(geometry, forces):
-            member_results.append(
-                {
-                    "name": item["name"],
-                    "force": force,
-                    "state": "tension" if force >= 0.0 else "compression",
-                    "length": item["length"],
-                }
-            )
-        rocker_result = solve_rocker(
-            assembly["rocker"],
-            forces[pushrod_index],
-            geometry[pushrod_index]["application"],
-        )
-        case_results.append(
+    wrench = external_wrench(load_case, contact_patch, reference)
+    rhs = scale(-1.0, wrench)
+    forces = solve_square(matrix, rhs)
+    residual = subtract(mat_vec(matrix, forces), rhs)
+    member_results = []
+    for item, force in zip(geometry, forces):
+        member_results.append(
             {
-                "name": str(load_case["name"]),
-                "external_wrench": wrench,
-                "members": member_results,
-                "rocker": rocker_result,
-                "max_equilibrium_residual": max(abs(value) for value in residual),
+                "name": item["name"],
+                "force": force,
+                "state": "tension" if force >= 0.0 else "compression",
+                "length": item["length"],
             }
         )
+    rocker_result = solve_rocker(
+        assembly["rocker"],
+        forces[pushrod_index],
+        geometry[pushrod_index]["application"],
+    )
+    result = {
+        "name": str(load_case["name"]),
+        "external_wrench": wrench,
+        "members": member_results,
+        "rocker": rocker_result,
+        "max_equilibrium_residual": max(abs(value) for value in residual),
+    }
+    return result, geometry, condition
+
+
+def displaced_assembly(assembly: dict[str, Any], state: Vector) -> dict[str, Any]:
+    """Move the rigid upright/wheel and rotate the rocker about its fixed axis."""
+    translation = state[:3]
+    rotation = state[3:6]
+    rocker_angle = state[6]
+    contact_reference = _vec(assembly["contact_patch"], "contact_patch")
+
+    def move_upright(point: Iterable[float]) -> Vector:
+        relative = subtract(_vec(point, "upright point"), contact_reference)
+        return add(contact_reference, add(rotate_by_vector(relative, rotation), translation))
+
+    moved = copy.deepcopy(assembly)
+    moved["contact_patch"] = move_upright(assembly["contact_patch"])
+    axis_a = _vec(assembly["rocker"]["pivot_axis"][0], "rocker.pivot_axis[0]")
+    axis_b = _vec(assembly["rocker"]["pivot_axis"][1], "rocker.pivot_axis[1]")
+    moved_pushrod = rotate_about_axis(
+        _vec(assembly["rocker"]["pushrod_pickup"], "rocker.pushrod_pickup"),
+        axis_a,
+        axis_b,
+        rocker_angle,
+    )
+    moved_shock = rotate_about_axis(
+        _vec(assembly["rocker"]["shock_pickup"], "rocker.shock_pickup"),
+        axis_a,
+        axis_b,
+        rocker_angle,
+    )
+    moved["rocker"]["pushrod_pickup"] = moved_pushrod
+    moved["rocker"]["shock_pickup"] = moved_shock
+    for original, member in zip(assembly["members"], moved["members"]):
+        member["application"] = move_upright(original["application"])
+        if original.get("role") == "pushrod":
+            member["anchor"] = moved_pushrod
+    return moved
+
+
+def solve_moving_case(
+    assembly: dict[str, Any],
+    load_case: dict[str, Any],
+    spring_rate: float,
+    ride_shock_compression: float,
+) -> dict[str, Any]:
+    """Find the rigid suspension pose compatible with link lengths and spring force."""
+    reference_lengths = [
+        magnitude(subtract(_vec(item["anchor"], "anchor"), _vec(item["application"], "application")))
+        for item in assembly["members"]
+    ]
+    shock_chassis = _vec(assembly["rocker"]["shock_chassis_pickup"], "shock chassis")
+    reference_shock_length = magnitude(
+        subtract(shock_chassis, _vec(assembly["rocker"]["shock_pickup"], "shock pickup"))
+    )
+
+    def evaluate(state: Vector) -> tuple[Vector, dict[str, Any], dict[str, Any]]:
+        moved = displaced_assembly(assembly, state)
+        moved_case = copy.deepcopy(load_case)
+        if "application" in load_case:
+            # Explicit tire-force application points are attached to the upright.
+            base_cp = _vec(assembly["contact_patch"], "contact patch")
+            relative = subtract(_vec(load_case["application"], "load application"), base_cp)
+            moved_case["application"] = add(
+                _vec(moved["contact_patch"], "moved contact patch"),
+                rotate_by_vector(relative, state[3:6]),
+            )
+        solved, geometry, _ = solve_case(moved, moved_case)
+        link_residuals = [
+            item["length"] - reference_lengths[index]
+            for index, item in enumerate(geometry)
+        ]
+        current_shock_length = solved["rocker"]["shock_length"]
+        shock_compression = reference_shock_length - current_shock_length
+        spring_compression_force = ride_shock_compression + spring_rate * shock_compression
+        # Negative solver force denotes compression. Divide by rate so all seven
+        # residuals are expressed as equivalent inches.
+        spring_residual = (
+            -solved["rocker"]["shock_force"] - spring_compression_force
+        ) / spring_rate
+        solved["kinematics"] = {
+            "upright_translation": state[:3],
+            "upright_rotation_vector_rad": state[3:6],
+            "rocker_rotation_rad": state[6],
+            "shock_travel_from_ride_height": shock_compression,
+            "spring_force": spring_compression_force,
+            "geometry": {
+                "contact_patch": moved["contact_patch"],
+                "members": moved["members"],
+                "rocker": moved["rocker"],
+            },
+        }
+        return link_residuals + [spring_residual], solved, moved
+
+    state = [0.0] * 7
+    solved: dict[str, Any] | None = None
+    for iteration in range(40):
+        residual, solved, _ = evaluate(state)
+        norm = max(abs(value) for value in residual)
+        if norm < 1e-8:
+            solved["kinematics"]["iterations"] = iteration
+            solved["kinematics"]["max_constraint_residual"] = norm
+            return solved
+        jacobian = [[0.0] * 7 for _ in range(7)]
+        for column in range(7):
+            step = 1e-5
+            trial = state[:]
+            trial[column] += step
+            trial_residual, _, _ = evaluate(trial)
+            for row in range(7):
+                jacobian[row][column] = (trial_residual[row] - residual[row]) / step
+        delta = solve_square(jacobian, scale(-1.0, residual))
+        accepted = False
+        factor = 1.0
+        for _ in range(12):
+            trial = add(state, scale(factor, delta))
+            try:
+                trial_residual, _, _ = evaluate(trial)
+            except ValueError:
+                factor *= 0.5
+                continue
+            if max(abs(value) for value in trial_residual) < norm:
+                state = trial
+                accepted = True
+                break
+            factor *= 0.5
+        if not accepted:
+            raise ValueError(f"{assembly['name']} {load_case['name']} kinematics did not converge")
+    raise ValueError(f"{assembly['name']} {load_case['name']} kinematics exceeded 40 iterations")
+
+
+def solve_assembly(
+    assembly: dict[str, Any], ride_height_wheel_load: float | None = None
+) -> dict[str, Any]:
+    name = str(assembly["name"])
+    initial_case_results = [solve_case(assembly, case)[0] for case in assembly["load_cases"]]
+    _, geometry, condition = solve_case(assembly, assembly["load_cases"][0])
+    case_results = initial_case_results
+    ride_height_result = None
+    spring_rate = assembly.get("spring_rate_lbf_per_in")
+    if ride_height_wheel_load is not None and spring_rate is not None:
+        spring_rate = float(spring_rate)
+        if spring_rate <= 0.0:
+            raise ValueError(f"{name}.spring_rate_lbf_per_in must be positive")
+        ride_case = {
+            "name": "ride_height_reference",
+            "force": [0.0, 0.0, -float(ride_height_wheel_load)],
+        }
+        ride_height_result, _, _ = solve_case(assembly, ride_case)
+        ride_compression = -ride_height_result["rocker"]["shock_force"]
+        if ride_compression <= 0.0:
+            raise ValueError(f"{name} ride-height load does not compress the shock")
+        case_results = [
+            solve_moving_case(assembly, case, spring_rate, ride_compression)
+            for case in assembly["load_cases"]
+        ]
 
     return {
         "name": name,
@@ -285,6 +465,17 @@ def solve_assembly(assembly: dict[str, Any]) -> dict[str, Any]:
             else None
         ),
         "member_geometry": geometry,
+        "ride_height_reference": (
+            {
+                "wheel_load_supported_by_spring": ride_height_wheel_load,
+                "shock_force": ride_height_result["rocker"]["shock_force"],
+                "shock_compression_force": -ride_height_result["rocker"]["shock_force"],
+                "spring_rate": spring_rate,
+                "spring_compression_from_free_length": -ride_height_result["rocker"]["shock_force"] / spring_rate,
+            }
+            if ride_height_result is not None
+            else None
+        ),
         "load_cases": case_results,
     }
 
@@ -293,10 +484,45 @@ def solve_config(config: dict[str, Any]) -> dict[str, Any]:
     assemblies = config.get("assemblies")
     if not isinstance(assemblies, list) or not assemblies:
         raise ValueError("Configuration must contain a non-empty 'assemblies' list")
+    vehicle = config.get("vehicle")
+    ride_loads: dict[str, float] = {}
+    ride_summary = None
+    if vehicle is not None:
+        total = float(vehicle["full_car_weight_lbf"])
+        unsprung = float(vehicle["total_unsprung_weight_lbf"])
+        front_fraction = float(vehicle["front_weight_fraction"])
+        rear_fraction = float(vehicle["rear_weight_fraction"])
+        if abs(front_fraction + rear_fraction - 1.0) > 1e-6:
+            raise ValueError("vehicle front and rear weight fractions must sum to 1.0")
+        unsprung_per_corner = unsprung / 4.0
+        front_corner = total * front_fraction / 2.0
+        rear_corner = total * rear_fraction / 2.0
+        ride_loads = {
+            "front": front_corner - unsprung_per_corner,
+            "rear": rear_corner - unsprung_per_corner,
+        }
+        if min(ride_loads.values()) <= 0.0:
+            raise ValueError("Calculated spring-supported ride-height corner load must be positive")
+        ride_summary = {
+            "full_car_weight_lbf": total,
+            "total_unsprung_weight_lbf": unsprung,
+            "unsprung_weight_per_corner_lbf": unsprung_per_corner,
+            "front_tire_load_per_corner_lbf": front_corner,
+            "rear_tire_load_per_corner_lbf": rear_corner,
+            "front_spring_supported_wheel_load_lbf": ride_loads["front"],
+            "rear_spring_supported_wheel_load_lbf": ride_loads["rear"],
+            "assumption": "symmetric left/right loading and equal unsprung weight at all four corners",
+        }
+    solved_assemblies = []
+    for assembly in assemblies:
+        axle = assembly.get("axle")
+        ride_load = ride_loads.get(str(axle)) if vehicle is not None else None
+        solved_assemblies.append(solve_assembly(assembly, ride_load))
     return {
-        "model": "3D rigid-body equilibrium with axial two-force members",
+        "model": "3D rigid-body equilibrium with axial two-force members and nonlinear rigid-link kinematics",
         "sign_convention": "positive = tension; negative = compression",
-        "assemblies": [solve_assembly(assembly) for assembly in assemblies],
+        "ride_height": ride_summary,
+        "assemblies": solved_assemblies,
     }
 
 
@@ -386,6 +612,12 @@ def print_summary(result: dict[str, Any]) -> None:
             print(
                 f"    {'rocker pivot reaction':<22} {rocker['pivot_reaction_magnitude']:>11.2f} {units}"
             )
+            if "kinematics" in case:
+                travel = case["kinematics"]["shock_travel_from_ride_height"]
+                direction = "compression" if travel >= 0.0 else "rebound"
+                print(
+                    f"    {'shock travel':<22} {abs(travel):>11.4f} {assembly['coordinate_units']}  {direction} from ride height"
+                )
 
 
 def parse_args() -> argparse.Namespace:

@@ -1,8 +1,16 @@
 {
-  "notes": "Wishbone and tire-load coordinates are adapted from the supplied Mk11 workbook. Front and rear rocker/shock points are transformed from user-supplied CAD coordinates. The rear rocker pivot axis uses two measured CAD points; the front pivot axis is assumed parallel to model X through its supplied chassis pickup center.",
+  "notes": "All listed coordinates are the ride-height reference geometry. Wishbone and tire-load coordinates are adapted from the supplied Mk11 workbook. Front and rear rocker/shock points are transformed from user-supplied CAD coordinates. The rear rocker pivot axis uses two measured CAD points; the front pivot axis is assumed parallel to model X through its supplied chassis pickup center.",
+  "vehicle": {
+    "full_car_weight_lbf": 631.0,
+    "front_weight_fraction": 0.504,
+    "rear_weight_fraction": 0.496,
+    "total_unsprung_weight_lbf": 86.5
+  },
   "assemblies": [
     {
       "name": "front_left",
+      "axle": "front",
+      "spring_rate_lbf_per_in": 600.0,
       "coordinate_units": "in",
       "force_units": "lbf",
       "contact_patch": [0.0, 25.5, 0.0],
@@ -29,6 +37,8 @@
     },
     {
       "name": "rear_left",
+      "axle": "rear",
+      "spring_rate_lbf_per_in": 450.0,
       "coordinate_units": "in",
       "force_units": "lbf",
       "contact_patch": [-61.0, 25.5, 0.0],

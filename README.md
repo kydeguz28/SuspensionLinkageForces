@@ -8,7 +8,8 @@ pickup coordinates, then calculates:
 - axial force in the fore and aft legs of both wishbones;
 - pushrod or pullrod force at an A-arm/rocker pickup;
 - shock force from the rocker geometry;
-- rocker pivot force reaction and reaction moment; and
+- rocker pivot force reaction and reaction moment;
+- spring compression and moved pickup coordinates for each load case; and
 - a numerical conditioning warning for weak or nearly singular geometry.
 
 Positive axial force means **tension**. Negative axial force means
@@ -68,13 +69,35 @@ The Mk11 coordinate convention uses negative Z upward. Consequently, an upward
 vertical tire force must be entered as a negative Z force component.
 
 The example uses wishbone coordinates and translated load cases from the Mk11
-workbook. Its rocker axis and shock points are deliberately illustrative because
-those packaging coordinates were not present in the workbook; replace them with
-CAD coordinates before using the shock results.
+workbook plus the subsequently supplied CAD rocker and shock coordinates. The
+front rocker-axis direction is still assumed parallel to model X; replace its two
+axis points when a measured front axis is available.
+
+## Ride height and spring movement
+
+The example defines the initial coordinates as ride height and uses:
+
+- 631 lbf full-car weight;
+- 50.4% front / 49.6% rear distribution;
+- 86.5 lbf total unsprung weight, provisionally split equally among four corners;
+- 600 lbf/in front springs and 450 lbf/in rear springs.
+
+This gives tire loads of 159.012 lbf front and 156.488 lbf rear per corner. After
+subtracting 21.625 lbf unsprung weight at each corner, the spring-supported wheel
+loads are 137.387 lbf front and 134.863 lbf rear. The rocker geometry converts
+those into the ride-height shock preload. Load-case shock travel is then measured
+relative to ride height, not relative to the spring's free length.
+
+For each load case the nonlinear kinematic solve holds all six two-force member
+lengths fixed, treats the upright/wheel as one rigid body, rotates the rocker only
+about its fixed pivot axis, and enforces `spring force = ride-height preload +
+rate × shock travel`. The moved coordinates are stored below
+`load_cases[].kinematics.geometry` in the JSON output and are used by the 3D
+viewer. The chassis-side shock pickup remains fixed.
 
 ## Engineering assumptions
 
-This is a static, small-deflection, rigid-body model. All six links are ideal
+This is a quasi-static, rigid-body model. All six links are ideal
 pin-jointed two-force members; friction, joint offsets, member bending, compliance,
 inertial loads, and brake torque are omitted unless added as an external moment.
 The rocker is treated as rigid and its shock force is found by moment equilibrium
@@ -85,3 +108,8 @@ If a pushrod mounts partway along a flexible wishbone, this global model gives t
 load-path estimate but not local wishbone bending stress. Use a beam/FEA model for
 that local detail and validate critical results against CAD, hand calculations,
 and measured load cases before sizing safety-critical parts.
+
+The equal four-way unsprung-weight split is an explicit assumption. Replace it
+with measured front/rear corner unsprung weights when available. Unsprung weight
+is currently removed as a scalar per-corner ride-height load; locating unsprung
+component centers of gravity would be required to include their exact moments.

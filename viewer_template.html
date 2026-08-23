@@ -443,15 +443,20 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       function segment(name, a, b, kind, extra={}) { return {name, a:[...a], b:[...b], kind, family:family(kind === "member" ? name : kind), ...extra}; }
       function buildAssembly(assembly, caseName, mirrored=false) {
         const reflect = p => mirrored ? [p[0], -p[1], p[2]] : [...p];
+        const activeResult = resultCase(assembly, caseName);
+        const moved = activeResult?.kinematics?.geometry;
+        const geometryMembers = moved?.members || assembly.members;
+        const geometryRocker = moved?.rocker || assembly.rocker;
+        const geometryContactPatch = moved?.contact_patch || assembly.contact_patch;
         const forces = forceMap(assembly, caseName);
-        const segments = assembly.members.map(member => {
+        const segments = geometryMembers.map(member => {
           const item = forces.get(member.name);
           return segment(member.name, reflect(member.application), reflect(member.anchor), "member", {
             force:item?.force, forceState:item?.state, length:item?.length, assembly:assembly.name, mirrored,
             forceUnits:assembly.force_units || "", coordinateUnits:assembly.coordinate_units || ""
           });
         });
-        const rocker = assembly.rocker;
+        const rocker = geometryRocker;
         const pa = reflect(rocker.pivot_axis[0]), pb = reflect(rocker.pivot_axis[1]);
         const pm = vAvg([pa,pb]), rp = reflect(rocker.pushrod_pickup), sp = reflect(rocker.shock_pickup), sc = reflect(rocker.shock_chassis_pickup);
         segments.push(segment("rocker pivot axis", pa, pb, "rocker", {assembly:assembly.name, mirrored}));
@@ -461,17 +466,17 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
         const shock = forces.get("shock");
         segments.push(segment("shock", sp, sc, "shock", {force:shock?.force, forceState:shock?.state, length:shock?.length, assembly:assembly.name, mirrored, forceUnits:assembly.force_units || "", coordinateUnits:assembly.coordinate_units || "", fixedB:true}));
 
-        const upper = assembly.members.filter(m => family(m.name) === "upper").map(m => reflect(m.application));
-        const lower = assembly.members.filter(m => family(m.name) === "lower").map(m => reflect(m.application));
-        const tie = assembly.members.find(m => family(m.name) === "tie");
+        const upper = geometryMembers.filter(m => family(m.name) === "upper").map(m => reflect(m.application));
+        const lower = geometryMembers.filter(m => family(m.name) === "lower").map(m => reflect(m.application));
+        const tie = geometryMembers.find(m => family(m.name) === "tie");
         if (upper.length && lower.length) {
           const ua=vAvg(upper), la=vAvg(lower);
           segments.push(segment("upright", ua, la, "upright", {assembly:assembly.name, mirrored, structural:true}));
           if (tie) segments.push(segment("steering arm", reflect(tie.application), la, "upright", {assembly:assembly.name, mirrored, structural:true}));
         }
 
-        const applications = assembly.members.map(m => reflect(m.application));
-        const cp = reflect(assembly.contact_patch);
+        const applications = geometryMembers.map(m => reflect(m.application));
+        const cp = reflect(geometryContactPatch);
         const wheelCenterZ = applications.reduce((sum,p) => sum+p[2],0) / applications.length;
         const radius = Math.max(2, Math.abs(cp[2]-wheelCenterZ));
         const center=[cp[0],cp[1],wheelCenterZ];
@@ -504,9 +509,15 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       }
 
       function sceneBounds(segments) {
-        // Applied-force arrows change between load cases, but the mechanical geometry does not.
-        // Excluding them prevents a load-case change from visually moving fixed chassis pickups.
-        const points=segments.filter(s=>s.kind!=="load").flatMap(s=>[s.a,s.b]);
+        // Keep framing tied to the ride-height reference geometry. Re-fitting the
+        // camera to every moved load case would make fixed chassis pickups appear
+        // to move on screen even though their coordinates are unchanged.
+        let points=[];
+        for (const assembly of selectedAssemblies()) {
+          const base=[assembly.contact_patch, ...assembly.members.flatMap(m=>[m.application,m.anchor]), ...assembly.rocker.pivot_axis, assembly.rocker.pushrod_pickup, assembly.rocker.shock_pickup, assembly.rocker.shock_chassis_pickup];
+          points.push(...base);
+          if (controls.mirror.checked) points.push(...base.map(p=>[p[0],-p[1],p[2]]));
+        }
         const min=[Infinity,Infinity,Infinity], max=[-Infinity,-Infinity,-Infinity];
         for(const p of points) for(let i=0;i<3;i++){ min[i]=Math.min(min[i],p[i]); max[i]=Math.max(max[i],p[i]); }
         return {min,max,center:min.map((n,i)=>(n+max[i])/2),span:max.map((n,i)=>Math.max(1,n-min[i]))};
