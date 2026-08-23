@@ -1,0 +1,669 @@
+<!doctype html>
+<!--
+THESIS: Geometry is the interface; refuse the generic dashboard of summary cards.
+OWN-WORLD: Cool aluminum, dark drafted linework, safety orange selection, and force-state blue/vermilion.
+STORY: Choose an assembly and load case, orbit the mechanism, then inspect each load path and reaction.
+FIRST VIEWPORT: A full-height linkage model between a compact setup rail and a live engineering readout; Reset view is always visible.
+FORM: Operate-mode optical inspection bench, shaped directly for the narrow engineering-viewer request; no concept seed.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Suspension Linkage 3D Inspector</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #edf0f1;
+      --chrome: #dfe4e6;
+      --paper: #f7f8f8;
+      --ink: #172026;
+      --muted: #52616a;
+      --hairline: #aab5ba;
+      --orange: #e56a2f;
+      --tension: #c84d35;
+      --compression: #266d93;
+      --focus: #025f88;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body {
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: Bahnschrift, Aptos, "Segoe UI", sans-serif;
+      font-size: 14px;
+    }
+
+    button, select, input { font: inherit; }
+    button, select {
+      min-height: 38px;
+      border: 1px solid #8d9a9f;
+      border-radius: 6px;
+      background: var(--paper);
+      color: var(--ink);
+    }
+    button { cursor: pointer; padding: 0 12px; font-weight: 700; }
+    button:hover, select:hover { background: #fff; border-color: #65747a; }
+    button:focus-visible, select:focus-visible, input:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--focus) 30%, transparent);
+      outline-offset: 2px;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 282px minmax(0, 1fr) 290px;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .rail {
+      position: relative;
+      z-index: 2;
+      min-width: 0;
+      overflow: auto;
+      background: var(--chrome);
+    }
+    .rail--controls { border-right: 1px solid var(--hairline); }
+    .rail--inspect { border-left: 1px solid var(--hairline); }
+
+    .rail-inner { padding: 22px 20px 28px; }
+    .brand {
+      margin: 0 0 4px;
+      max-width: 11ch;
+      font-family: "Bahnschrift SemiCondensed", Bahnschrift, Aptos, sans-serif;
+      font-size: clamp(26px, 2.4vw, 38px);
+      line-height: .92;
+      letter-spacing: -.03em;
+      text-transform: uppercase;
+    }
+    .subtitle { margin: 10px 0 28px; color: var(--muted); line-height: 1.45; }
+    .model-note {
+      margin: -15px 0 26px;
+      border: 1px solid #bd7a3b;
+      border-radius: 7px;
+      background: #f5e8da;
+      padding: 10px 11px;
+      color: #6d3d18;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .section { margin-top: 25px; }
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 12px;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+    .field { display: grid; gap: 6px; margin-top: 13px; }
+    .field label { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .field select { width: 100%; padding: 0 34px 0 10px; }
+
+    .switches { display: grid; gap: 9px; }
+    .check {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+      min-height: 28px;
+      color: #2e3b42;
+      cursor: pointer;
+    }
+    .check input { width: 17px; height: 17px; accent-color: var(--orange); }
+    .button-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .button-row .primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+    .button-row .primary:hover { background: #2b3940; }
+
+    .keymap {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 7px 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    kbd {
+      min-width: 24px;
+      border: 1px solid #9eaaaf;
+      border-bottom-width: 2px;
+      border-radius: 4px;
+      background: #f5f7f7;
+      padding: 2px 5px;
+      color: var(--ink);
+      font-family: Consolas, monospace;
+      text-align: center;
+    }
+
+    .viewport { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+    #scene { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+    #scene.dragging { cursor: grabbing; }
+    .viewport-meta {
+      position: absolute;
+      top: 15px;
+      left: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      pointer-events: none;
+    }
+    .tag {
+      border: 1px solid rgba(61, 75, 82, .3);
+      border-radius: 5px;
+      background: rgba(247, 248, 248, .88);
+      padding: 6px 8px;
+      color: #344249;
+      font-size: 11px;
+      font-weight: 700;
+      box-shadow: 2px 3px 8px rgba(36, 49, 55, .08);
+      backdrop-filter: blur(5px);
+    }
+    .tag.warning { border-color: #ca7d35; color: #75431a; }
+
+    .tooltip {
+      position: absolute;
+      z-index: 3;
+      display: none;
+      width: max-content;
+      max-width: 260px;
+      border-radius: 7px;
+      background: #172026;
+      padding: 9px 11px;
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.4;
+      pointer-events: none;
+      box-shadow: 4px 7px 18px rgba(23, 32, 38, .24);
+    }
+    .tooltip strong { display: block; margin-bottom: 2px; }
+    .tooltip .mono { color: #dce4e6; }
+
+    .inspect-heading { margin: 0 0 6px; font-size: 19px; letter-spacing: -.02em; }
+    .inspect-copy { margin: 0 0 20px; color: var(--muted); line-height: 1.45; }
+    .readout {
+      border-top: 1px solid #a8b3b8;
+      border-bottom: 1px solid #a8b3b8;
+      padding: 15px 0;
+    }
+    .readout-name { margin: 0 0 8px; font-weight: 800; overflow-wrap: anywhere; }
+    .readout-force {
+      margin: 0;
+      font-family: Consolas, "SFMono-Regular", monospace;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -.03em;
+    }
+    .readout-state { margin: 4px 0 0; color: var(--muted); text-transform: capitalize; }
+    .data-list { margin: 16px 0 0; }
+    .data-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      border-bottom: 1px solid #bbc4c8;
+      padding: 9px 0;
+    }
+    .data-row dt { color: var(--muted); }
+    .data-row dd { margin: 0; font-family: Consolas, monospace; text-align: right; }
+
+    .legend { display: grid; gap: 8px; }
+    .legend-item { display: grid; grid-template-columns: 17px minmax(0, 1fr); align-items: center; gap: 8px; }
+    .swatch { width: 17px; height: 4px; border-radius: 2px; background: var(--swatch); }
+    .force-table { display: grid; margin-top: 12px; }
+    .force-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid #bec7ca;
+      font-size: 12px;
+    }
+    .force-row span:first-child { overflow-wrap: anywhere; }
+    .force-value { font-family: Consolas, monospace; font-weight: 700; }
+    .force-value.tension { color: #963825; }
+    .force-value.compression { color: #1e5c7d; }
+
+    .status {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      background: var(--canvas);
+      padding: 30px;
+      text-align: center;
+    }
+    .status[hidden] { display: none; }
+    .status strong { display: block; margin-bottom: 8px; font-size: 18px; }
+
+    @media (max-width: 900px) {
+      html, body { overflow: auto; }
+      .app { grid-template-columns: 1fr; grid-template-rows: auto minmax(58vh, 1fr) auto; height: auto; min-height: 100%; }
+      .rail { overflow: visible; }
+      .rail--controls { border-right: 0; border-bottom: 1px solid var(--hairline); }
+      .rail--inspect { border-left: 0; border-top: 1px solid var(--hairline); }
+      .rail-inner { padding: 16px; }
+      .brand { max-width: none; font-size: 27px; }
+      .subtitle { margin: 7px 0 14px; }
+      .compact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .section { margin-top: 16px; }
+      .key-section { display: none; }
+      .viewport { min-height: 58vh; }
+      .rail--inspect .rail-inner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, .8fr); gap: 18px; }
+      .force-section { grid-column: 1 / -1; }
+    }
+    @media (max-width: 580px) {
+      .compact-grid, .rail--inspect .rail-inner { grid-template-columns: 1fr; }
+      .switches { grid-template-columns: 1fr 1fr; }
+      .force-section { grid-column: auto; }
+      .viewport-meta { top: 9px; left: 9px; right: 9px; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <aside class="rail rail--controls" aria-label="Viewer controls">
+      <div class="rail-inner">
+        <h1 class="brand">Linkage Inspector</h1>
+        <p class="subtitle">Static geometry and force paths from the active suspension model.</p>
+        <p class="model-note" id="modelNote" hidden></p>
+
+        <div class="compact-grid">
+          <section class="section" aria-labelledby="model-heading">
+            <h2 class="section-title" id="model-heading">Model setup</h2>
+            <div class="field">
+              <label for="assembly">Assembly</label>
+              <select id="assembly"></select>
+            </div>
+            <div class="field">
+              <label for="loadCase">Load case</label>
+              <select id="loadCase"></select>
+            </div>
+            <div class="field">
+              <label for="colorMode">Link encoding</label>
+              <select id="colorMode">
+                <option value="component">Component family</option>
+                <option value="force">Force state + magnitude</option>
+              </select>
+            </div>
+          </section>
+
+          <section class="section" aria-labelledby="display-heading">
+            <h2 class="section-title" id="display-heading">Display</h2>
+            <div class="switches">
+              <label class="check"><input id="labels" type="checkbox" checked> Member labels</label>
+              <label class="check"><input id="nodes" type="checkbox" checked> Pickup nodes</label>
+              <label class="check"><input id="axes" type="checkbox" checked> Datum + axes</label>
+              <label class="check"><input id="mirror" type="checkbox"> Mirror opposite side</label>
+            </div>
+          </section>
+        </div>
+
+        <section class="section" aria-labelledby="view-heading">
+          <h2 class="section-title" id="view-heading">View</h2>
+          <div class="button-row">
+            <button class="primary" id="reset" type="button">Reset view</button>
+            <button id="projection" type="button" aria-pressed="false">Perspective</button>
+          </div>
+        </section>
+
+        <section class="section key-section" aria-labelledby="keys-heading">
+          <h2 class="section-title" id="keys-heading">Navigation</h2>
+          <div class="keymap">
+            <kbd>drag</kbd><span>orbit</span>
+            <kbd>⇧</kbd><span>drag to pan</span>
+            <kbd>wheel</kbd><span>zoom</span>
+            <kbd>R</kbd><span>reset view</span>
+          </div>
+        </section>
+      </div>
+    </aside>
+
+    <section class="viewport" aria-label="Interactive 3D suspension linkage view">
+      <canvas id="scene" tabindex="0" aria-label="Drag to rotate the 3D suspension linkage model"></canvas>
+      <div class="viewport-meta" aria-hidden="true">
+        <span class="tag" id="unitTag"></span>
+        <span class="tag">−Z displayed upward</span>
+        <span class="tag">Shock base fixed to chassis</span>
+        <span class="tag warning" id="mirrorTag" hidden>Mirrored side is illustrative</span>
+      </div>
+      <div class="tooltip" id="tooltip" role="tooltip"></div>
+      <div class="status" id="status"><div><strong>Preparing geometry</strong><span>Building the shared linkage model…</span></div></div>
+    </section>
+
+    <aside class="rail rail--inspect" aria-label="Selected component details">
+      <div class="rail-inner">
+        <section>
+          <h2 class="inspect-heading">Live inspection</h2>
+          <p class="inspect-copy" id="inspectionHelp">Hover over a link for a quick read. Click it to keep its coordinates and force visible.</p>
+          <div class="readout" aria-live="polite">
+            <p class="readout-name" id="readoutName">No component selected</p>
+            <p class="readout-force" id="readoutForce">—</p>
+            <p class="readout-state" id="readoutState">Select a linkage</p>
+          </div>
+          <dl class="data-list" id="dataList"></dl>
+        </section>
+
+        <section class="section" aria-labelledby="legend-heading">
+          <h2 class="section-title" id="legend-heading">Color key</h2>
+          <div class="legend" id="legend"></div>
+        </section>
+
+        <section class="section force-section" aria-labelledby="forces-heading">
+          <h2 class="section-title" id="forces-heading">Active load path</h2>
+          <div class="force-table" id="forceTable"></div>
+        </section>
+      </div>
+    </aside>
+  </main>
+
+  <script id="model-data" type="application/json">__SUSPENSION_DATA__</script>
+  <script>
+    (() => {
+      "use strict";
+      const COLORS = {
+        upper: "#6b4c9a", lower: "#1f758d", tie: "#d47a24", pushrod: "#b43f72",
+        shock: "#568421", rocker: "#343e43", upright: "#68757b", wheel: "#8c969a",
+        load: "#e56a2f", tension: "#c84d35", compression: "#266d93", selected: "#e56a2f"
+      };
+      const canvas = document.getElementById("scene");
+      const ctx = canvas.getContext("2d");
+      const controls = {
+        assembly: document.getElementById("assembly"), loadCase: document.getElementById("loadCase"),
+        colorMode: document.getElementById("colorMode"), labels: document.getElementById("labels"),
+        nodes: document.getElementById("nodes"), axes: document.getElementById("axes"),
+        mirror: document.getElementById("mirror"), projection: document.getElementById("projection")
+      };
+      const tooltip = document.getElementById("tooltip");
+      const status = document.getElementById("status");
+      let payload;
+      try {
+        payload = JSON.parse(document.getElementById("model-data").textContent);
+        if (!payload.config?.assemblies?.length || !payload.result?.assemblies?.length) throw new Error("No assemblies found");
+      } catch (error) {
+        status.innerHTML = `<div><strong>Geometry could not be loaded</strong><span>${escapeHtml(error.message)}. Regenerate this file from a valid configuration.</span></div>`;
+        return;
+      }
+
+      const configAssemblies = payload.config.assemblies;
+      const resultByName = new Map(payload.result.assemblies.map(a => [a.name, a]));
+      const state = {
+        yaw: -0.68, pitch: 0.54, zoom: 1, panX: 0, panY: 0, perspective: true,
+        dragging: false, shifted: false, lastX: 0, lastY: 0, downX: 0, downY: 0, hover: null, selected: null,
+        projected: [], width: 0, height: 0, dpr: 1
+      };
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
+      }
+      function vAdd(a,b) { return a.map((n,i) => n+b[i]); }
+      function vSub(a,b) { return a.map((n,i) => n-b[i]); }
+      function vScale(a,s) { return a.map(n => n*s); }
+      function vMag(a) { return Math.hypot(...a); }
+      function vAvg(points) { return points.reduce((a,p) => vAdd(a,p), [0,0,0]).map(n => n/points.length); }
+      function labelName(value) { return value.replaceAll("_", " ").replace(/\b\w/g, c => c.toUpperCase()); }
+      function family(name) {
+        const n = name.toLowerCase();
+        if (n.includes("upper")) return "upper";
+        if (n.includes("lower")) return "lower";
+        if (n.includes("tie") || n.includes("steering")) return "tie";
+        if (n.includes("push") || n.includes("pull")) return "pushrod";
+        if (n.includes("shock")) return "shock";
+        if (n.includes("rocker")) return "rocker";
+        if (n.includes("upright")) return "upright";
+        return "wheel";
+      }
+      function resultCase(assembly, caseName) {
+        const result = resultByName.get(assembly.name);
+        return result?.load_cases.find(item => item.name === caseName) || null;
+      }
+      function forceMap(assembly, caseName) {
+        const active = resultCase(assembly, caseName);
+        const map = new Map((active?.members || []).map(member => [member.name, member]));
+        if (active?.rocker) map.set("shock", {name:"shock", force:active.rocker.shock_force, state:active.rocker.shock_state, length:active.rocker.shock_length});
+        return map;
+      }
+
+      function populateControls() {
+        controls.assembly.innerHTML = `<option value="all">All assemblies</option>` + configAssemblies.map((a,i) => `<option value="${i}">${escapeHtml(labelName(a.name))}</option>`).join("");
+        syncLoadCases();
+      }
+      function selectedAssemblies() {
+        return controls.assembly.value === "all" ? configAssemblies : [configAssemblies[Number(controls.assembly.value)]];
+      }
+      function syncLoadCases() {
+        const assembly = controls.assembly.value === "all" ? configAssemblies[0] : configAssemblies[Number(controls.assembly.value)];
+        const old = controls.loadCase.value;
+        controls.loadCase.innerHTML = assembly.load_cases.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(labelName(c.name))}</option>`).join("");
+        controls.loadCase.value = assembly.load_cases.some(c => c.name === old) ? old : assembly.load_cases[0].name;
+        const visible = selectedAssemblies();
+        const coordinateUnits = [...new Set(visible.map(item => item.coordinate_units || "units"))];
+        const forceUnits = [...new Set(visible.map(item => item.force_units || "force"))];
+        document.getElementById("unitTag").textContent = `${coordinateUnits.join("/")} · ${forceUnits.join("/")}`;
+      }
+
+      function segment(name, a, b, kind, extra={}) { return {name, a:[...a], b:[...b], kind, family:family(kind === "member" ? name : kind), ...extra}; }
+      function buildAssembly(assembly, caseName, mirrored=false) {
+        const reflect = p => mirrored ? [p[0], -p[1], p[2]] : [...p];
+        const forces = forceMap(assembly, caseName);
+        const segments = assembly.members.map(member => {
+          const item = forces.get(member.name);
+          return segment(member.name, reflect(member.application), reflect(member.anchor), "member", {
+            force:item?.force, forceState:item?.state, length:item?.length, assembly:assembly.name, mirrored,
+            forceUnits:assembly.force_units || "", coordinateUnits:assembly.coordinate_units || ""
+          });
+        });
+        const rocker = assembly.rocker;
+        const pa = reflect(rocker.pivot_axis[0]), pb = reflect(rocker.pivot_axis[1]);
+        const pm = vAvg([pa,pb]), rp = reflect(rocker.pushrod_pickup), sp = reflect(rocker.shock_pickup), sc = reflect(rocker.shock_chassis_pickup);
+        segments.push(segment("rocker pivot axis", pa, pb, "rocker", {assembly:assembly.name, mirrored}));
+        segments.push(segment("rocker arm · pushrod", pm, rp, "rocker", {assembly:assembly.name, mirrored}));
+        segments.push(segment("rocker arm · shock", pm, sp, "rocker", {assembly:assembly.name, mirrored}));
+        segments.push(segment("rocker web", rp, sp, "rocker", {assembly:assembly.name, mirrored}));
+        const shock = forces.get("shock");
+        segments.push(segment("shock", sp, sc, "shock", {force:shock?.force, forceState:shock?.state, length:shock?.length, assembly:assembly.name, mirrored, forceUnits:assembly.force_units || "", coordinateUnits:assembly.coordinate_units || "", fixedB:true}));
+
+        const upper = assembly.members.filter(m => family(m.name) === "upper").map(m => reflect(m.application));
+        const lower = assembly.members.filter(m => family(m.name) === "lower").map(m => reflect(m.application));
+        const tie = assembly.members.find(m => family(m.name) === "tie");
+        if (upper.length && lower.length) {
+          const ua=vAvg(upper), la=vAvg(lower);
+          segments.push(segment("upright", ua, la, "upright", {assembly:assembly.name, mirrored, structural:true}));
+          if (tie) segments.push(segment("steering arm", reflect(tie.application), la, "upright", {assembly:assembly.name, mirrored, structural:true}));
+        }
+
+        const applications = assembly.members.map(m => reflect(m.application));
+        const cp = reflect(assembly.contact_patch);
+        const wheelCenterZ = applications.reduce((sum,p) => sum+p[2],0) / applications.length;
+        const radius = Math.max(2, Math.abs(cp[2]-wheelCenterZ));
+        const center=[cp[0],cp[1],wheelCenterZ];
+        const wheel=[];
+        for(let i=0;i<36;i++) {
+          const a=i*Math.PI*2/36, b=(i+1)*Math.PI*2/36;
+          const p1=[center[0]+Math.cos(a)*radius,center[1],center[2]+Math.sin(a)*radius];
+          const p2=[center[0]+Math.cos(b)*radius,center[1],center[2]+Math.sin(b)*radius];
+          wheel.push(segment("wheel envelope", p1,p2,"wheel",{assembly:assembly.name,mirrored,decorative:true}));
+        }
+        segments.push(...wheel);
+
+        const load = assembly.load_cases.find(item => item.name === caseName);
+        const f=load ? reflect(load.force) : null, fm=f ? vMag(f) : 0;
+        if (f && fm > 1e-9 && !mirrored) {
+          const displayLength=Math.max(4,radius*1.25);
+          segments.push(segment("tire force", cp, vAdd(cp,vScale(f,displayLength/fm)), "load", {force:fm, forceState:"applied", assembly:assembly.name, vector:f, forceUnits:assembly.force_units || "", coordinateUnits:assembly.coordinate_units || ""}));
+        }
+        return segments;
+      }
+
+      function buildScene() {
+        const caseName=controls.loadCase.value;
+        let segments=[];
+        for (const assembly of selectedAssemblies()) {
+          segments.push(...buildAssembly(assembly,caseName,false));
+          if (controls.mirror.checked) segments.push(...buildAssembly(assembly,caseName,true));
+        }
+        return segments;
+      }
+
+      function sceneBounds(segments) {
+        // Applied-force arrows change between load cases, but the mechanical geometry does not.
+        // Excluding them prevents a load-case change from visually moving fixed chassis pickups.
+        const points=segments.filter(s=>s.kind!=="load").flatMap(s=>[s.a,s.b]);
+        const min=[Infinity,Infinity,Infinity], max=[-Infinity,-Infinity,-Infinity];
+        for(const p of points) for(let i=0;i<3;i++){ min[i]=Math.min(min[i],p[i]); max[i]=Math.max(max[i],p[i]); }
+        return {min,max,center:min.map((n,i)=>(n+max[i])/2),span:max.map((n,i)=>Math.max(1,n-min[i]))};
+      }
+
+      function transformPoint(point, bounds) {
+        const dx=point[0]-bounds.center[0], dy=point[1]-bounds.center[1], dz=-(point[2]-bounds.center[2]);
+        const cy=Math.cos(state.yaw), sy=Math.sin(state.yaw), cp=Math.cos(state.pitch), sp=Math.sin(state.pitch);
+        const x1=dx*cy-dy*sy, y1=dx*sy+dy*cy;
+        const y2=y1*cp-dz*sp, z2=y1*sp+dz*cp;
+        const margin=52;
+        const fit=Math.min((state.width-margin*2)/Math.max(bounds.span[0],bounds.span[1]),(state.height-margin*2)/Math.max(bounds.span[1],bounds.span[2]))*.72;
+        const scale=fit*state.zoom;
+        const perspective=state.perspective ? Math.max(.42, 1/(1-y2/(Math.max(...bounds.span)*3.2))) : 1;
+        return {x:state.width/2+state.panX+x1*scale*perspective,y:state.height/2+state.panY-z2*scale*perspective,depth:y2,scale:perspective};
+      }
+
+      function colorFor(seg, maxForce) {
+        if (seg.mirrored) return "rgba(84,99,106,.28)";
+        if (seg.kind === "load") return COLORS.load;
+        if (controls.colorMode.value === "force" && Number.isFinite(seg.force)) return seg.force >= 0 ? COLORS.tension : COLORS.compression;
+        return COLORS[seg.family] || COLORS.upright;
+      }
+      function lineWidth(seg,maxForce) {
+        if (seg.decorative) return 1.2;
+        if (seg.kind === "load") return 3;
+        if (controls.colorMode.value === "force" && Number.isFinite(seg.force) && maxForce>0) return 2.5+5*Math.sqrt(Math.abs(seg.force)/maxForce);
+        return seg.kind === "member" || seg.kind === "shock" ? 5 : 3;
+      }
+
+      function drawGrid(bounds) {
+        if (!controls.axes.checked) return;
+        const extent=Math.ceil(Math.max(bounds.span[0],bounds.span[1])*.65/10)*10+10;
+        const origin=[bounds.center[0],bounds.center[1],0];
+        ctx.save();
+        ctx.lineWidth=1;
+        for(let n=-extent;n<=extent;n+=10){
+          const alpha=n===0?.25:.09;
+          ctx.strokeStyle=`rgba(42,58,65,${alpha})`;
+          for(const pair of [[[origin[0]-extent,origin[1]+n,0],[origin[0]+extent,origin[1]+n,0]],[[origin[0]+n,origin[1]-extent,0],[origin[0]+n,origin[1]+extent,0]]]){
+            const a=transformPoint(pair[0],bounds),b=transformPoint(pair[1],bounds);
+            ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+          }
+        }
+        const axisLength=Math.max(12,extent*.32);
+        const axes=[[[origin[0]+axisLength,origin[1],0],"X","#b84c35"],[[origin[0],origin[1]+axisLength,0],"Y","#37764e"],[[origin[0],origin[1],-axisLength],"−Z↑","#2a668e"]];
+        const o=transformPoint(origin,bounds);
+        ctx.font="700 12px Bahnschrift, sans-serif";
+        for(const [point,label,color] of axes){const p=transformPoint(point,bounds);ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(o.x,o.y);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.fillStyle=color;ctx.fillText(label,p.x+5,p.y-5);}
+        ctx.restore();
+      }
+
+      function drawArrowHead(a,b,color) {
+        const angle=Math.atan2(b.y-a.y,b.x-a.x), size=10;
+        ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-Math.cos(angle-.45)*size,b.y-Math.sin(angle-.45)*size);ctx.lineTo(b.x-Math.cos(angle+.45)*size,b.y-Math.sin(angle+.45)*size);ctx.closePath();ctx.fill();
+      }
+
+      function render() {
+        const segments=buildScene(), bounds=sceneBounds(segments);
+        ctx.clearRect(0,0,state.width,state.height);
+        const bg=ctx.createLinearGradient(0,0,0,state.height);bg.addColorStop(0,"#f4f6f6");bg.addColorStop(1,"#e4e9ea");ctx.fillStyle=bg;ctx.fillRect(0,0,state.width,state.height);
+        drawGrid(bounds);
+        const maxForce=Math.max(1,...segments.filter(s=>Number.isFinite(s.force)).map(s=>Math.abs(s.force)));
+        state.projected=segments.map(seg=>({...seg,pa:transformPoint(seg.a,bounds),pb:transformPoint(seg.b,bounds)})).sort((a,b)=>(a.pa.depth+a.pb.depth)-(b.pa.depth+b.pb.depth));
+        for(const seg of state.projected){
+          const active=state.hover===seg || state.selected?.name===seg.name && state.selected?.assembly===seg.assembly && !seg.mirrored;
+          const color=active?COLORS.selected:colorFor(seg,maxForce);
+          ctx.save();ctx.strokeStyle=color;ctx.lineCap="round";ctx.lineJoin="round";ctx.lineWidth=(active?2:0)+lineWidth(seg,maxForce)*((seg.pa.scale+seg.pb.scale)/2);
+          if(seg.mirrored) ctx.setLineDash([6,6]);
+          if(active){ctx.shadowColor="rgba(229,106,47,.3)";ctx.shadowBlur=10;ctx.shadowOffsetY=3;}
+          ctx.beginPath();ctx.moveTo(seg.pa.x,seg.pa.y);ctx.lineTo(seg.pb.x,seg.pb.y);ctx.stroke();
+          if(seg.kind==="load") drawArrowHead(seg.pa,seg.pb,color);
+          ctx.restore();
+        }
+        if(controls.nodes.checked) drawNodes();
+        drawFixedAnchors();
+        if(controls.labels.checked) drawLabels();
+        updateLegend();updateForceTable();
+      }
+
+      function drawNodes(){
+        const seen=new Set();
+        for(const seg of state.projected){
+          if(seg.decorative||seg.kind==="load") continue;
+          for(const p of [seg.pa,seg.pb]){
+            const key=`${Math.round(p.x)}:${Math.round(p.y)}:${seg.mirrored}`;if(seen.has(key))continue;seen.add(key);
+            ctx.beginPath();ctx.fillStyle=seg.mirrored?"rgba(90,104,110,.34)":"#f8f9f9";ctx.strokeStyle=seg.mirrored?"rgba(66,78,84,.3)":"#26333a";ctx.lineWidth=1.5;ctx.arc(p.x,p.y,seg.mirrored?3:4.2,0,Math.PI*2);ctx.fill();ctx.stroke();
+          }
+        }
+      }
+      function drawFixedAnchors(){
+        for(const seg of state.projected){
+          if(!seg.fixedB||seg.mirrored)continue;
+          const p=seg.pb;
+          ctx.save();ctx.translate(p.x,p.y);ctx.strokeStyle="#172026";ctx.fillStyle="#f7f8f8";ctx.lineWidth=1.7;
+          ctx.fillRect(-7,-7,14,14);ctx.strokeRect(-7,-7,14,14);
+          ctx.beginPath();ctx.arc(0,0,3,0,Math.PI*2);ctx.fillStyle=COLORS.shock;ctx.fill();
+          ctx.beginPath();ctx.moveTo(-10,10);ctx.lineTo(10,10);ctx.moveTo(-7,10);ctx.lineTo(-11,15);ctx.moveTo(0,10);ctx.lineTo(-4,15);ctx.moveTo(7,10);ctx.lineTo(3,15);ctx.stroke();
+          ctx.font="700 10px Bahnschrift, sans-serif";ctx.fillStyle="#172026";ctx.fillText("FIXED CHASSIS",12,14);ctx.restore();
+        }
+      }
+      function drawLabels(){
+        if(state.projected.length>120) return;
+        ctx.font="600 11px Bahnschrift, sans-serif";ctx.textBaseline="middle";
+        for(const seg of state.projected){
+          if(seg.kind!=="member"&&seg.kind!=="shock"&&seg.kind!=="load")continue;if(seg.mirrored)continue;
+          const x=(seg.pa.x+seg.pb.x)/2+7,y=(seg.pa.y+seg.pb.y)/2-6;
+          const text=labelName(seg.name),w=ctx.measureText(text).width;
+          ctx.fillStyle="rgba(244,246,246,.86)";ctx.fillRect(x-3,y-8,w+6,16);ctx.fillStyle="#253138";ctx.fillText(text,x,y);
+        }
+      }
+
+      function updateLegend(){
+        const items=controls.colorMode.value==="force"?[["Tension",COLORS.tension],["Compression",COLORS.compression],["Applied tire force",COLORS.load]]:[["Upper wishbone",COLORS.upper],["Lower wishbone",COLORS.lower],["Tie / toe rod",COLORS.tie],["Push / pull rod",COLORS.pushrod],["Shock",COLORS.shock],["Rocker + upright",COLORS.rocker]];
+        document.getElementById("legend").innerHTML=items.map(([label,color])=>`<div class="legend-item"><span class="swatch" style="--swatch:${color}"></span><span>${label}</span></div>`).join("");
+      }
+      function updateForceTable(){
+        const caseName=controls.loadCase.value, rows=[];
+        for(const assembly of selectedAssemblies()){
+          const active=resultCase(assembly,caseName);if(!active)continue;
+          for(const m of active.members)rows.push({assembly:assembly.name,forceUnits:assembly.force_units||"",...m});
+          rows.push({assembly:assembly.name,name:"shock",force:active.rocker.shock_force,state:active.rocker.shock_state,forceUnits:assembly.force_units||""});
+        }
+        rows.sort((a,b)=>Math.abs(b.force)-Math.abs(a.force));
+        document.getElementById("forceTable").innerHTML=rows.map(r=>`<div class="force-row"><span>${selectedAssemblies().length>1?escapeHtml(labelName(r.assembly))+" · ":""}${escapeHtml(labelName(r.name))}</span><span class="force-value ${r.state}">${r.force.toFixed(1)} ${escapeHtml(r.forceUnits)}</span></div>`).join("");
+      }
+
+      function lineDistance(px,py,a,b){const dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy;if(!l2)return Math.hypot(px-a.x,py-a.y);const t=Math.max(0,Math.min(1,((px-a.x)*dx+(py-a.y)*dy)/l2));return Math.hypot(px-(a.x+t*dx),py-(a.y+t*dy));}
+      function pick(x,y){let best=null,dist=12;for(let i=state.projected.length-1;i>=0;i--){const s=state.projected[i];if(s.decorative||s.mirrored)continue;const d=lineDistance(x,y,s.pa,s.pb);if(d<dist){dist=d;best=s;}}return best;}
+      function showTooltip(seg,x,y){if(!seg){tooltip.style.display="none";return;}tooltip.innerHTML=`<strong>${escapeHtml(labelName(seg.name))}</strong><span class="mono">${Number.isFinite(seg.force)?`${seg.force.toFixed(2)} ${escapeHtml(seg.forceUnits||"")} · ${escapeHtml(seg.forceState||"")}`:"geometry"}</span>`;tooltip.style.display="block";const maxX=canvas.clientWidth-tooltip.offsetWidth-10,maxY=canvas.clientHeight-tooltip.offsetHeight-10;tooltip.style.left=`${Math.max(10,Math.min(maxX,x+14))}px`;tooltip.style.top=`${Math.max(10,Math.min(maxY,y+14))}px`;}
+      function selectSegment(seg){state.selected=seg;if(!seg){document.getElementById("readoutName").textContent="No component selected";document.getElementById("readoutForce").textContent="—";document.getElementById("readoutState").textContent="Select a linkage";document.getElementById("dataList").innerHTML="";render();return;}const assembly=configAssemblies.find(a=>a.name===seg.assembly),units=assembly?.force_units||"",lengthUnits=assembly?.coordinate_units||"";document.getElementById("readoutName").textContent=`${labelName(seg.assembly)} · ${labelName(seg.name)}`;document.getElementById("readoutForce").textContent=Number.isFinite(seg.force)?`${seg.force.toFixed(2)} ${units}`:"Geometry";document.getElementById("readoutState").textContent=seg.forceState||seg.kind;const pointALabel=seg.kind==="shock"?"Rocker pickup":"Point A",pointBLabel=seg.fixedB?"Fixed chassis pickup":"Point B";const rows=[["Length",Number.isFinite(seg.length)?`${seg.length.toFixed(3)} ${lengthUnits}`:`${vMag(vSub(seg.b,seg.a)).toFixed(3)} ${lengthUnits}`],[pointALabel,seg.a.map(n=>n.toFixed(3)).join(", ")],[pointBLabel,seg.b.map(n=>n.toFixed(3)).join(", ")]];document.getElementById("dataList").innerHTML=rows.map(([k,v])=>`<div class="data-row"><dt>${k}</dt><dd>${v}</dd></div>`).join("");render();}
+
+      function resetView(){state.yaw=-.68;state.pitch=.54;state.zoom=1;state.panX=0;state.panY=0;render();}
+      function resize(){const rect=canvas.getBoundingClientRect();state.dpr=Math.min(2,window.devicePixelRatio||1);canvas.width=Math.round(rect.width*state.dpr);canvas.height=Math.round(rect.height*state.dpr);ctx.setTransform(state.dpr,0,0,state.dpr,0,0);state.width=rect.width;state.height=rect.height;render();}
+
+      canvas.addEventListener("pointerdown",e=>{state.dragging=true;state.shifted=e.shiftKey;state.lastX=e.clientX;state.lastY=e.clientY;state.downX=e.clientX;state.downY=e.clientY;canvas.setPointerCapture(e.pointerId);canvas.classList.add("dragging");});
+      canvas.addEventListener("pointermove",e=>{const rect=canvas.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;if(state.dragging){const dx=e.clientX-state.lastX,dy=e.clientY-state.lastY;state.lastX=e.clientX;state.lastY=e.clientY;if(state.shifted||e.shiftKey){state.panX+=dx;state.panY+=dy;}else{state.yaw+=dx*.008;state.pitch=Math.max(-1.35,Math.min(1.35,state.pitch+dy*.008));}render();return;}state.hover=pick(x,y);showTooltip(state.hover,x,y);render();});
+      canvas.addEventListener("pointerup",e=>{state.dragging=false;canvas.classList.remove("dragging");canvas.releasePointerCapture(e.pointerId);});
+      canvas.addEventListener("pointerleave",()=>{if(!state.dragging){state.hover=null;showTooltip(null);render();}});
+      canvas.addEventListener("click",e=>{if(Math.hypot(e.clientX-state.downX,e.clientY-state.downY)<4){const rect=canvas.getBoundingClientRect();selectSegment(pick(e.clientX-rect.left,e.clientY-rect.top));}});
+      canvas.addEventListener("wheel",e=>{e.preventDefault();state.zoom=Math.max(.25,Math.min(5,state.zoom*Math.exp(-e.deltaY*.001)));render();},{passive:false});
+      canvas.addEventListener("keydown",e=>{let used=true;if(e.key==="ArrowLeft")state.yaw-=.08;else if(e.key==="ArrowRight")state.yaw+=.08;else if(e.key==="ArrowUp")state.pitch-=.08;else if(e.key==="ArrowDown")state.pitch+=.08;else if(e.key==="+"||e.key==="=")state.zoom*=1.1;else if(e.key==="-")state.zoom/=1.1;else if(e.key.toLowerCase()==="r")resetView();else used=false;if(used){e.preventDefault();render();}});
+      document.getElementById("reset").addEventListener("click",resetView);
+      controls.projection.addEventListener("click",()=>{state.perspective=!state.perspective;controls.projection.textContent=state.perspective?"Perspective":"Orthographic";controls.projection.setAttribute("aria-pressed",String(!state.perspective));render();});
+      controls.assembly.addEventListener("change",()=>{syncLoadCases();state.selected=null;resetView();});
+      controls.loadCase.addEventListener("change",()=>{state.selected=null;render();});
+      for(const control of [controls.colorMode,controls.labels,controls.nodes,controls.axes,controls.mirror])control.addEventListener("change",()=>{document.getElementById("mirrorTag").hidden=!controls.mirror.checked;render();});
+      window.addEventListener("resize",resize);
+
+      populateControls();
+      if (payload.config.notes) {
+        const note = document.getElementById("modelNote");
+        note.textContent = payload.config.notes;
+        note.hidden = false;
+      }
+      requestAnimationFrame(()=>{resize();status.hidden=true;});
+    })();
+  </script>
+</body>
+</html>

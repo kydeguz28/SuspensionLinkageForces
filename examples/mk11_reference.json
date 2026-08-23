@@ -1,0 +1,57 @@
+{
+  "notes": "Wishbone and tire-load coordinates are adapted from the supplied Mk11 workbook. Front and rear rocker/shock points are transformed from user-supplied CAD coordinates. The rear rocker pivot axis uses two measured CAD points; the front pivot axis is assumed parallel to model X through its supplied chassis pickup center.",
+  "assemblies": [
+    {
+      "name": "front_left",
+      "coordinate_units": "in",
+      "force_units": "lbf",
+      "contact_patch": [0.0, 25.5, 0.0],
+      "members": [
+        {"name": "steering_tie_rod", "role": "tie_rod", "application": [2.15, 21.1, -6.89412519], "anchor": [3.9, 8.7, -6.15]},
+        {"name": "lower_fore", "application": [-0.15484862, 20.75, -4.62744094], "anchor": [6.95, 7.62636793, -4.395]},
+        {"name": "lower_aft", "application": [-0.15484862, 20.75, -4.62744094], "anchor": [-2.7, 7.62636793, -4.395]},
+        {"name": "upper_fore", "application": [-0.76246773, 20.3102437, -11.57255906], "anchor": [6.95, 9.81018934, -10.0]},
+        {"name": "upper_aft", "application": [-0.76246773, 20.3102437, -11.57255906], "anchor": [-2.7, 9.81018934, -10.0]},
+        {"name": "pullrod", "role": "pushrod", "application": [-0.20748083, 19.48671836, -5.35518379], "anchor": [-0.21, 11.35, -23.9]}
+      ],
+      "rocker": {
+        "pivot_axis": [[-1.21, 8.33, -24.4], [0.79, 8.33, -24.4]],
+        "pushrod_pickup": [-0.21, 11.35, -23.9],
+        "shock_pickup": [-0.21, 9.17, -26.79],
+        "shock_chassis_pickup": [-0.207, 2.0, -24.903]
+      },
+      "load_cases": [
+        {"name": "case_1_linear_accel", "force": [48.7544, 0.0, -103.8425]},
+        {"name": "case_2_braking", "force": [451.3544, 0.0, -323.6225]},
+        {"name": "case_3_accel_corner", "force": [48.7544, 406.0447, -281.8825]},
+        {"name": "case_4_brake_corner", "force": [248.1622, -339.2734, -361.5148]}
+      ]
+    },
+    {
+      "name": "rear_left",
+      "coordinate_units": "in",
+      "force_units": "lbf",
+      "contact_patch": [-61.0, 25.5, 0.0],
+      "members": [
+        {"name": "rear_tie_rod", "role": "tie_rod", "application": [-57.85, 20.75, -6.6], "anchor": [-52.73306567, 11.01527574, -6.31855306]},
+        {"name": "lower_fore", "application": [-62.375, 20.75, -5.22055], "anchor": [-53.5, 10.912, -5.37886759]},
+        {"name": "lower_aft", "application": [-62.375, 20.75, -5.22055], "anchor": [-60.5, 10.912, -5.37886759]},
+        {"name": "upper_fore", "application": [-61.42579354, 20.44337683, -11.18376063], "anchor": [-52.5, 12.017909, -9.665]},
+        {"name": "upper_aft", "application": [-61.42579354, 20.44337683, -11.18376063], "anchor": [-60.5, 12.017909, -9.665]},
+        {"name": "pushrod", "role": "pushrod", "application": [-61.32233791, 19.32992143, -11.75452775], "anchor": [-60.88, 16.02, -12.02]}
+      ],
+      "rocker": {
+        "pivot_axis": [[-58.94, 11.36, -10.67], [-62.34, 10.92, -10.86]],
+        "pushrod_pickup": [-60.88, 16.02, -12.02],
+        "shock_pickup": [-60.42, 14.09, -15.71],
+        "shock_chassis_pickup": [-59.5, 6.58, -14.73]
+      },
+      "load_cases": [
+        {"name": "case_1_linear_accel", "force": [-488.0456, 0.0, -349.9128]},
+        {"name": "case_2_braking", "force": [317.1544, 0.0, -130.1328]},
+        {"name": "case_3_accel_corner", "force": [-130.2348, 570.4961, -439.69]},
+        {"name": "case_4_brake_corner", "force": [181.6929, -475.8796, -328.246]}
+      ]
+    }
+  ]
+}
