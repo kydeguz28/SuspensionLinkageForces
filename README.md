@@ -30,7 +30,8 @@ it does not require a server or internet connection.
 
 The viewer supports drag-to-orbit, Shift-drag panning, wheel zoom, assembly and
 load-case selection, component or force coloring, joint/member labels, hover and
-click inspection, and an optional translucent mirror of the opposite side. Its
+click inspection, collision-aware labels, and an optional chassis-force-vector
+overlay for the selected load case. Its
 **Member Sizing** tab reports the peak axial force and load case for every corner
 and member, the configured inboard/outboard JMX selections, and the governing
 recalculated margin.

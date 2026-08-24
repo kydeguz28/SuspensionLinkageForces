@@ -3,7 +3,7 @@
 THESIS: Geometry and governing load evidence share one inspection instrument; refuse the generic dashboard of summary cards.
 OWN-WORLD: Cool aluminum, dark drafted linework, safety orange selection, and force-state blue/vermilion.
 STORY: Inspect a load path in 3D, then move to Member Sizing to find the governing force, case, JMX selection, and margin.
-FIRST VIEWPORT: A two-tab instrument opens on the full-height linkage model; the sizing tab becomes a dense sortable engineering ledger.
+FIRST VIEWPORT: A three-tab instrument opens on the full-height linkage model; analysis tabs become dense engineering ledgers.
 FORM: Operate-mode optical inspection bench, shaped directly for the narrow engineering-viewer request; no concept seed.
 -->
 <html lang="en">
@@ -469,6 +469,7 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
               <label class="check"><input id="labels" type="checkbox" checked> Member labels</label>
               <label class="check"><input id="nodes" type="checkbox" checked> Pickup nodes</label>
               <label class="check"><input id="axes" type="checkbox" checked> Datum + axes</label>
+              <label class="check"><input id="chassisForces" type="checkbox"> Chassis force vectors</label>
               <input id="mirror" type="checkbox" hidden>
             </div>
           </section>
@@ -661,7 +662,7 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       const COLORS = {
         upper: "#6b4c9a", lower: "#1f758d", tie: "#d47a24", pushrod: "#b43f72",
         shock: "#568421", rocker: "#343e43", upright: "#68757b", wheel: "#8c969a",
-        load: "#e56a2f", tension: "#c84d35", compression: "#266d93", selected: "#e56a2f"
+        load: "#e56a2f", chassisForce: "#c2362b", tension: "#c84d35", compression: "#266d93", selected: "#e56a2f"
       };
       const canvas = document.getElementById("scene");
       const ctx = canvas.getContext("2d");
@@ -669,6 +670,7 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
         assembly: document.getElementById("assembly"), loadCase: document.getElementById("loadCase"),
         colorMode: document.getElementById("colorMode"), labels: document.getElementById("labels"),
         nodes: document.getElementById("nodes"), axes: document.getElementById("axes"),
+        chassisForces: document.getElementById("chassisForces"),
         mirror: document.getElementById("mirror"), projection: document.getElementById("projection")
       };
       const tooltip = document.getElementById("tooltip");
@@ -806,6 +808,14 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
         const selectedCase = cases.find(item=>item.name===selection);
         return selectedCase ? {...selectedCase,interfaces:selectedCase.interfaces.map(item=>({...item,sourceCase:selectedCase.name})),sourceCase:selectedCase.name} : null;
       }
+      function maximumChassisForce(caseName) {
+        let maximum=1;
+        for(const assembly of selectedAssemblies()) {
+          const chassis=chassisSelection(resultByName.get(assembly.name),caseName);
+          for(const item of chassis?.interfaces||[]) maximum=Math.max(maximum,item.force_magnitude);
+        }
+        return maximum;
+      }
       function renderChassisLoads() {
         const selected = payload.result.assemblies.filter(assembly=>
           chassisControls.corner.value === "all" || assembly.name === chassisControls.corner.value
@@ -923,6 +933,20 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
         }
         segments.push(...wheel);
 
+        if(controls.chassisForces.checked&&!mirrored) {
+          const chassis=chassisSelection(resultByName.get(assembly.name),caseName);
+          const maximum=maximumChassisForce(caseName);
+          for(const item of chassis?.interfaces||[]) {
+            const start=[...item.point], magnitude=Math.max(item.force_magnitude,1e-9);
+            const displayLength=Math.max(1.8,radius*1.7*magnitude/maximum);
+            const end=vAdd(start,vScale(item.force,displayLength/magnitude));
+            segments.push(segment(`chassis · ${item.name}`,start,end,"chassisForce",{
+              force:item.force_magnitude,forceState:labelName(item.type),assembly:assembly.name,mirrored:false,
+              vector:item.force,forceUnits:assembly.force_units||"",coordinateUnits:assembly.coordinate_units||""
+            }));
+          }
+        }
+
         const loadCase=assembly.load_cases.find(item=>item.name===caseName);
         const signs=assembly.tire_force_to_coordinate_signs||[1,1,1];
         const f=loadCase?.force ? reflect(loadCase.force.map((value,index)=>value*signs[index])) : null, fm=f ? vMag(f) : 0;
@@ -972,12 +996,14 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
 
       function colorFor(seg, maxForce) {
         if (seg.mirrored) return "rgba(84,99,106,.28)";
+        if (seg.kind === "chassisForce") return COLORS.chassisForce;
         if (seg.kind === "load") return COLORS.load;
         if (controls.colorMode.value === "force" && Number.isFinite(seg.force)) return seg.force >= 0 ? COLORS.tension : COLORS.compression;
         return COLORS[seg.family] || COLORS.upright;
       }
       function lineWidth(seg,maxForce) {
         if (seg.decorative) return 1.2;
+        if (seg.kind === "chassisForce") return 3.5;
         if (seg.kind === "load") return 3;
         if (controls.colorMode.value === "force" && Number.isFinite(seg.force) && maxForce>0) return 2.5+5*Math.sqrt(Math.abs(seg.force)/maxForce);
         return seg.kind === "member" || seg.kind === "shock" ? 5 : 3;
@@ -1024,11 +1050,10 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
           if(seg.mirrored) ctx.setLineDash([6,6]);
           if(active){ctx.shadowColor="rgba(229,106,47,.3)";ctx.shadowBlur=10;ctx.shadowOffsetY=3;}
           ctx.beginPath();ctx.moveTo(seg.pa.x,seg.pa.y);ctx.lineTo(seg.pb.x,seg.pb.y);ctx.stroke();
-          if(seg.kind==="load") drawArrowHead(seg.pa,seg.pb,color);
+          if(seg.kind==="load"||seg.kind==="chassisForce") drawArrowHead(seg.pa,seg.pb,color);
           ctx.restore();
         }
         if(controls.nodes.checked) drawNodes();
-        drawFixedAnchors();
         if(controls.labels.checked) drawLabels();
         updateLegend();updateForceTable();
       }
@@ -1036,37 +1061,30 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       function drawNodes(){
         const seen=new Set();
         for(const seg of state.projected){
-          if(seg.decorative||seg.kind==="load") continue;
+          if(seg.decorative||seg.kind==="load"||seg.kind==="chassisForce") continue;
           for(const p of [seg.pa,seg.pb]){
             const key=`${Math.round(p.x)}:${Math.round(p.y)}:${seg.mirrored}`;if(seen.has(key))continue;seen.add(key);
             ctx.beginPath();ctx.fillStyle=seg.mirrored?"rgba(90,104,110,.34)":"#f8f9f9";ctx.strokeStyle=seg.mirrored?"rgba(66,78,84,.3)":"#26333a";ctx.lineWidth=1.5;ctx.arc(p.x,p.y,seg.mirrored?3:4.2,0,Math.PI*2);ctx.fill();ctx.stroke();
           }
         }
       }
-      function drawFixedAnchors(){
-        for(const seg of state.projected){
-          if(!seg.fixedB||seg.mirrored)continue;
-          const p=seg.pb;
-          ctx.save();ctx.translate(p.x,p.y);ctx.strokeStyle="#172026";ctx.fillStyle="#f7f8f8";ctx.lineWidth=1.7;
-          ctx.fillRect(-7,-7,14,14);ctx.strokeRect(-7,-7,14,14);
-          ctx.beginPath();ctx.arc(0,0,3,0,Math.PI*2);ctx.fillStyle=COLORS.shock;ctx.fill();
-          ctx.beginPath();ctx.moveTo(-10,10);ctx.lineTo(10,10);ctx.moveTo(-7,10);ctx.lineTo(-11,15);ctx.moveTo(0,10);ctx.lineTo(-4,15);ctx.moveTo(7,10);ctx.lineTo(3,15);ctx.stroke();
-          ctx.restore();
-        }
-      }
       function drawLabels(){
-        if(state.projected.length>120) return;
         ctx.font="600 11px Bahnschrift, sans-serif";ctx.textBaseline="middle";
+        const occupied=[];
         for(const seg of state.projected){
-          if(seg.kind!=="member"&&seg.kind!=="shock"&&seg.kind!=="load")continue;if(seg.mirrored)continue;
+          if(seg.kind!=="member"&&seg.kind!=="shock"&&seg.kind!=="load"&&seg.kind!=="chassisForce")continue;if(seg.mirrored)continue;
           const x=(seg.pa.x+seg.pb.x)/2+7,y=(seg.pa.y+seg.pb.y)/2-6;
           const text=labelName(seg.name),w=ctx.measureText(text).width;
+          const box={left:x-5,right:x+w+5,top:y-10,bottom:y+10};
+          if(occupied.some(item=>box.left<item.right&&box.right>item.left&&box.top<item.bottom&&box.bottom>item.top))continue;
+          occupied.push(box);
           ctx.fillStyle="rgba(244,246,246,.86)";ctx.fillRect(x-3,y-8,w+6,16);ctx.fillStyle="#253138";ctx.fillText(text,x,y);
         }
       }
 
       function updateLegend(){
         const items=controls.colorMode.value==="force"?[["Tension",COLORS.tension],["Compression",COLORS.compression],["Applied tire force",COLORS.load]]:[["Upper wishbone",COLORS.upper],["Lower wishbone",COLORS.lower],["Tie / toe rod",COLORS.tie],["Push / pull rod",COLORS.pushrod],["Shock",COLORS.shock],["Rocker + upright",COLORS.rocker]];
+        if(controls.chassisForces.checked)items.push(["Chassis force",COLORS.chassisForce]);
         document.getElementById("legend").innerHTML=items.map(([label,color])=>`<div class="legend-item"><span class="swatch" style="--swatch:${color}"></span><span>${label}</span></div>`).join("");
       }
       function updateForceTable(){
@@ -1083,7 +1101,7 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       function lineDistance(px,py,a,b){const dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy;if(!l2)return Math.hypot(px-a.x,py-a.y);const t=Math.max(0,Math.min(1,((px-a.x)*dx+(py-a.y)*dy)/l2));return Math.hypot(px-(a.x+t*dx),py-(a.y+t*dy));}
       function pick(x,y){let best=null,dist=12;for(let i=state.projected.length-1;i>=0;i--){const s=state.projected[i];if(s.decorative||s.mirrored)continue;const d=lineDistance(x,y,s.pa,s.pb);if(d<dist){dist=d;best=s;}}return best;}
       function showTooltip(seg,x,y){if(!seg){tooltip.style.display="none";return;}tooltip.innerHTML=`<strong>${escapeHtml(labelName(seg.name))}</strong><span class="mono">${Number.isFinite(seg.force)?`${seg.force.toFixed(2)} ${escapeHtml(seg.forceUnits||"")} · ${escapeHtml(seg.forceState||"")}`:"geometry"}</span>`;tooltip.style.display="block";const maxX=canvas.clientWidth-tooltip.offsetWidth-10,maxY=canvas.clientHeight-tooltip.offsetHeight-10;tooltip.style.left=`${Math.max(10,Math.min(maxX,x+14))}px`;tooltip.style.top=`${Math.max(10,Math.min(maxY,y+14))}px`;}
-      function selectSegment(seg){state.selected=seg;if(!seg){document.getElementById("readoutName").textContent="No component selected";document.getElementById("readoutForce").textContent="—";document.getElementById("readoutState").textContent="Select a linkage";document.getElementById("dataList").innerHTML="";render();return;}const assembly=configAssemblies.find(a=>a.name===seg.assembly),units=assembly?.force_units||"",lengthUnits=assembly?.coordinate_units||"";document.getElementById("readoutName").textContent=`${labelName(seg.assembly)} · ${labelName(seg.name)}`;document.getElementById("readoutForce").textContent=Number.isFinite(seg.force)?`${seg.force.toFixed(2)} ${units}`:"Geometry";document.getElementById("readoutState").textContent=seg.forceState||seg.kind;const pointALabel=seg.kind==="shock"?"Rocker pickup":"Point A",pointBLabel=seg.fixedB?"Chassis pickup":"Point B";const rows=[["Length",Number.isFinite(seg.length)?`${seg.length.toFixed(3)} ${lengthUnits}`:`${vMag(vSub(seg.b,seg.a)).toFixed(3)} ${lengthUnits}`],[pointALabel,seg.a.map(n=>n.toFixed(3)).join(", ")],[pointBLabel,seg.b.map(n=>n.toFixed(3)).join(", ")]];document.getElementById("dataList").innerHTML=rows.map(([k,v])=>`<div class="data-row"><dt>${k}</dt><dd>${v}</dd></div>`).join("");render();}
+      function selectSegment(seg){state.selected=seg;if(!seg){document.getElementById("readoutName").textContent="No component selected";document.getElementById("readoutForce").textContent="—";document.getElementById("readoutState").textContent="Select a linkage";document.getElementById("dataList").innerHTML="";render();return;}const assembly=configAssemblies.find(a=>a.name===seg.assembly),units=assembly?.force_units||"",lengthUnits=assembly?.coordinate_units||"";document.getElementById("readoutName").textContent=`${labelName(seg.assembly)} · ${labelName(seg.name)}`;document.getElementById("readoutForce").textContent=Number.isFinite(seg.force)?`${seg.force.toFixed(2)} ${units}`:"Geometry";document.getElementById("readoutState").textContent=seg.forceState||seg.kind;const pointALabel=seg.kind==="shock"?"Rocker pickup":seg.kind==="chassisForce"?"Chassis hardpoint":"Point A",pointBLabel=seg.fixedB?"Chassis pickup":seg.kind==="chassisForce"?"Force arrow tip":"Point B";const rows=[["Length",Number.isFinite(seg.length)?`${seg.length.toFixed(3)} ${lengthUnits}`:`${vMag(vSub(seg.b,seg.a)).toFixed(3)} ${lengthUnits}`],[pointALabel,seg.a.map(n=>n.toFixed(3)).join(", ")],[pointBLabel,seg.b.map(n=>n.toFixed(3)).join(", ")]];document.getElementById("dataList").innerHTML=rows.map(([k,v])=>`<div class="data-row"><dt>${k}</dt><dd>${v}</dd></div>`).join("");render();}
 
       function resetView(){state.yaw=-.68;state.pitch=.54;state.zoom=1;state.panX=0;state.panY=0;render();}
       function resize(){const rect=canvas.getBoundingClientRect();state.dpr=Math.min(2,window.devicePixelRatio||1);canvas.width=Math.round(rect.width*state.dpr);canvas.height=Math.round(rect.height*state.dpr);ctx.setTransform(state.dpr,0,0,state.dpr,0,0);state.width=rect.width;state.height=rect.height;render();}
@@ -1099,7 +1117,7 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       controls.projection.addEventListener("click",()=>{state.perspective=!state.perspective;controls.projection.textContent=state.perspective?"Perspective":"Orthographic";controls.projection.setAttribute("aria-pressed",String(!state.perspective));render();});
       controls.assembly.addEventListener("change",()=>{syncLoadCases();state.selected=null;resetView();});
       controls.loadCase.addEventListener("change",()=>{state.selected=null;render();});
-      for(const control of [controls.colorMode,controls.labels,controls.nodes,controls.axes])control.addEventListener("change",render);
+      for(const control of [controls.colorMode,controls.labels,controls.nodes,controls.axes,controls.chassisForces])control.addEventListener("change",render);
       geometryTab.addEventListener("click",()=>setAnalysisView("geometry"));
       sizingTab.addEventListener("click",()=>setAnalysisView("sizing"));
       chassisTab.addEventListener("click",()=>setAnalysisView("chassis"));

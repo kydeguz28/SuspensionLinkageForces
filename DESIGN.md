@@ -24,7 +24,8 @@ Controls are squared, tactile instruments with small radii and clear focus rings
 - Links are cylinders/lines with visible joint nodes and depth sorting.
 - A ground datum, axes, and `−Z up` note make the coordinate convention explicit.
 - Hover and click reveal endpoints, length, force, and state.
-- Shock chassis pickups use a grounded mount symbol and do not influence camera reframing between load cases.
+- Shock chassis pickups use a clean pickup node and do not influence camera reframing between load cases.
+- Chassis force vectors are an optional, off-by-default overlay in the 3D geometry view.
 - Mirrored geometry is visibly translucent and labeled illustrative.
 - Force color and thickness encode state and magnitude; component mode provides structural identification.
 

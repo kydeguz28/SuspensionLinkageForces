@@ -185,6 +185,10 @@ class SuspensionForceTests(unittest.TestCase):
         self.assertNotIn("All listed coordinates are the ride-height reference geometry", html)
         self.assertNotIn("Mirror opposite side", html)
         self.assertNotIn("chassisCanvasHost", html)
+        self.assertIn("Chassis force vectors", html)
+        self.assertIn('id="chassisForces" type="checkbox"', html)
+        self.assertNotIn("drawFixedAnchors", html)
+        self.assertNotIn("state.projected.length>120", html)
         self.assertNotIn("__SUSPENSION_DATA__", html)
         self.assertNotIn("https://", html)
 
