@@ -199,6 +199,11 @@ def external_wrench(
     else:
         signs = _vec(tire_force_to_coordinate_signs, "tire_force_to_coordinate_signs")
         force = [input_force[index] * signs[index] for index in range(3)]
+    additional_force = _vec(
+        load_case.get("additional_force_coordinate", [0.0, 0.0, 0.0]),
+        f"{load_case['name']}.additional_force_coordinate",
+    )
+    force = add(force, additional_force)
     application = _vec(load_case.get("application", default_point), f"{load_case['name']}.application")
     applied_moment = _vec(load_case.get("moment", [0.0, 0.0, 0.0]), f"{load_case['name']}.moment")
     moment = add(cross(subtract(application, reference), force), applied_moment)
@@ -583,7 +588,7 @@ def build_chassis_load_summary(
         pivot_points = [
             _vec(point, "rocker.pivot_axis") for point in rocker_geometry["pivot_axis"]
         ]
-        # Display the resultant on the physical middle of the rocker pivot axis.
+        # Report the pivot reaction at the physical middle of the rocker axis.
         # Translate the equivalent reaction moment from solver point A to that
         # midpoint so the wrench remains mechanically identical.
         pivot_point = scale(0.5, add(pivot_points[0], pivot_points[1]))
@@ -597,7 +602,7 @@ def build_chassis_load_summary(
         interfaces.append(
             {
                 "name": "rocker_pivot_axis",
-                "type": "rocker_axis_resultant",
+                "type": "rocker_pivot_reaction",
                 "point": pivot_point,
                 "force": pivot_force,
                 "force_magnitude": magnitude(pivot_force),

@@ -39,14 +39,8 @@ The **Chassis Loads** tab reports the suspension-on-chassis force vector at each
 wishbone/tie-rod pickup, the shock chassis pickup, and the equivalent rocker-axis
 wrench for the selected load case. Push/pull rods are internal to this free body
 and are therefore represented through the rocker and shock reactions rather than
-double-counted as chassis interfaces. Each corner also includes a resultant force
-and moment check about its displayed reference point. The default maximum-resultant
-envelope reports `sqrt(Fx^2 + Fy^2 + Fz^2)` at every hardpoint and identifies the
-independently governing load case.
-The Chassis Loads page embeds the interactive 3D linkage view and draws the
-hardpoint resultants as globally scaled red arrows. Individual arrows can be
-hovered or selected to inspect their magnitude, governing case, and hardpoint
-coordinates.
+double-counted as chassis interfaces. Select a load case to inspect the force,
+local moment, and magnitude at each physical mounting interface.
 
 Sizing uses the workbook tube IDs/ODs and 4130 properties: 29 Msi elastic
 modulus, 70 ksi yield, 95 ksi ultimate, FSy 1.3, and FSu 1.5. Tube checks cover
@@ -116,6 +110,12 @@ subtracting 21.625 lbf unsprung weight at each corner, the spring-supported whee
 loads are 137.387 lbf front and 134.863 lbf rear. The rocker geometry converts
 those into the ride-height shock preload. Load-case shock travel is then measured
 relative to ride height, not relative to the spring's free length.
+
+The first viewer option, **Ride Height Static**, applies only these vertical tire
+reactions. The simplified free body also applies the per-corner unsprung weight
+downward at the contact patch, so the solved net suspension loads are 137.387 lbf
+front and 134.863 lbf rear while the displayed tire arrow remains the full ground
+reaction. This case has zero calculated shock travel by definition.
 
 For each load case the nonlinear kinematic solve holds all six two-force member
 lengths fixed, treats the upright/wheel as one rigid body, rotates the rocker only

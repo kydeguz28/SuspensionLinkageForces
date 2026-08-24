@@ -54,8 +54,42 @@ class SuspensionForceTests(unittest.TestCase):
             cases["case_3_accel_corner"], [48.7544, -406.0447, 281.8825]
         )
         result_by_name = {item["name"]: item for item in self.result["assemblies"]}
-        coordinate_force = result_by_name["front_right"]["load_cases"][2]["external_wrench"][:3]
+        coordinate_force = next(
+            item
+            for item in result_by_name["front_right"]["load_cases"]
+            if item["name"] == "case_3_accel_corner"
+        )["external_wrench"][:3]
         self.assertEqual(coordinate_force, [48.7544, 406.0447, -281.8825])
+
+    def test_static_ride_height_case_uses_weight_distribution_and_zero_travel(self):
+        expected = {
+            "front_right": (159.012, -137.387),
+            "front_left": (159.012, -137.387),
+            "rear_right": (156.488, -134.863),
+            "rear_left": (156.488, -134.863),
+        }
+        config = expand_config(
+            json.loads((ROOT / "examples" / "mk11_reference.json").read_text())
+        )
+        config_by_name = {item["name"]: item for item in config["assemblies"]}
+        for assembly in self.result["assemblies"]:
+            input_load, coordinate_load = expected[assembly["name"]]
+            configured = next(
+                item
+                for item in config_by_name[assembly["name"]]["load_cases"]
+                if item["name"] == "ride_height_static"
+            )
+            solved = next(
+                item
+                for item in assembly["load_cases"]
+                if item["name"] == "ride_height_static"
+            )
+            self.assertAlmostEqual(configured["force"][2], input_load)
+            self.assertEqual(configured["additional_force_coordinate"], [0.0, 0.0, 21.625])
+            self.assertAlmostEqual(solved["external_wrench"][2], coordinate_load)
+            self.assertAlmostEqual(
+                solved["kinematics"]["shock_travel_from_ride_height"], 0.0, places=7
+            )
 
     def test_sizing_summary_finds_peak_case_and_margin(self):
         by_name = {assembly["name"]: assembly for assembly in self.result["assemblies"]}
@@ -144,10 +178,13 @@ class SuspensionForceTests(unittest.TestCase):
         self.assertIn("Member Sizing", html)
         self.assertIn("Governing member loads", html)
         self.assertIn("Chassis Loads", html)
-        self.assertIn("Maximum resultant envelope", html)
-        self.assertIn("Interactive chassis hardpoint resultant visualizer", html)
+        self.assertIn("ride_height_static", html)
+        self.assertNotIn("Maximum resultant envelope", html)
+        self.assertNotIn("Interactive chassis hardpoint resultant visualizer", html)
+        self.assertNotIn("Corner resultant into chassis", html)
+        self.assertNotIn("All listed coordinates are the ride-height reference geometry", html)
         self.assertNotIn("Mirror opposite side", html)
-        self.assertLess(html.index("chassisTableBody"), html.index("chassisCanvasHost"))
+        self.assertNotIn("chassisCanvasHost", html)
         self.assertNotIn("__SUSPENSION_DATA__", html)
         self.assertNotIn("https://", html)
 

@@ -1,5 +1,4 @@
 {
-  "notes": "All listed coordinates are the ride-height reference geometry. Every applied suspension force is the full opposite of the workbook tire-force vector: Fx, Fy, and Fz are all sign-reversed. Wishbone and tire-load coordinates are adapted from the supplied Mk11 workbook. Front and rear rocker/shock points are transformed from user-supplied CAD coordinates. The rear rocker pivot axis uses two measured CAD points; the front pivot axis is assumed parallel to model X through its supplied chassis pickup center.",
   "tire_force_convention": "Tire-load inputs use vehicle axes: +X toward the front, +Y toward the left side, and +Z upward. CAD coordinates retain their original basis (+Y right and -Z upward).",
   "vehicle": {
     "full_car_weight_lbf": 631.0,
@@ -63,6 +62,7 @@
         "shock_chassis_pickup": [-0.207, 2.0, -24.903]
       },
       "load_cases": [
+        {"name": "ride_height_static", "force": [0.0, 0.0, 159.012], "additional_force_coordinate": [0.0, 0.0, 21.625]},
         {"name": "case_1_linear_accel", "force": [48.7544, 0.0, 103.8425]},
         {"name": "case_2_braking", "force": [451.3544, 0.0, 323.6225]},
         {"name": "case_3_accel_corner", "force": [48.7544, -406.0447, 281.8825]},
@@ -73,6 +73,7 @@
       "name": "front_left",
       "mirror_geometry_of": "front_right",
       "load_cases": [
+        {"name": "ride_height_static", "force": [0.0, 0.0, 159.012], "additional_force_coordinate": [0.0, 0.0, 21.625]},
         {"name": "case_1_linear_accel", "force": [48.7544, 0.0, 103.8425]},
         {"name": "case_2_braking", "force": [451.3544, 0.0, 323.6225]},
         {"name": "case_3_accel_corner", "force": [48.7544, -51.7802, 56.0222]},
@@ -102,6 +103,7 @@
         "shock_chassis_pickup": [-59.5, 6.58, -14.73]
       },
       "load_cases": [
+        {"name": "ride_height_static", "force": [0.0, 0.0, 156.488], "additional_force_coordinate": [0.0, 0.0, 21.625]},
         {"name": "case_1_linear_accel", "force": [-488.0456, 0.0, 349.9128]},
         {"name": "case_2_braking", "force": [317.1544, 0.0, 130.1328]},
         {"name": "case_3_accel_corner", "force": [-130.2348, -570.4961, 439.69]},
@@ -112,6 +114,7 @@
       "name": "rear_left",
       "mirror_geometry_of": "rear_right",
       "load_cases": [
+        {"name": "ride_height_static", "force": [0.0, 0.0, 156.488], "additional_force_coordinate": [0.0, 0.0, 21.625]},
         {"name": "case_1_linear_accel", "force": [-488.0456, 0.0, 349.9128]},
         {"name": "case_2_braking", "force": [317.1544, 0.0, 130.1328]},
         {"name": "case_3_accel_corner", "force": [-130.2348, -57.4241, 129.9161]},
