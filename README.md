@@ -30,7 +30,30 @@ it does not require a server or internet connection.
 
 The viewer supports drag-to-orbit, Shift-drag panning, wheel zoom, assembly and
 load-case selection, component or force coloring, joint/member labels, hover and
-click inspection, and an optional translucent mirror of the opposite side.
+click inspection, and an optional translucent mirror of the opposite side. Its
+**Member Sizing** tab reports the peak axial force and load case for every corner
+and member, the configured inboard/outboard JMX selections, and the governing
+recalculated margin.
+
+The **Chassis Loads** tab reports the suspension-on-chassis force vector at each
+wishbone/tie-rod pickup, the shock chassis pickup, and the equivalent rocker-axis
+wrench for the selected load case. Push/pull rods are internal to this free body
+and are therefore represented through the rocker and shock reactions rather than
+double-counted as chassis interfaces. Each corner also includes a resultant force
+and moment check about its displayed reference point. The default maximum-resultant
+envelope reports `sqrt(Fx^2 + Fy^2 + Fz^2)` at every hardpoint and identifies the
+independently governing load case.
+The Chassis Loads page embeds the interactive 3D linkage view and draws the
+hardpoint resultants as globally scaled red arrows. Individual arrows can be
+hovered or selected to inspect their magnitude, governing case, and hardpoint
+coordinates.
+
+Sizing uses the workbook tube IDs/ODs and 4130 properties: 29 Msi elastic
+modulus, 70 ksi yield, 95 ksi ultimate, FSy 1.3, and FSu 1.5. Tube checks cover
+yield, ultimate, and Euler buckling. JMX selections follow `Manufacturing
+Summary`; their displayed margin is a workbook-derived axial tensile proxy, not
+a substitute for the rod-end manufacturer's radial/misalignment rating. A margin
+is calculated as `allowable / applied - 1`, so a negative value fails.
 
 Run the verification suite with:
 
@@ -65,11 +88,17 @@ suspension**. It acts at `contact_patch` unless that case provides a different
 in inches or millimetres, but every coordinate in one assembly must use the same
 unit. Moments must use force × coordinate units (for example lbf-in).
 
-The Mk11 coordinate convention uses negative Z upward. Consequently, an upward
-vertical tire force must be entered as a negative Z force component.
+The Mk11 CAD coordinate convention remains unchanged and uses negative Z upward.
+Tire-load inputs deliberately use vehicle force axes instead: +X points toward
+the front of the car, +Y toward the left side, and +Z toward the sky. The solver
+maps those load components into the CAD basis internally; it does not relabel or
+sign-flip any geometry coordinates.
 
-The example uses wishbone coordinates and translated load cases from the Mk11
-workbook plus the subsequently supplied CAD rocker and shock coordinates. The
+The example solves all four physical corners. Positive-Y front-right and
+rear-right geometry uses the supplied CAD rocker and shock coordinates; the
+front-left and rear-left geometry is mirrored across the vehicle center plane.
+Each corner receives its own tire-force vector from the workbook's `MATLAB Loads`
+table, so inside and outside cornering loads are not treated as equal. The
 front rocker-axis direction is still assumed parallel to model X; replace its two
 axis points when a measured front axis is available.
 

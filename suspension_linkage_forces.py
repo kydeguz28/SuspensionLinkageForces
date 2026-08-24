@@ -187,8 +187,18 @@ def build_equilibrium_matrix(members: list[dict[str, Any]], reference: Vector) -
     return matrix, member_geometry
 
 
-def external_wrench(load_case: dict[str, Any], default_point: Vector, reference: Vector) -> Vector:
-    force = _vec(load_case["force"], f"{load_case['name']}.force")
+def external_wrench(
+    load_case: dict[str, Any],
+    default_point: Vector,
+    reference: Vector,
+    tire_force_to_coordinate_signs: Iterable[float] = (1.0, 1.0, 1.0),
+) -> Vector:
+    input_force = _vec(load_case["force"], f"{load_case['name']}.force")
+    if load_case.get("force_in_coordinate_axes"):
+        force = input_force
+    else:
+        signs = _vec(tire_force_to_coordinate_signs, "tire_force_to_coordinate_signs")
+        force = [input_force[index] * signs[index] for index in range(3)]
     application = _vec(load_case.get("application", default_point), f"{load_case['name']}.application")
     applied_moment = _vec(load_case.get("moment", [0.0, 0.0, 0.0]), f"{load_case['name']}.moment")
     moment = add(cross(subtract(application, reference), force), applied_moment)
@@ -272,7 +282,12 @@ def solve_case(assembly: dict[str, Any], load_case: dict[str, Any]) -> tuple[dic
             f"{name} pushrod member anchor and rocker pushrod_pickup must be the same point"
         )
 
-    wrench = external_wrench(load_case, contact_patch, reference)
+    wrench = external_wrench(
+        load_case,
+        contact_patch,
+        reference,
+        assembly.get("tire_force_to_coordinate_signs", [1.0, 1.0, 1.0]),
+    )
     rhs = scale(-1.0, wrench)
     forces = solve_square(matrix, rhs)
     residual = subtract(mat_vec(matrix, forces), rhs)
@@ -444,6 +459,7 @@ def solve_assembly(
         ride_case = {
             "name": "ride_height_reference",
             "force": [0.0, 0.0, -float(ride_height_wheel_load)],
+            "force_in_coordinate_axes": True,
         }
         ride_height_result, _, _ = solve_case(assembly, ride_case)
         ride_compression = -ride_height_result["rocker"]["shock_force"]
@@ -480,7 +496,281 @@ def solve_assembly(
     }
 
 
+def expand_config(config: dict[str, Any]) -> dict[str, Any]:
+    """Expand compact mirror_geometry_of assembly definitions."""
+    expanded = copy.deepcopy(config)
+    source_assemblies = config.get("assemblies", [])
+    full_by_name = {
+        str(item["name"]): copy.deepcopy(item)
+        for item in source_assemblies
+        if "mirror_geometry_of" not in item
+    }
+    resolved: list[dict[str, Any]] = []
+    for specification in source_assemblies:
+        source_name = specification.get("mirror_geometry_of")
+        if source_name is None:
+            resolved.append(copy.deepcopy(specification))
+            continue
+        if str(source_name) not in full_by_name:
+            raise ValueError(
+                f"{specification.get('name', 'assembly')} mirrors unknown assembly {source_name}"
+            )
+        mirrored = copy.deepcopy(full_by_name[str(source_name)])
+        for key, value in specification.items():
+            if key != "mirror_geometry_of":
+                mirrored[key] = copy.deepcopy(value)
+
+        def mirror_y(point: Iterable[float]) -> Vector:
+            vector = _vec(point, "mirrored coordinate")
+            return [vector[0], -vector[1], vector[2]]
+
+        mirrored["contact_patch"] = mirror_y(mirrored["contact_patch"])
+        if "moment_reference" in mirrored:
+            mirrored["moment_reference"] = mirror_y(mirrored["moment_reference"])
+        for member in mirrored["members"]:
+            member["application"] = mirror_y(member["application"])
+            member["anchor"] = mirror_y(member["anchor"])
+        rocker = mirrored["rocker"]
+        rocker["pivot_axis"] = [mirror_y(point) for point in rocker["pivot_axis"]]
+        rocker["pushrod_pickup"] = mirror_y(rocker["pushrod_pickup"])
+        rocker["shock_pickup"] = mirror_y(rocker["shock_pickup"])
+        rocker["shock_chassis_pickup"] = mirror_y(rocker["shock_chassis_pickup"])
+        resolved.append(mirrored)
+    expanded["assemblies"] = resolved
+    return expanded
+
+
+def build_chassis_load_summary(
+    assembly: dict[str, Any], solved: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Return the suspension-on-chassis load at every physical chassis interface."""
+    roles = {str(item["name"]): item.get("role", "link") for item in assembly["members"]}
+    summaries: list[dict[str, Any]] = []
+    for case in solved["load_cases"]:
+        moved = case.get("kinematics", {}).get("geometry", assembly)
+        reference = _vec(
+            moved.get("moment_reference", moved["contact_patch"]),
+            f"{assembly['name']}.moment_reference",
+        )
+        moved_members = {str(item["name"]): item for item in moved["members"]}
+        interfaces: list[dict[str, Any]] = []
+
+        # The push/pull rod terminates at the rocker and is internal to the
+        # suspension assembly. Its load reaches the chassis through the rocker
+        # pivot and shock mounts, so it must not be counted a second time here.
+        for member in case["members"]:
+            name = str(member["name"])
+            if roles.get(name) == "pushrod":
+                continue
+            geometry = moved_members[name]
+            point = _vec(geometry["anchor"], f"{name}.anchor")
+            direction = unit(
+                subtract(geometry["anchor"], geometry["application"]), name
+            )
+            force = scale(-float(member["force"]), direction)
+            interfaces.append(
+                {
+                    "name": name,
+                    "type": "two_force_member",
+                    "point": point,
+                    "force": force,
+                    "force_magnitude": magnitude(force),
+                    "local_moment": [0.0, 0.0, 0.0],
+                }
+            )
+
+        rocker_geometry = moved["rocker"]
+        pivot_points = [
+            _vec(point, "rocker.pivot_axis") for point in rocker_geometry["pivot_axis"]
+        ]
+        # The solver's equivalent reaction moment is reported at pivot-axis
+        # point A, so retain that same wrench reference here.
+        pivot_point = pivot_points[0]
+        rocker = case["rocker"]
+        pivot_force = scale(-1.0, rocker["pivot_reaction"])
+        pivot_moment = scale(-1.0, rocker["pivot_reaction_moment"])
+        interfaces.append(
+            {
+                "name": "rocker_pivot_axis",
+                "type": "rocker_axis_resultant",
+                "point": pivot_point,
+                "force": pivot_force,
+                "force_magnitude": magnitude(pivot_force),
+                "local_moment": pivot_moment,
+            }
+        )
+
+        shock_point = _vec(
+            rocker_geometry["shock_chassis_pickup"], "rocker.shock_chassis_pickup"
+        )
+        shock_force = scale(
+            -float(rocker["shock_force"]), rocker["shock_direction_rocker_to_chassis"]
+        )
+        interfaces.append(
+            {
+                "name": "shock_chassis_pickup",
+                "type": "shock_mount",
+                "point": shock_point,
+                "force": shock_force,
+                "force_magnitude": magnitude(shock_force),
+                "local_moment": [0.0, 0.0, 0.0],
+            }
+        )
+
+        total_force = [0.0, 0.0, 0.0]
+        total_moment = [0.0, 0.0, 0.0]
+        for interface in interfaces:
+            total_force = add(total_force, interface["force"])
+            total_moment = add(
+                total_moment,
+                add(
+                    cross(subtract(interface["point"], reference), interface["force"]),
+                    interface["local_moment"],
+                ),
+            )
+        summaries.append(
+            {
+                "name": case["name"],
+                "reference_point": reference,
+                "interfaces": interfaces,
+                "resultant_force": total_force,
+                "resultant_force_magnitude": magnitude(total_force),
+                "resultant_moment": total_moment,
+            }
+        )
+    return summaries
+
+
+def build_sizing_summary(
+    assembly: dict[str, Any],
+    solved: dict[str, Any],
+    sizing: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Calculate governing force, tube margin, and selected JMX margin per member."""
+    axle = str(assembly.get("axle", ""))
+    member_sizing = sizing.get(axle, {})
+    material = sizing.get("material", {})
+    jmx_allowables = sizing.get("jmx_safe_axial_load_lbf", {})
+    elastic_modulus = float(material.get("elastic_modulus_psi", 29_000_000.0))
+    yield_strength = float(material.get("yield_strength_psi", 70_000.0))
+    ultimate_strength = float(material.get("ultimate_strength_psi", 95_000.0))
+    yield_factor = float(material.get("yield_safety_factor", 1.3))
+    ultimate_factor = float(material.get("ultimate_safety_factor", 1.5))
+    effective_length = float(material.get("effective_length_factor", 1.0))
+    geometry_by_name = {item["name"]: item for item in solved["member_geometry"]}
+    rows: list[dict[str, Any]] = []
+
+    for member_name, specification in member_sizing.items():
+        loads = []
+        for case in solved["load_cases"]:
+            member = next(item for item in case["members"] if item["name"] == member_name)
+            loads.append((case["name"], float(member["force"])))
+        peak_case, peak_force = max(loads, key=lambda item: abs(item[1]))
+        tension = max((item for item in loads if item[1] > 0.0), key=lambda item: item[1], default=None)
+        compression = min((item for item in loads if item[1] < 0.0), key=lambda item: item[1], default=None)
+        outside = float(specification["tube_od_in"])
+        inside = float(specification["tube_id_in"])
+        area = math.pi * (outside * outside - inside * inside) / 4.0
+        inertia = math.pi * (outside**4 - inside**4) / 64.0
+        length = float(geometry_by_name[member_name]["length"])
+        critical_buckling = (
+            math.pi**2 * elastic_modulus * inertia / (effective_length * length) ** 2
+        )
+        candidates: list[dict[str, Any]] = []
+        if tension is not None:
+            tensile_case, tensile_force = tension
+            candidates.extend(
+                [
+                    {
+                        "mode": "tube yield",
+                        "case": tensile_case,
+                        "margin": area * yield_strength / (tensile_force * yield_factor) - 1.0,
+                    },
+                    {
+                        "mode": "tube ultimate",
+                        "case": tensile_case,
+                        "margin": area * ultimate_strength / (tensile_force * ultimate_factor) - 1.0,
+                    },
+                ]
+            )
+        if compression is not None:
+            compression_case, compression_force = compression
+            candidates.append(
+                {
+                    "mode": "tube Euler buckling",
+                    "case": compression_case,
+                    "margin": critical_buckling
+                    / (abs(compression_force) * ultimate_factor)
+                    - 1.0,
+                }
+            )
+        jmx_margins: dict[str, float | None] = {}
+        for end_key in ("chassis_jmx", "wheel_jmx"):
+            selection = str(specification.get(end_key, "NA"))
+            allowable = jmx_allowables.get(selection)
+            margin = (
+                float(allowable) / abs(peak_force) - 1.0
+                if allowable is not None and abs(peak_force) > 1e-12
+                else None
+            )
+            jmx_margins[end_key] = margin
+            if margin is not None:
+                candidates.append(
+                    {
+                        "mode": f"{end_key.replace('_jmx', '')} {selection} axial proxy",
+                        "case": peak_case,
+                        "margin": margin,
+                    }
+                )
+        governing = min(candidates, key=lambda item: item["margin"])
+        rows.append(
+            {
+                "member": member_name,
+                "peak_force": peak_force,
+                "peak_state": "tension" if peak_force >= 0.0 else "compression",
+                "peak_case": peak_case,
+                "max_tension_force": tension[1] if tension else None,
+                "max_tension_case": tension[0] if tension else None,
+                "max_compression_force": compression[1] if compression else None,
+                "max_compression_case": compression[0] if compression else None,
+                "tube_id_in": inside,
+                "tube_od_in": outside,
+                "critical_buckling_load_lbf": critical_buckling,
+                "chassis_jmx": specification.get("chassis_jmx", "NA"),
+                "wheel_jmx": specification.get("wheel_jmx", "NA"),
+                "chassis_jmx_margin": jmx_margins["chassis_jmx"],
+                "wheel_jmx_margin": jmx_margins["wheel_jmx"],
+                "governing_margin": governing["margin"],
+                "governing_margin_mode": governing["mode"],
+                "governing_margin_case": governing["case"],
+            }
+        )
+
+    shock_loads = [
+        (case["name"], float(case["rocker"]["shock_force"]))
+        for case in solved["load_cases"]
+    ]
+    shock_case, shock_force = max(shock_loads, key=lambda item: abs(item[1]))
+    rows.append(
+        {
+            "member": "shock",
+            "peak_force": shock_force,
+            "peak_state": "tension" if shock_force >= 0.0 else "compression",
+            "peak_case": shock_case,
+            "chassis_jmx": "NA",
+            "wheel_jmx": "NA",
+            "chassis_jmx_margin": None,
+            "wheel_jmx_margin": None,
+            "governing_margin": None,
+            "governing_margin_mode": "damper rating not supplied",
+            "governing_margin_case": shock_case,
+        }
+    )
+    return rows
+
+
 def solve_config(config: dict[str, Any]) -> dict[str, Any]:
+    config = expand_config(config)
     assemblies = config.get("assemblies")
     if not isinstance(assemblies, list) or not assemblies:
         raise ValueError("Configuration must contain a non-empty 'assemblies' list")
@@ -517,7 +807,13 @@ def solve_config(config: dict[str, Any]) -> dict[str, Any]:
     for assembly in assemblies:
         axle = assembly.get("axle")
         ride_load = ride_loads.get(str(axle)) if vehicle is not None else None
-        solved_assemblies.append(solve_assembly(assembly, ride_load))
+        solved = solve_assembly(assembly, ride_load)
+        solved["chassis_loads"] = build_chassis_load_summary(assembly, solved)
+        if config.get("sizing"):
+            solved["sizing_summary"] = build_sizing_summary(
+                assembly, solved, config["sizing"]
+            )
+        solved_assemblies.append(solved)
     return {
         "model": "3D rigid-body equilibrium with axial two-force members and nonlinear rigid-link kinematics",
         "sign_convention": "positive = tension; negative = compression",
@@ -634,19 +930,21 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     with args.config.open("r", encoding="utf-8") as handle:
-        config = json.load(handle)
+        config = expand_config(json.load(handle))
     result = solve_config(config)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     json_path = args.output_dir / "suspension_forces.json"
     csv_path = args.output_dir / "suspension_forces.csv"
     viewer_path = args.output_dir / "suspension_linkages_3d.html"
+    current_viewer_path = args.output_dir / "suspension_linkages_3d_current.html"
     json_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
     write_csv(result, csv_path)
     from linkage_viewer import write_viewer_html
 
     write_viewer_html(config, result, viewer_path)
+    write_viewer_html(config, result, current_viewer_path)
     print_summary(result)
-    print(f"\nWrote {json_path}, {csv_path}, and {viewer_path}")
+    print(f"\nWrote {json_path}, {csv_path}, {viewer_path}, and {current_viewer_path}")
     return 0
 
 

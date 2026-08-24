@@ -3,7 +3,7 @@ import unittest
 import tempfile
 from pathlib import Path
 
-from suspension_linkage_forces import solve_config
+from suspension_linkage_forces import expand_config, solve_config
 from linkage_viewer import write_viewer_html
 
 
@@ -22,16 +22,63 @@ class SuspensionForceTests(unittest.TestCase):
                 self.assertLess(case["max_equilibrium_residual"], 1e-8)
 
     def test_reference_contains_front_and_rear_tie_rods(self):
+        by_name = {assembly["name"]: assembly for assembly in self.result["assemblies"]}
         front_names = {
             member["name"]
-            for member in self.result["assemblies"][0]["load_cases"][0]["members"]
+            for member in by_name["front_right"]["load_cases"][0]["members"]
         }
         rear_names = {
             member["name"]
-            for member in self.result["assemblies"][1]["load_cases"][0]["members"]
+            for member in by_name["rear_right"]["load_cases"][0]["members"]
         }
         self.assertIn("steering_tie_rod", front_names)
         self.assertIn("rear_tie_rod", rear_names)
+
+    def test_reference_solves_all_four_corners(self):
+        self.assertEqual(
+            {assembly["name"] for assembly in self.result["assemblies"]},
+            {"front_left", "front_right", "rear_left", "rear_right"},
+        )
+
+    def test_full_tire_force_vector_uses_reaction_signs(self):
+        config = expand_config(
+            json.loads((ROOT / "examples" / "mk11_reference.json").read_text())
+        )
+        assemblies = {item["name"]: item for item in config["assemblies"]}
+        cases = {
+            item["name"]: item["force"]
+            for item in assemblies["front_right"]["load_cases"]
+        }
+        # Tire inputs use vehicle axes: +X front, +Y left, +Z upward.
+        self.assertEqual(
+            cases["case_3_accel_corner"], [48.7544, -406.0447, 281.8825]
+        )
+        result_by_name = {item["name"]: item for item in self.result["assemblies"]}
+        coordinate_force = result_by_name["front_right"]["load_cases"][2]["external_wrench"][:3]
+        self.assertEqual(coordinate_force, [48.7544, 406.0447, -281.8825])
+
+    def test_sizing_summary_finds_peak_case_and_margin(self):
+        by_name = {assembly["name"]: assembly for assembly in self.result["assemblies"]}
+        front = by_name["front_right"]
+        sizing = {row["member"]: row for row in front["sizing_summary"]}
+        self.assertEqual(len(sizing), 7)
+        lower_aft = sizing["lower_aft"]
+        self.assertEqual(lower_aft["peak_case"], "case_2_braking")
+        self.assertAlmostEqual(lower_aft["peak_force"], 1731.76, places=1)
+        self.assertEqual(lower_aft["chassis_jmx"], "JMX3")
+        self.assertLess(lower_aft["governing_margin"], 0.0)
+
+    def test_chassis_interface_loads_reconstruct_external_wrench(self):
+        for assembly in self.result["assemblies"]:
+            for chassis, case in zip(assembly["chassis_loads"], assembly["load_cases"]):
+                reconstructed = chassis["resultant_force"] + chassis["resultant_moment"]
+                for actual, expected in zip(reconstructed, case["external_wrench"]):
+                    self.assertAlmostEqual(actual, expected, places=8)
+                names = {item["name"] for item in chassis["interfaces"]}
+                self.assertIn("rocker_pivot_axis", names)
+                self.assertIn("shock_chassis_pickup", names)
+                self.assertNotIn("pullrod", names)
+                self.assertNotIn("pushrod", names)
 
     def test_rocker_axis_moment_is_balanced(self):
         for assembly in self.result["assemblies"]:
@@ -53,7 +100,9 @@ class SuspensionForceTests(unittest.TestCase):
         self.assertAlmostEqual(ride["rear_spring_supported_wheel_load_lbf"], 134.863)
 
     def test_moving_geometry_preserves_links_and_fixed_shock_chassis_pickup(self):
-        config = json.loads((ROOT / "examples" / "mk11_reference.json").read_text())
+        config = expand_config(
+            json.loads((ROOT / "examples" / "mk11_reference.json").read_text())
+        )
         config_by_name = {item["name"]: item for item in config["assemblies"]}
         for assembly in self.result["assemblies"]:
             fixed = config_by_name[assembly["name"]]["rocker"]["shock_chassis_pickup"]
@@ -85,7 +134,13 @@ class SuspensionForceTests(unittest.TestCase):
         self.assertIn("front_left", html)
         self.assertIn("rear_left", html)
         self.assertIn("steering_tie_rod", html)
-        self.assertIn("FIXED CHASSIS", html)
+        self.assertNotIn("FIXED CHASSIS", html)
+        self.assertIn("Member Sizing", html)
+        self.assertIn("Governing member loads", html)
+        self.assertIn("Chassis Loads", html)
+        self.assertIn("Maximum resultant envelope", html)
+        self.assertIn("Interactive chassis hardpoint resultant visualizer", html)
+        self.assertNotIn("Mirror opposite side", html)
         self.assertNotIn("__SUSPENSION_DATA__", html)
         self.assertNotIn("https://", html)
 

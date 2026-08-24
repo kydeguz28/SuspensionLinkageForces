@@ -14,6 +14,10 @@ def write_viewer_html(
     config: dict[str, Any], result: dict[str, Any], output_path: Path
 ) -> None:
     """Embed configuration and solved results in the standalone viewer."""
+    if any("mirror_geometry_of" in item for item in config.get("assemblies", [])):
+        from suspension_linkage_forces import expand_config
+
+        config = expand_config(config)
     template = TEMPLATE_PATH.read_text(encoding="utf-8")
     payload = json.dumps(
         {"config": config, "result": result}, separators=(",", ":"), ensure_ascii=False

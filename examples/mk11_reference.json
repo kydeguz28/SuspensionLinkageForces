@@ -1,18 +1,52 @@
 {
-  "notes": "All listed coordinates are the ride-height reference geometry. Wishbone and tire-load coordinates are adapted from the supplied Mk11 workbook. Front and rear rocker/shock points are transformed from user-supplied CAD coordinates. The rear rocker pivot axis uses two measured CAD points; the front pivot axis is assumed parallel to model X through its supplied chassis pickup center.",
+  "notes": "All listed coordinates are the ride-height reference geometry. Every applied suspension force is the full opposite of the workbook tire-force vector: Fx, Fy, and Fz are all sign-reversed. Wishbone and tire-load coordinates are adapted from the supplied Mk11 workbook. Front and rear rocker/shock points are transformed from user-supplied CAD coordinates. The rear rocker pivot axis uses two measured CAD points; the front pivot axis is assumed parallel to model X through its supplied chassis pickup center.",
+  "tire_force_convention": "Tire-load inputs use vehicle axes: +X toward the front, +Y toward the left side, and +Z upward. CAD coordinates retain their original basis (+Y right and -Z upward).",
   "vehicle": {
     "full_car_weight_lbf": 631.0,
     "front_weight_fraction": 0.504,
     "rear_weight_fraction": 0.496,
     "total_unsprung_weight_lbf": 86.5
   },
+  "sizing": {
+    "material": {
+      "elastic_modulus_psi": 29000000.0,
+      "yield_strength_psi": 70000.0,
+      "ultimate_strength_psi": 95000.0,
+      "yield_safety_factor": 1.3,
+      "ultimate_safety_factor": 1.5,
+      "effective_length_factor": 1.0
+    },
+    "jmx_safe_axial_load_lbf": {
+      "JMX3": 1024.591645,
+      "JMX4": 1881.068572,
+      "JMX5": 3016.410035
+    },
+    "front": {
+      "steering_tie_rod": {"tube_id_in": 0.34, "tube_od_in": 0.4375, "chassis_jmx": "JMX4", "wheel_jmx": "JMX3"},
+      "lower_fore": {"tube_id_in": 0.444, "tube_od_in": 0.5, "chassis_jmx": "JMX4", "wheel_jmx": "NA"},
+      "lower_aft": {"tube_id_in": 0.34, "tube_od_in": 0.4375, "chassis_jmx": "JMX3", "wheel_jmx": "NA"},
+      "upper_fore": {"tube_id_in": 0.34, "tube_od_in": 0.4375, "chassis_jmx": "JMX3", "wheel_jmx": "NA"},
+      "upper_aft": {"tube_id_in": 0.34, "tube_od_in": 0.4375, "chassis_jmx": "JMX3", "wheel_jmx": "NA"},
+      "pullrod": {"tube_id_in": 0.323, "tube_od_in": 0.5625, "chassis_jmx": "JMX3", "wheel_jmx": "JMX3"}
+    },
+    "rear": {
+      "rear_tie_rod": {"tube_id_in": 0.384, "tube_od_in": 0.5, "chassis_jmx": "JMX3", "wheel_jmx": "JMX3"},
+      "lower_fore": {"tube_id_in": 0.402, "tube_od_in": 0.5, "chassis_jmx": "JMX4", "wheel_jmx": "NA"},
+      "lower_aft": {"tube_id_in": 0.402, "tube_od_in": 0.5, "chassis_jmx": "JMX5", "wheel_jmx": "NA"},
+      "upper_fore": {"tube_id_in": 0.34, "tube_od_in": 0.4375, "chassis_jmx": "JMX3", "wheel_jmx": "NA"},
+      "upper_aft": {"tube_id_in": 0.34, "tube_od_in": 0.4375, "chassis_jmx": "JMX3", "wheel_jmx": "NA"},
+      "pushrod": {"tube_id_in": 0.444, "tube_od_in": 0.5, "chassis_jmx": "JMX3", "wheel_jmx": "JMX3"}
+    },
+    "source_note": "Tube geometry and margins follow Summary Front/Rear. JMX selections follow Manufacturing Summary. JMX safe axial loads are derived from Rod end and plugs using 70 ksi and FSy 1.3."
+  },
   "assemblies": [
     {
-      "name": "front_left",
+      "name": "front_right",
       "axle": "front",
       "spring_rate_lbf_per_in": 600.0,
       "coordinate_units": "in",
       "force_units": "lbf",
+      "tire_force_to_coordinate_signs": [1.0, -1.0, -1.0],
       "contact_patch": [0.0, 25.5, 0.0],
       "members": [
         {"name": "steering_tie_rod", "role": "tie_rod", "application": [2.15, 21.1, -6.89412519], "anchor": [3.9, 8.7, -6.15]},
@@ -29,18 +63,29 @@
         "shock_chassis_pickup": [-0.207, 2.0, -24.903]
       },
       "load_cases": [
-        {"name": "case_1_linear_accel", "force": [48.7544, 0.0, -103.8425]},
-        {"name": "case_2_braking", "force": [451.3544, 0.0, -323.6225]},
-        {"name": "case_3_accel_corner", "force": [48.7544, 406.0447, -281.8825]},
-        {"name": "case_4_brake_corner", "force": [248.1622, -339.2734, -361.5148]}
+        {"name": "case_1_linear_accel", "force": [48.7544, 0.0, 103.8425]},
+        {"name": "case_2_braking", "force": [451.3544, 0.0, 323.6225]},
+        {"name": "case_3_accel_corner", "force": [48.7544, -406.0447, 281.8825]},
+        {"name": "case_4_brake_corner", "force": [248.1622, 339.2734, 361.5148]}
       ]
     },
     {
-      "name": "rear_left",
+      "name": "front_left",
+      "mirror_geometry_of": "front_right",
+      "load_cases": [
+        {"name": "case_1_linear_accel", "force": [48.7544, 0.0, 103.8425]},
+        {"name": "case_2_braking", "force": [451.3544, 0.0, 323.6225]},
+        {"name": "case_3_accel_corner", "force": [48.7544, -51.7802, 56.0222]},
+        {"name": "case_4_brake_corner", "force": [248.1622, 64.1706, 162.4825]}
+      ]
+    },
+    {
+      "name": "rear_right",
       "axle": "rear",
       "spring_rate_lbf_per_in": 450.0,
       "coordinate_units": "in",
       "force_units": "lbf",
+      "tire_force_to_coordinate_signs": [1.0, -1.0, -1.0],
       "contact_patch": [-61.0, 25.5, 0.0],
       "members": [
         {"name": "rear_tie_rod", "role": "tie_rod", "application": [-57.85, 20.75, -6.6], "anchor": [-52.73306567, 11.01527574, -6.31855306]},
@@ -57,10 +102,20 @@
         "shock_chassis_pickup": [-59.5, 6.58, -14.73]
       },
       "load_cases": [
-        {"name": "case_1_linear_accel", "force": [-488.0456, 0.0, -349.9128]},
-        {"name": "case_2_braking", "force": [317.1544, 0.0, -130.1328]},
-        {"name": "case_3_accel_corner", "force": [-130.2348, 570.4961, -439.69]},
-        {"name": "case_4_brake_corner", "force": [181.6929, -475.8796, -328.246]}
+        {"name": "case_1_linear_accel", "force": [-488.0456, 0.0, 349.9128]},
+        {"name": "case_2_braking", "force": [317.1544, 0.0, 130.1328]},
+        {"name": "case_3_accel_corner", "force": [-130.2348, -570.4961, 439.69]},
+        {"name": "case_4_brake_corner", "force": [181.6929, 475.8796, 328.246]}
+      ]
+    },
+    {
+      "name": "rear_left",
+      "mirror_geometry_of": "rear_right",
+      "load_cases": [
+        {"name": "case_1_linear_accel", "force": [-488.0456, 0.0, 349.9128]},
+        {"name": "case_2_braking", "force": [317.1544, 0.0, 130.1328]},
+        {"name": "case_3_accel_corner", "force": [-130.2348, -57.4241, 129.9161]},
+        {"name": "case_4_brake_corner", "force": [181.6929, 77.4554, 55.2674]}
       ]
     }
   ]

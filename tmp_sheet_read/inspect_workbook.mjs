@@ -6,22 +6,20 @@ const input = await FileBlob.load(source);
 const workbook = await SpreadsheetFile.importXlsx(input);
 await fs.writeFile("import_ok.txt", "ok", "utf8");
 
-const sheets = await workbook.inspect({
-  kind: "sheet",
-  include: "id,name",
-  maxChars: 12000,
-});
-console.log("SHEETS");
-console.log(sheets.ndjson);
-await fs.writeFile("sheets.ndjson", String(sheets.ndjson ?? ""), "utf8");
-
-const summary = await workbook.inspect({
-  kind: "workbook,sheet,table",
-  maxChars: 18000,
-  tableMaxRows: 8,
-  tableMaxCols: 12,
-  tableMaxCellChars: 80,
-});
-console.log("SUMMARY");
-console.log(summary.ndjson);
-await fs.writeFile("summary.ndjson", String(summary.ndjson ?? ""), "utf8");
+const targets = {
+  "Manufacturing Summary": "A1:T27",
+  "Summary Front": "A1:R59",
+  "Summary Rear": "A1:M58",
+  "Rod end and plugs": "A1:AB29",
+};
+const extracted = {};
+for (const [sheetName, address] of Object.entries(targets)) {
+  const sheet = workbook.worksheets.getItem(sheetName);
+  const range = sheet.getRange(address);
+  extracted[sheetName] = {
+    address,
+    values: range.values,
+    formulas: range.formulas,
+  };
+}
+await fs.writeFile("sizing_ranges.json", JSON.stringify(extracted, null, 2), "utf8");

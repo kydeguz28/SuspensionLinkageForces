@@ -1,9 +1,9 @@
 <!doctype html>
 <!--
-THESIS: Geometry is the interface; refuse the generic dashboard of summary cards.
+THESIS: Geometry and governing load evidence share one inspection instrument; refuse the generic dashboard of summary cards.
 OWN-WORLD: Cool aluminum, dark drafted linework, safety orange selection, and force-state blue/vermilion.
-STORY: Choose an assembly and load case, orbit the mechanism, then inspect each load path and reaction.
-FIRST VIEWPORT: A full-height linkage model between a compact setup rail and a live engineering readout; Reset view is always visible.
+STORY: Inspect a load path in 3D, then move to Member Sizing to find the governing force, case, JMX selection, and margin.
+FIRST VIEWPORT: A two-tab instrument opens on the full-height linkage model; the sizing tab becomes a dense sortable engineering ledger.
 FORM: Operate-mode optical inspection bench, shaped directly for the narrow engineering-viewer request; no concept seed.
 -->
 <html lang="en">
@@ -51,12 +51,161 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       outline-offset: 2px;
     }
 
+    .modebar {
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      height: 52px;
+      border-bottom: 1px solid #88969c;
+      background: #172026;
+      color: #fff;
+    }
+    .modebar-title {
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      font-family: "Bahnschrift SemiCondensed", Bahnschrift, sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+    .mode-tabs { display: flex; align-items: stretch; }
+    .mode-tab {
+      min-width: 150px;
+      min-height: 0;
+      border: 0;
+      border-left: 1px solid #455158;
+      border-radius: 0;
+      background: transparent;
+      color: #cbd4d7;
+      padding: 0 20px;
+    }
+    .mode-tab:hover { border-color: #455158; background: #27343a; color: #fff; }
+    .mode-tab[aria-selected="true"] {
+      background: var(--canvas);
+      color: var(--ink);
+      box-shadow: inset 0 4px 0 var(--orange);
+    }
+
     .app {
       display: grid;
       grid-template-columns: 282px minmax(0, 1fr) 290px;
-      height: 100%;
+      height: calc(100% - 52px);
       min-height: 0;
     }
+    [hidden] { display: none !important; }
+
+    .sizing-view {
+      height: calc(100% - 52px);
+      overflow: auto;
+      background: var(--canvas);
+    }
+    .sizing-shell { width: min(1540px, 100%); margin: 0 auto; padding: 30px 32px 48px; }
+    .sizing-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 28px;
+      border-bottom: 1px solid #909da2;
+      padding-bottom: 22px;
+    }
+    .sizing-title {
+      margin: 0;
+      font-family: "Bahnschrift SemiCondensed", Bahnschrift, sans-serif;
+      font-size: clamp(32px, 4vw, 56px);
+      line-height: .95;
+      letter-spacing: -.03em;
+      text-transform: uppercase;
+    }
+    .sizing-copy { max-width: 70ch; margin: 12px 0 0; color: var(--muted); line-height: 1.45; }
+    .sizing-filters { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+    .sizing-filters .field { min-width: 155px; margin: 0; }
+    .sizing-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+      border-bottom: 1px solid #a7b2b6;
+      padding: 14px 0;
+    }
+    .sizing-metric { display: flex; gap: 8px; align-items: baseline; padding: 4px 22px; border-right: 1px solid #b4bec2; }
+    .sizing-metric:first-child { padding-left: 0; }
+    .sizing-metric:last-child { border-right: 0; }
+    .sizing-metric strong { font: 800 20px/1 Consolas, monospace; }
+    .sizing-metric span { color: var(--muted); font-size: 12px; }
+    .sizing-table-wrap { margin-top: 22px; overflow-x: auto; border-top: 2px solid var(--ink); border-bottom: 1px solid #8f9da2; }
+    .sizing-table { width: 100%; min-width: 1250px; border-collapse: collapse; }
+    .sizing-table th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #d7dddf;
+      padding: 11px 10px;
+      color: #38464d;
+      font-size: 11px;
+      text-align: left;
+      text-transform: uppercase;
+    }
+    .sort-button {
+      min-height: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 0;
+      color: inherit;
+      font-size: inherit;
+      text-transform: inherit;
+    }
+    .sort-button:hover { border: 0; background: transparent; color: var(--ink); }
+    .sort-button::after { content: "↕"; margin-left: 6px; color: #718087; }
+    .sort-button[data-active="true"]::after { content: attr(data-arrow); color: var(--orange); }
+    .sizing-table td { border-top: 1px solid #b8c2c6; padding: 12px 10px; vertical-align: middle; }
+    .sizing-table tbody tr:hover { background: #f7f8f8; }
+    .sizing-table .numeric { font-family: Consolas, monospace; text-align: right; white-space: nowrap; }
+    .sizing-table .member-cell strong { display: block; }
+    .sizing-table .member-cell span { color: var(--muted); font-size: 11px; }
+    .jmx-cell strong, .jmx-cell span { display: block; }
+    .jmx-cell span, .table-muted { color: var(--muted); font-size: 11px; }
+    .jmx-na { color: var(--muted); }
+    .empty-table { padding: 34px !important; color: var(--muted); text-align: center; }
+    .state-word { font-weight: 800; text-transform: capitalize; }
+    .state-word.tension { color: #963825; }
+    .state-word.compression { color: #1e5c7d; }
+    .margin-mark { display: inline-flex; min-width: 72px; justify-content: space-between; gap: 8px; border-radius: 4px; padding: 5px 7px; font: 800 12px/1 Consolas, monospace; }
+    .margin-mark.pass { background: #dce9dc; color: #285b30; }
+    .margin-mark.caution { background: #f4e5c8; color: #714710; }
+    .margin-mark.fail { background: #f0d6d2; color: #812b21; }
+    .margin-mark.unrated { background: #dfe4e6; color: #52616a; }
+    .inspect-link { min-height: 30px; padding: 0 9px; white-space: nowrap; }
+    .sizing-foot {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 26px;
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .sizing-foot p { margin: 0; }
+    .sizing-proxy-note {
+      margin: 14px 0 -8px;
+      color: #6d3d18;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .chassis-note { color: var(--muted); }
+    .vector-value { font-family: Consolas, monospace; text-align: right; white-space: nowrap; }
+    .chassis-table .resultant-row { background: #dde4e6; border-top: 2px solid #66767d; }
+    .chassis-table .resultant-row td { font-weight: 800; }
+    .chassis-table .interface-type { display: block; color: var(--muted); font-size: 11px; }
+    .chassis-canvas-host {
+      height: max(560px, calc(100vh - 315px));
+      margin-top: 22px;
+      border: 1px solid #9aa7ac;
+      background: #e8edef;
+      overflow: hidden;
+    }
+    .chassis-canvas-host .viewport { width: 100%; height: 100%; min-height: 0; }
 
     .rail {
       position: relative;
@@ -235,7 +384,11 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
 
     @media (max-width: 900px) {
       html, body { overflow: auto; }
-      .app { grid-template-columns: 1fr; grid-template-rows: auto minmax(58vh, 1fr) auto; height: auto; min-height: 100%; }
+      .modebar { position: sticky; top: 0; z-index: 10; }
+      .modebar-title { display: none; }
+      .mode-tabs, .mode-tab { flex: 1; }
+      .mode-tab { min-width: 0; }
+      .app { grid-template-columns: 1fr; grid-template-rows: auto minmax(58vh, 1fr) auto; height: auto; min-height: calc(100% - 52px); }
       .rail { overflow: visible; }
       .rail--controls { border-right: 0; border-bottom: 1px solid var(--hairline); }
       .rail--inspect { border-left: 0; border-top: 1px solid var(--hairline); }
@@ -248,18 +401,64 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       .viewport { min-height: 58vh; }
       .rail--inspect .rail-inner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, .8fr); gap: 18px; }
       .force-section { grid-column: 1 / -1; }
+      .sizing-view { height: auto; min-height: calc(100vh - 52px); }
+      .sizing-shell { padding: 24px 18px 40px; }
+      .sizing-head { grid-template-columns: 1fr; align-items: start; }
+      .sizing-filters { justify-content: flex-start; }
     }
     @media (max-width: 580px) {
       .compact-grid, .rail--inspect .rail-inner { grid-template-columns: 1fr; }
       .switches { grid-template-columns: 1fr 1fr; }
       .force-section { grid-column: auto; }
       .viewport-meta { top: 9px; left: 9px; right: 9px; }
+      .sizing-filters { display: grid; grid-template-columns: 1fr; }
+      .sizing-filters .field { min-width: 0; }
+      .sizing-metric { padding: 5px 12px; }
+      .sizing-foot { grid-template-columns: 1fr; }
+      .sizing-table-wrap { overflow: visible; }
+      .sizing-table { min-width: 0; }
+      .sizing-table thead { display: none; }
+      .sizing-table tbody { display: grid; }
+      .sizing-table tbody tr {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 14px;
+        border-top: 2px solid #89969c;
+        padding: 12px 0;
+      }
+      .sizing-table tbody tr:first-child { border-top: 0; }
+      .sizing-table td { border: 0; padding: 6px 0; text-align: left !important; white-space: normal !important; }
+      .sizing-table td::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 3px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .sizing-table .member-cell,
+      .sizing-table:not(.chassis-table) td:nth-child(9) { grid-column: 1 / -1; }
+      .chassis-table td:first-child,
+      .chassis-table .resultant-row td:first-child { grid-column: 1 / -1; }
+      .sizing-table td:last-child { align-self: end; }
+      .inspect-link { width: 100%; }
+      .empty-table { grid-column: 1 / -1 !important; }
     }
     @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
   </style>
 </head>
 <body>
-  <main class="app">
+  <header class="modebar">
+    <div class="modebar-title">Mk11 suspension analysis</div>
+    <div class="mode-tabs" role="tablist" aria-label="Analysis view">
+      <button class="mode-tab" id="geometryTab" type="button" role="tab" aria-controls="geometryView" aria-selected="true">3D Geometry</button>
+      <button class="mode-tab" id="sizingTab" type="button" role="tab" aria-controls="sizingView" aria-selected="false">Member Sizing</button>
+      <button class="mode-tab" id="chassisTab" type="button" role="tab" aria-controls="chassisView" aria-selected="false">Chassis Loads</button>
+    </div>
+  </header>
+
+  <main class="app" id="geometryView" role="tabpanel" aria-labelledby="geometryTab">
     <aside class="rail rail--controls" aria-label="Viewer controls">
       <div class="rail-inner">
         <h1 class="brand">Linkage Inspector</h1>
@@ -292,7 +491,7 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
               <label class="check"><input id="labels" type="checkbox" checked> Member labels</label>
               <label class="check"><input id="nodes" type="checkbox" checked> Pickup nodes</label>
               <label class="check"><input id="axes" type="checkbox" checked> Datum + axes</label>
-              <label class="check"><input id="mirror" type="checkbox"> Mirror opposite side</label>
+              <input id="mirror" type="checkbox" hidden>
             </div>
           </section>
         </div>
@@ -317,19 +516,21 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       </div>
     </aside>
 
-    <section class="viewport" aria-label="Interactive 3D suspension linkage view">
+    <section class="viewport" id="sharedViewport" aria-label="Interactive 3D suspension linkage view">
       <canvas id="scene" tabindex="0" aria-label="Drag to rotate the 3D suspension linkage model"></canvas>
       <div class="viewport-meta" aria-hidden="true">
         <span class="tag" id="unitTag"></span>
-        <span class="tag">−Z displayed upward</span>
-        <span class="tag">Shock base fixed to chassis</span>
+        <span class="tag">CAD coordinates: +X front · +Y right · −Z up</span>
+        <span class="tag">Tire inputs only: +X front · +Y left · +Z sky</span>
+        <span class="tag">Shock chassis pickup</span>
+        <span class="tag warning" id="chassisVectorTag" hidden>Chassis resultants</span>
         <span class="tag warning" id="mirrorTag" hidden>Mirrored side is illustrative</span>
       </div>
       <div class="tooltip" id="tooltip" role="tooltip"></div>
       <div class="status" id="status"><div><strong>Preparing geometry</strong><span>Building the shared linkage model…</span></div></div>
     </section>
 
-    <aside class="rail rail--inspect" aria-label="Selected component details">
+    <aside class="rail rail--inspect" id="geometryInspectRail" aria-label="Selected component details">
       <div class="rail-inner">
         <section>
           <h2 class="inspect-heading">Live inspection</h2>
@@ -355,6 +556,108 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
     </aside>
   </main>
 
+  <section class="sizing-view" id="sizingView" role="tabpanel" aria-labelledby="sizingTab" hidden>
+    <div class="sizing-shell">
+      <header class="sizing-head">
+        <div>
+          <h1 class="sizing-title">Governing member loads</h1>
+          <p class="sizing-copy">Peak axial force and governing margin across every simulated load case. Select Inspect to return to the exact corner and case in the 3D view.</p>
+        </div>
+        <div class="sizing-filters" aria-label="Sizing filters">
+          <div class="field">
+            <label for="sizingCorner">Corner</label>
+            <select id="sizingCorner"><option value="all">All four corners</option></select>
+          </div>
+          <div class="field">
+            <label for="sizingState">Peak state</label>
+            <select id="sizingState">
+              <option value="all">Tension + compression</option>
+              <option value="tension">Tension</option>
+              <option value="compression">Compression</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="sizingStatus">Margin status</label>
+            <select id="sizingStatus">
+              <option value="all">All statuses</option>
+              <option value="fail">Fail · MS &lt; 0</option>
+              <option value="caution">Caution · MS 0–0.5</option>
+              <option value="pass">Pass · MS &gt; 0.5</option>
+              <option value="unrated">Unrated</option>
+            </select>
+          </div>
+        </div>
+      </header>
+
+      <div class="sizing-metrics" aria-live="polite">
+        <div class="sizing-metric"><strong id="sizingRowCount">0</strong><span>members shown</span></div>
+        <div class="sizing-metric"><strong id="sizingFailCount">0</strong><span>failed margins</span></div>
+        <div class="sizing-metric"><strong id="sizingCautionCount">0</strong><span>caution margins</span></div>
+        <div class="sizing-metric"><strong id="sizingUnratedCount">0</strong><span>unrated components</span></div>
+      </div>
+      <p class="sizing-proxy-note"><strong>JMX screening only:</strong> each displayed JMX margin is an axial-tension proxy from the workbook—not a final radial or misalignment rating.</p>
+
+      <div class="sizing-table-wrap">
+        <table class="sizing-table">
+          <thead>
+            <tr>
+              <th>Corner / member</th>
+              <th class="numeric" aria-sort="none"><button class="sort-button" type="button" data-sizing-sort="peak">Peak axial</button></th>
+              <th>State</th>
+              <th>Peak case</th>
+              <th>Tube ID × OD</th>
+              <th>JMX inboard</th>
+              <th>JMX outboard</th>
+              <th class="numeric" aria-sort="ascending"><button class="sort-button" type="button" data-sizing-sort="margin" data-active="true" data-arrow="↑">Governing MS</button></th>
+              <th>Governing mode / case</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="sizingTableBody"></tbody>
+        </table>
+      </div>
+
+      <footer class="sizing-foot">
+        <p><strong>Margin convention:</strong> MS = allowable ÷ applied − 1. Negative is a predicted failure; zero is the allowable boundary. Tube checks include yield, ultimate, and Euler buckling with the workbook’s safety factors.</p>
+        <p><strong>JMX scope:</strong> selections follow Manufacturing Summary. JMX margin uses the workbook-derived axial tensile allowable as a screening proxy; verify final rod-end radial ratings, misalignment, threads, bolts, tabs, fatigue, and manufacturer data before release.</p>
+      </footer>
+    </div>
+  </section>
+
+  <section class="sizing-view" id="chassisView" role="tabpanel" aria-labelledby="chassisTab" hidden>
+    <div class="sizing-shell">
+      <header class="sizing-head">
+        <div>
+          <h1 class="sizing-title">Loads into the chassis</h1>
+          <p class="sizing-copy">Suspension-on-chassis forces at every physical mounting interface. Push/pull-rod forces are internal and reach the chassis through the rocker axis and shock mount.</p>
+        </div>
+        <div class="sizing-filters" aria-label="Chassis load filters">
+          <div class="field">
+            <label for="chassisCorner">Corner</label>
+            <select id="chassisCorner"><option value="all">All four corners</option></select>
+          </div>
+          <div class="field">
+            <label for="chassisCase">Load case / envelope</label>
+            <select id="chassisCase"></select>
+          </div>
+        </div>
+      </header>
+
+      <div class="sizing-metrics" aria-live="polite">
+        <div class="sizing-metric"><strong id="chassisInterfaceCount">0</strong><span>mounting interfaces</span></div>
+        <div class="sizing-metric"><strong id="chassisCornerCount">0</strong><span>corners shown</span></div>
+      </div>
+      <p class="sizing-proxy-note chassis-note"><strong>Hardpoint resultant:</strong> |F| = √(Fx² + Fy² + Fz²). The envelope chooses the case with the largest |F| independently at each hardpoint; arrow lengths use one shared scale across the displayed corners.</p>
+
+      <div class="chassis-canvas-host" id="chassisCanvasHost" aria-label="Interactive chassis hardpoint resultant visualizer"></div>
+
+      <footer class="sizing-foot">
+        <p><strong>Arrow convention:</strong> each red arrow starts at its chassis hardpoint, points in the direction the suspension loads the chassis, and is globally scaled by resultant magnitude. Hover or click an arrow to inspect it.</p>
+        <p><strong>Axes:</strong> tire-load inputs use +X toward the front, +Y toward the left, and +Z skyward. Hardpoint coordinates remain in the original CAD coordinate basis; they are not relabeled or sign-flipped.</p>
+      </footer>
+    </div>
+  </section>
+
   <script id="model-data" type="application/json">__SUSPENSION_DATA__</script>
   <script>
     (() => {
@@ -362,7 +665,7 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       const COLORS = {
         upper: "#6b4c9a", lower: "#1f758d", tie: "#d47a24", pushrod: "#b43f72",
         shock: "#568421", rocker: "#343e43", upright: "#68757b", wheel: "#8c969a",
-        load: "#e56a2f", tension: "#c84d35", compression: "#266d93", selected: "#e56a2f"
+        load: "#e56a2f", chassisLoad: "#c2362b", tension: "#c84d35", compression: "#266d93", selected: "#e56a2f"
       };
       const canvas = document.getElementById("scene");
       const ctx = canvas.getContext("2d");
@@ -385,10 +688,34 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
 
       const configAssemblies = payload.config.assemblies;
       const resultByName = new Map(payload.result.assemblies.map(a => [a.name, a]));
+      const geometryView = document.getElementById("geometryView");
+      const sizingView = document.getElementById("sizingView");
+      const chassisView = document.getElementById("chassisView");
+      const geometryTab = document.getElementById("geometryTab");
+      const sizingTab = document.getElementById("sizingTab");
+      const chassisTab = document.getElementById("chassisTab");
+      const sharedViewport = document.getElementById("sharedViewport");
+      const geometryInspectRail = document.getElementById("geometryInspectRail");
+      const chassisCanvasHost = document.getElementById("chassisCanvasHost");
+      const sizingControls = {
+        corner: document.getElementById("sizingCorner"),
+        state: document.getElementById("sizingState"),
+        status: document.getElementById("sizingStatus"),
+        body: document.getElementById("sizingTableBody")
+      };
+      const chassisControls = {
+        corner: document.getElementById("chassisCorner"),
+        loadCase: document.getElementById("chassisCase")
+      };
+      const sizingRows = payload.result.assemblies.flatMap(assembly =>
+        (assembly.sizing_summary || []).map(row => ({...row, assembly: assembly.name, forceUnits: assembly.force_units || "lbf"}))
+      );
+      const sizingSort = {key: "margin", direction: "asc"};
       const state = {
         yaw: -0.68, pitch: 0.54, zoom: 1, panX: 0, panY: 0, perspective: true,
         dragging: false, shifted: false, lastX: 0, lastY: 0, downX: 0, downY: 0, hover: null, selected: null,
-        projected: [], width: 0, height: 0, dpr: 1
+        projected: [], width: 0, height: 0, dpr: 1,
+        chassisOverlayCase: "envelope", chassisOverlayCorner: "all", showChassisVectors: false
       };
 
       function escapeHtml(value) {
@@ -411,6 +738,135 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
         if (n.includes("upright")) return "upright";
         return "wheel";
       }
+      function marginStatus(value) {
+        if (!Number.isFinite(value)) return "unrated";
+        if (value < 0) return "fail";
+        if (value <= .5) return "caution";
+        return "pass";
+      }
+      function setAnalysisView(view) {
+        const geometryActive = view === "geometry";
+        const sizingActive = view === "sizing";
+        const chassisActive = view === "chassis";
+        geometryView.hidden = !geometryActive;
+        sizingView.hidden = !sizingActive;
+        chassisView.hidden = !chassisActive;
+        geometryTab.setAttribute("aria-selected", String(geometryActive));
+        sizingTab.setAttribute("aria-selected", String(sizingActive));
+        chassisTab.setAttribute("aria-selected", String(chassisActive));
+        state.showChassisVectors=chassisActive;
+        if(chassisActive){
+          state.chassisOverlayCase=chassisControls.loadCase.value;
+          state.chassisOverlayCorner=chassisControls.corner.value;
+          chassisCanvasHost.appendChild(sharedViewport);
+        }else if(geometryActive){
+          geometryInspectRail.before(sharedViewport);
+        }
+        if (sizingActive) renderSizing();
+        else if (chassisActive) renderChassisLoads();
+        else requestAnimationFrame(resize);
+      }
+      function formatJmx(selection, margin) {
+        if (!selection || selection === "NA") return `<span class="jmx-na">—</span>`;
+        const detail = Number.isFinite(margin) ? `MS ${margin.toFixed(2)}` : "unrated";
+        return `<strong>${escapeHtml(selection)}</strong><span>${escapeHtml(detail)}</span>`;
+      }
+      function renderSizing() {
+        const visible = sizingRows.filter(row => {
+          if (sizingControls.corner.value !== "all" && row.assembly !== sizingControls.corner.value) return false;
+          if (sizingControls.state.value !== "all" && row.peak_state !== sizingControls.state.value) return false;
+          return sizingControls.status.value === "all" || marginStatus(row.governing_margin) === sizingControls.status.value;
+        }).sort((a,b) => {
+          let comparison;
+          if (sizingSort.key === "peak") {
+            comparison = Math.abs(a.peak_force) - Math.abs(b.peak_force);
+          } else {
+            const aRated = Number.isFinite(a.governing_margin);
+            const bRated = Number.isFinite(b.governing_margin);
+            if (aRated !== bRated) return aRated ? -1 : 1;
+            const am = aRated ? a.governing_margin : 0;
+            const bm = bRated ? b.governing_margin : 0;
+            comparison = am - bm;
+          }
+          return (sizingSort.direction === "asc" ? comparison : -comparison)
+            || Math.abs(b.peak_force) - Math.abs(a.peak_force);
+        });
+        sizingControls.body.innerHTML = visible.length ? visible.map(row => {
+          const statusName = marginStatus(row.governing_margin);
+          const marginLabel = Number.isFinite(row.governing_margin) ? row.governing_margin.toFixed(2) : "N/A";
+          const tube = Number.isFinite(row.tube_id_in) && Number.isFinite(row.tube_od_in) ? `${row.tube_id_in.toFixed(3)} × ${row.tube_od_in.toFixed(3)} in` : "—";
+          return `<tr>
+            <td class="member-cell" data-label="Corner / member"><strong>${escapeHtml(labelName(row.assembly))}</strong><span>${escapeHtml(labelName(row.member))}</span></td>
+            <td class="numeric" data-label="Peak axial">${row.peak_force.toFixed(1)} ${escapeHtml(row.forceUnits)}</td>
+            <td data-label="State"><span class="state-word ${escapeHtml(row.peak_state)}">${escapeHtml(row.peak_state)}</span></td>
+            <td data-label="Peak case">${escapeHtml(labelName(row.peak_case))}</td>
+            <td class="numeric" data-label="Tube ID × OD">${escapeHtml(tube)}</td>
+            <td class="jmx-cell" data-label="JMX inboard">${formatJmx(row.chassis_jmx,row.chassis_jmx_margin)}</td>
+            <td class="jmx-cell" data-label="JMX outboard">${formatJmx(row.wheel_jmx,row.wheel_jmx_margin)}</td>
+            <td class="numeric" data-label="Governing MS"><span class="margin-mark ${statusName}"><span>${marginLabel}</span><span>${statusName.toUpperCase()}</span></span></td>
+            <td data-label="Governing mode / case"><strong>${escapeHtml(labelName(row.governing_margin_mode))}</strong><br><span class="table-muted">${escapeHtml(labelName(row.governing_margin_case))}</span></td>
+            <td data-label="Action"><button class="inspect-link" type="button" data-inspect-corner="${escapeHtml(row.assembly)}" data-inspect-case="${escapeHtml(row.peak_case)}">Inspect</button></td>
+          </tr>`;
+        }).join("") : `<tr><td colspan="10" class="empty-table">No members match these filters.</td></tr>`;
+        document.getElementById("sizingRowCount").textContent = String(visible.length);
+        document.getElementById("sizingFailCount").textContent = String(visible.filter(row=>marginStatus(row.governing_margin)==="fail").length);
+        document.getElementById("sizingCautionCount").textContent = String(visible.filter(row=>marginStatus(row.governing_margin)==="caution").length);
+        document.getElementById("sizingUnratedCount").textContent = String(visible.filter(row=>marginStatus(row.governing_margin)==="unrated").length);
+      }
+      function formatVector(values) {
+        return values.map(value=>Number(value).toFixed(2)).join(", ");
+      }
+      function chassisSelection(assembly, selection) {
+        const cases = assembly?.chassis_loads || [];
+        if (selection === "envelope") {
+          if (!cases.length) return null;
+          const interfaceNames = cases[0].interfaces.map(item=>item.name);
+          const interfaces = interfaceNames.map(name=>{
+            const candidates = cases.map(chassis=>({...chassis.interfaces.find(item=>item.name===name),sourceCase:chassis.name}));
+            return candidates.reduce((best,item)=>item.force_magnitude>best.force_magnitude?item:best);
+          });
+          const resultantCase = cases.reduce((best,item)=>item.resultant_force_magnitude>best.resultant_force_magnitude?item:best);
+          return {
+            interfaces,
+            reference_point: resultantCase.reference_point,
+            resultant_force: resultantCase.resultant_force,
+            resultant_force_magnitude: resultantCase.resultant_force_magnitude,
+            resultant_moment: resultantCase.resultant_moment,
+            sourceCase: resultantCase.name
+          };
+        }
+        const selectedCase = cases.find(item=>item.name===selection);
+        return selectedCase ? {...selectedCase,interfaces:selectedCase.interfaces.map(item=>({...item,sourceCase:selectedCase.name})),sourceCase:selectedCase.name} : null;
+      }
+      function chassisOverlayMaximumForce() {
+        const visibleNames = new Set(selectedAssemblies().map(item=>item.name));
+        let maximum = 1;
+        for (const assembly of payload.result.assemblies) {
+          if (!visibleNames.has(assembly.name)) continue;
+          if (state.chassisOverlayCorner !== "all" && state.chassisOverlayCorner !== assembly.name) continue;
+          const chassis = chassisSelection(assembly,state.chassisOverlayCase);
+          for (const item of chassis?.interfaces || []) maximum=Math.max(maximum,item.force_magnitude);
+        }
+        return maximum;
+      }
+      function renderChassisLoads() {
+        const selected = payload.result.assemblies.filter(assembly=>
+          chassisControls.corner.value === "all" || assembly.name === chassisControls.corner.value
+        );
+        const interfaceCount=selected.reduce((count,assembly)=>count+(chassisSelection(assembly,chassisControls.loadCase.value)?.interfaces.length||0),0);
+        state.chassisOverlayCase=chassisControls.loadCase.value;
+        state.chassisOverlayCorner=chassisControls.corner.value;
+        if(chassisControls.corner.value==="all")controls.assembly.value="all";
+        else{
+          const index=configAssemblies.findIndex(item=>item.name===chassisControls.corner.value);
+          if(index>=0)controls.assembly.value=String(index);
+        }
+        syncLoadCases();
+        if(state.chassisOverlayCase!=="envelope"&&[...controls.loadCase.options].some(item=>item.value===state.chassisOverlayCase))controls.loadCase.value=state.chassisOverlayCase;
+        document.getElementById("chassisInterfaceCount").textContent=String(interfaceCount);
+        document.getElementById("chassisCornerCount").textContent=String(selected.length);
+        if(!chassisView.hidden)requestAnimationFrame(resize);
+      }
       function resultCase(assembly, caseName) {
         const result = resultByName.get(assembly.name);
         return result?.load_cases.find(item => item.name === caseName) || null;
@@ -424,6 +880,16 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
 
       function populateControls() {
         controls.assembly.innerHTML = `<option value="all">All assemblies</option>` + configAssemblies.map((a,i) => `<option value="${i}">${escapeHtml(labelName(a.name))}</option>`).join("");
+        sizingControls.corner.innerHTML = `<option value="all">All four corners</option>` + configAssemblies.map(a => `<option value="${escapeHtml(a.name)}">${escapeHtml(labelName(a.name))}</option>`).join("");
+        chassisControls.corner.innerHTML = `<option value="all">All four corners</option>` + configAssemblies.map(a => `<option value="${escapeHtml(a.name)}">${escapeHtml(labelName(a.name))}</option>`).join("");
+        chassisControls.loadCase.innerHTML = `<option value="envelope">Maximum resultant envelope</option>` + configAssemblies[0].load_cases.map(item=>`<option value="${escapeHtml(item.name)}">${escapeHtml(labelName(item.name))}</option>`).join("");
+        const names = configAssemblies.map(item => item.name.toLowerCase());
+        const hasBothSides = names.some(name => name.includes("left")) && names.some(name => name.includes("right"));
+        if (hasBothSides) {
+          controls.mirror.checked = false;
+          controls.mirror.disabled = true;
+          controls.mirror.title = "Both physical sides are already included";
+        }
         syncLoadCases();
       }
       function selectedAssemblies() {
@@ -489,8 +955,24 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
         }
         segments.push(...wheel);
 
-        const load = assembly.load_cases.find(item => item.name === caseName);
-        const f=load ? reflect(load.force) : null, fm=f ? vMag(f) : 0;
+        if (state.showChassisVectors && !mirrored && (state.chassisOverlayCorner === "all" || state.chassisOverlayCorner === assembly.name)) {
+          const chassis = chassisSelection(resultByName.get(assembly.name), state.chassisOverlayCase);
+          if (chassis?.interfaces?.length) {
+            const maxResultant = chassisOverlayMaximumForce();
+            for (const item of chassis.interfaces) {
+              const start = [...item.point];
+              const vectorMagnitude = Math.max(item.force_magnitude,1e-9);
+              const displayLength = Math.max(1.8,radius*1.7*vectorMagnitude/maxResultant);
+              const end = vAdd(start,vScale(item.force,displayLength/vectorMagnitude));
+              segments.push(segment(`resultant · ${item.name}`,start,end,"chassisLoad",{
+                force:item.force_magnitude,forceState:labelName(item.sourceCase),assembly:assembly.name,mirrored:false,
+                vector:item.force,forceUnits:assembly.force_units||"",coordinateUnits:assembly.coordinate_units||"",hardpoint:item.point
+              }));
+            }
+          }
+        }
+
+        const f=activeResult?.external_wrench ? reflect(activeResult.external_wrench.slice(0,3)) : null, fm=f ? vMag(f) : 0;
         if (f && fm > 1e-9 && !mirrored) {
           const displayLength=Math.max(4,radius*1.25);
           segments.push(segment("tire force", cp, vAdd(cp,vScale(f,displayLength/fm)), "load", {force:fm, forceState:"applied", assembly:assembly.name, vector:f, forceUnits:assembly.force_units || "", coordinateUnits:assembly.coordinate_units || ""}));
@@ -537,13 +1019,14 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
 
       function colorFor(seg, maxForce) {
         if (seg.mirrored) return "rgba(84,99,106,.28)";
+        if (seg.kind === "chassisLoad") return COLORS.chassisLoad;
         if (seg.kind === "load") return COLORS.load;
         if (controls.colorMode.value === "force" && Number.isFinite(seg.force)) return seg.force >= 0 ? COLORS.tension : COLORS.compression;
         return COLORS[seg.family] || COLORS.upright;
       }
       function lineWidth(seg,maxForce) {
         if (seg.decorative) return 1.2;
-        if (seg.kind === "load") return 3;
+        if (seg.kind === "load" || seg.kind === "chassisLoad") return seg.kind === "chassisLoad" ? 4 : 3;
         if (controls.colorMode.value === "force" && Number.isFinite(seg.force) && maxForce>0) return 2.5+5*Math.sqrt(Math.abs(seg.force)/maxForce);
         return seg.kind === "member" || seg.kind === "shock" ? 5 : 3;
       }
@@ -577,6 +1060,9 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
 
       function render() {
         const segments=buildScene(), bounds=sceneBounds(segments);
+        const chassisTag=document.getElementById("chassisVectorTag");
+        chassisTag.hidden=!state.showChassisVectors;
+        chassisTag.textContent=state.chassisOverlayCase==="envelope"?"Chassis resultant envelope":`Chassis resultants · ${labelName(state.chassisOverlayCase)}`;
         ctx.clearRect(0,0,state.width,state.height);
         const bg=ctx.createLinearGradient(0,0,0,state.height);bg.addColorStop(0,"#f4f6f6");bg.addColorStop(1,"#e4e9ea");ctx.fillStyle=bg;ctx.fillRect(0,0,state.width,state.height);
         drawGrid(bounds);
@@ -589,7 +1075,7 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
           if(seg.mirrored) ctx.setLineDash([6,6]);
           if(active){ctx.shadowColor="rgba(229,106,47,.3)";ctx.shadowBlur=10;ctx.shadowOffsetY=3;}
           ctx.beginPath();ctx.moveTo(seg.pa.x,seg.pa.y);ctx.lineTo(seg.pb.x,seg.pb.y);ctx.stroke();
-          if(seg.kind==="load") drawArrowHead(seg.pa,seg.pb,color);
+          if(seg.kind==="load"||seg.kind==="chassisLoad") drawArrowHead(seg.pa,seg.pb,color);
           ctx.restore();
         }
         if(controls.nodes.checked) drawNodes();
@@ -601,7 +1087,7 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       function drawNodes(){
         const seen=new Set();
         for(const seg of state.projected){
-          if(seg.decorative||seg.kind==="load") continue;
+          if(seg.decorative||seg.kind==="load"||seg.kind==="chassisLoad") continue;
           for(const p of [seg.pa,seg.pb]){
             const key=`${Math.round(p.x)}:${Math.round(p.y)}:${seg.mirrored}`;if(seen.has(key))continue;seen.add(key);
             ctx.beginPath();ctx.fillStyle=seg.mirrored?"rgba(90,104,110,.34)":"#f8f9f9";ctx.strokeStyle=seg.mirrored?"rgba(66,78,84,.3)":"#26333a";ctx.lineWidth=1.5;ctx.arc(p.x,p.y,seg.mirrored?3:4.2,0,Math.PI*2);ctx.fill();ctx.stroke();
@@ -616,14 +1102,14 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
           ctx.fillRect(-7,-7,14,14);ctx.strokeRect(-7,-7,14,14);
           ctx.beginPath();ctx.arc(0,0,3,0,Math.PI*2);ctx.fillStyle=COLORS.shock;ctx.fill();
           ctx.beginPath();ctx.moveTo(-10,10);ctx.lineTo(10,10);ctx.moveTo(-7,10);ctx.lineTo(-11,15);ctx.moveTo(0,10);ctx.lineTo(-4,15);ctx.moveTo(7,10);ctx.lineTo(3,15);ctx.stroke();
-          ctx.font="700 10px Bahnschrift, sans-serif";ctx.fillStyle="#172026";ctx.fillText("FIXED CHASSIS",12,14);ctx.restore();
+          ctx.restore();
         }
       }
       function drawLabels(){
         if(state.projected.length>120) return;
         ctx.font="600 11px Bahnschrift, sans-serif";ctx.textBaseline="middle";
         for(const seg of state.projected){
-          if(seg.kind!=="member"&&seg.kind!=="shock"&&seg.kind!=="load")continue;if(seg.mirrored)continue;
+          if(seg.kind!=="member"&&seg.kind!=="shock"&&seg.kind!=="load"&&seg.kind!=="chassisLoad")continue;if(seg.mirrored)continue;
           const x=(seg.pa.x+seg.pb.x)/2+7,y=(seg.pa.y+seg.pb.y)/2-6;
           const text=labelName(seg.name),w=ctx.measureText(text).width;
           ctx.fillStyle="rgba(244,246,246,.86)";ctx.fillRect(x-3,y-8,w+6,16);ctx.fillStyle="#253138";ctx.fillText(text,x,y);
@@ -631,7 +1117,7 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       }
 
       function updateLegend(){
-        const items=controls.colorMode.value==="force"?[["Tension",COLORS.tension],["Compression",COLORS.compression],["Applied tire force",COLORS.load]]:[["Upper wishbone",COLORS.upper],["Lower wishbone",COLORS.lower],["Tie / toe rod",COLORS.tie],["Push / pull rod",COLORS.pushrod],["Shock",COLORS.shock],["Rocker + upright",COLORS.rocker]];
+        const items=controls.colorMode.value==="force"?[["Tension",COLORS.tension],["Compression",COLORS.compression],["Applied tire force",COLORS.load],["Chassis resultant",COLORS.chassisLoad]]:[["Upper wishbone",COLORS.upper],["Lower wishbone",COLORS.lower],["Tie / toe rod",COLORS.tie],["Push / pull rod",COLORS.pushrod],["Shock",COLORS.shock],["Rocker + upright",COLORS.rocker],["Chassis resultant",COLORS.chassisLoad]];
         document.getElementById("legend").innerHTML=items.map(([label,color])=>`<div class="legend-item"><span class="swatch" style="--swatch:${color}"></span><span>${label}</span></div>`).join("");
       }
       function updateForceTable(){
@@ -648,7 +1134,7 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       function lineDistance(px,py,a,b){const dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy;if(!l2)return Math.hypot(px-a.x,py-a.y);const t=Math.max(0,Math.min(1,((px-a.x)*dx+(py-a.y)*dy)/l2));return Math.hypot(px-(a.x+t*dx),py-(a.y+t*dy));}
       function pick(x,y){let best=null,dist=12;for(let i=state.projected.length-1;i>=0;i--){const s=state.projected[i];if(s.decorative||s.mirrored)continue;const d=lineDistance(x,y,s.pa,s.pb);if(d<dist){dist=d;best=s;}}return best;}
       function showTooltip(seg,x,y){if(!seg){tooltip.style.display="none";return;}tooltip.innerHTML=`<strong>${escapeHtml(labelName(seg.name))}</strong><span class="mono">${Number.isFinite(seg.force)?`${seg.force.toFixed(2)} ${escapeHtml(seg.forceUnits||"")} · ${escapeHtml(seg.forceState||"")}`:"geometry"}</span>`;tooltip.style.display="block";const maxX=canvas.clientWidth-tooltip.offsetWidth-10,maxY=canvas.clientHeight-tooltip.offsetHeight-10;tooltip.style.left=`${Math.max(10,Math.min(maxX,x+14))}px`;tooltip.style.top=`${Math.max(10,Math.min(maxY,y+14))}px`;}
-      function selectSegment(seg){state.selected=seg;if(!seg){document.getElementById("readoutName").textContent="No component selected";document.getElementById("readoutForce").textContent="—";document.getElementById("readoutState").textContent="Select a linkage";document.getElementById("dataList").innerHTML="";render();return;}const assembly=configAssemblies.find(a=>a.name===seg.assembly),units=assembly?.force_units||"",lengthUnits=assembly?.coordinate_units||"";document.getElementById("readoutName").textContent=`${labelName(seg.assembly)} · ${labelName(seg.name)}`;document.getElementById("readoutForce").textContent=Number.isFinite(seg.force)?`${seg.force.toFixed(2)} ${units}`:"Geometry";document.getElementById("readoutState").textContent=seg.forceState||seg.kind;const pointALabel=seg.kind==="shock"?"Rocker pickup":"Point A",pointBLabel=seg.fixedB?"Fixed chassis pickup":"Point B";const rows=[["Length",Number.isFinite(seg.length)?`${seg.length.toFixed(3)} ${lengthUnits}`:`${vMag(vSub(seg.b,seg.a)).toFixed(3)} ${lengthUnits}`],[pointALabel,seg.a.map(n=>n.toFixed(3)).join(", ")],[pointBLabel,seg.b.map(n=>n.toFixed(3)).join(", ")]];document.getElementById("dataList").innerHTML=rows.map(([k,v])=>`<div class="data-row"><dt>${k}</dt><dd>${v}</dd></div>`).join("");render();}
+      function selectSegment(seg){state.selected=seg;if(!seg){document.getElementById("readoutName").textContent="No component selected";document.getElementById("readoutForce").textContent="—";document.getElementById("readoutState").textContent="Select a linkage";document.getElementById("dataList").innerHTML="";render();return;}const assembly=configAssemblies.find(a=>a.name===seg.assembly),units=assembly?.force_units||"",lengthUnits=assembly?.coordinate_units||"";document.getElementById("readoutName").textContent=`${labelName(seg.assembly)} · ${labelName(seg.name)}`;document.getElementById("readoutForce").textContent=Number.isFinite(seg.force)?`${seg.force.toFixed(2)} ${units}`:"Geometry";document.getElementById("readoutState").textContent=seg.forceState||seg.kind;const pointALabel=seg.kind==="shock"?"Rocker pickup":seg.kind==="chassisLoad"?"Hardpoint":"Point A",pointBLabel=seg.fixedB?"Chassis pickup":seg.kind==="chassisLoad"?"Arrow tip":"Point B";const rows=[["Length",Number.isFinite(seg.length)?`${seg.length.toFixed(3)} ${lengthUnits}`:`${vMag(vSub(seg.b,seg.a)).toFixed(3)} ${lengthUnits}`],[pointALabel,seg.a.map(n=>n.toFixed(3)).join(", ")],[pointBLabel,seg.b.map(n=>n.toFixed(3)).join(", ")]];document.getElementById("dataList").innerHTML=rows.map(([k,v])=>`<div class="data-row"><dt>${k}</dt><dd>${v}</dd></div>`).join("");render();}
 
       function resetView(){state.yaw=-.68;state.pitch=.54;state.zoom=1;state.panX=0;state.panY=0;render();}
       function resize(){const rect=canvas.getBoundingClientRect();state.dpr=Math.min(2,window.devicePixelRatio||1);canvas.width=Math.round(rect.width*state.dpr);canvas.height=Math.round(rect.height*state.dpr);ctx.setTransform(state.dpr,0,0,state.dpr,0,0);state.width=rect.width;state.height=rect.height;render();}
@@ -663,11 +1149,42 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       document.getElementById("reset").addEventListener("click",resetView);
       controls.projection.addEventListener("click",()=>{state.perspective=!state.perspective;controls.projection.textContent=state.perspective?"Perspective":"Orthographic";controls.projection.setAttribute("aria-pressed",String(!state.perspective));render();});
       controls.assembly.addEventListener("change",()=>{syncLoadCases();state.selected=null;resetView();});
-      controls.loadCase.addEventListener("change",()=>{state.selected=null;render();});
-      for(const control of [controls.colorMode,controls.labels,controls.nodes,controls.axes,controls.mirror])control.addEventListener("change",()=>{document.getElementById("mirrorTag").hidden=!controls.mirror.checked;render();});
+      controls.loadCase.addEventListener("change",()=>{state.selected=null;if(state.showChassisVectors)state.chassisOverlayCase=controls.loadCase.value;render();});
+      for(const control of [controls.colorMode,controls.labels,controls.nodes,controls.axes])control.addEventListener("change",render);
+      geometryTab.addEventListener("click",()=>setAnalysisView("geometry"));
+      sizingTab.addEventListener("click",()=>setAnalysisView("sizing"));
+      chassisTab.addEventListener("click",()=>setAnalysisView("chassis"));
+      for (const button of document.querySelectorAll("[data-sizing-sort]")) button.addEventListener("click",()=>{
+        const key=button.dataset.sizingSort;
+        if(sizingSort.key===key)sizingSort.direction=sizingSort.direction==="asc"?"desc":"asc";
+        else{sizingSort.key=key;sizingSort.direction=key==="peak"?"desc":"asc";}
+        for(const item of document.querySelectorAll("[data-sizing-sort]")){
+          const active=item.dataset.sizingSort===sizingSort.key;
+          item.dataset.active=String(active);
+          item.dataset.arrow=active?(sizingSort.direction==="asc"?"↑":"↓"):"";
+          item.closest("th").setAttribute("aria-sort",active?(sizingSort.direction==="asc"?"ascending":"descending"):"none");
+        }
+        renderSizing();
+      });
+      for (const control of [sizingControls.corner,sizingControls.state,sizingControls.status]) control.addEventListener("change",renderSizing);
+      for (const control of [chassisControls.corner,chassisControls.loadCase]) control.addEventListener("change",renderChassisLoads);
+      sizingControls.body.addEventListener("click",event=>{
+        const button=event.target.closest("[data-inspect-corner]");
+        if(!button)return;
+        const index=configAssemblies.findIndex(item=>item.name===button.dataset.inspectCorner);
+        if(index<0)return;
+        controls.assembly.value=String(index);
+        syncLoadCases();
+        if(configAssemblies[index].load_cases.some(item=>item.name===button.dataset.inspectCase)) controls.loadCase.value=button.dataset.inspectCase;
+        state.selected=null;
+        setAnalysisView("geometry");
+        resetView();
+      });
       window.addEventListener("resize",resize);
 
       populateControls();
+      renderSizing();
+      renderChassisLoads();
       if (payload.config.notes) {
         const note = document.getElementById("modelNote");
         note.textContent = payload.config.notes;
