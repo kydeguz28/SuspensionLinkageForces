@@ -1,0 +1,1254 @@
+<!doctype html>
+<!--
+THESIS: Geometry and governing load evidence share one inspection instrument; refuse the generic dashboard of summary cards.
+OWN-WORLD: Cool aluminum, dark drafted linework, safety orange selection, and force-state blue/vermilion.
+STORY: Inspect a load path in 3D, then move to Member Sizing to find the governing force, case, JMX selection, and margin.
+FIRST VIEWPORT: A two-tab instrument opens on the full-height linkage model; the sizing tab becomes a dense sortable engineering ledger.
+FORM: Operate-mode optical inspection bench, shaped directly for the narrow engineering-viewer request; no concept seed.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Suspension Linkage 3D Inspector</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #edf0f1;
+      --chrome: #dfe4e6;
+      --paper: #f7f8f8;
+      --ink: #172026;
+      --muted: #52616a;
+      --hairline: #aab5ba;
+      --orange: #e56a2f;
+      --tension: #c84d35;
+      --compression: #266d93;
+      --focus: #025f88;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body {
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: Bahnschrift, Aptos, "Segoe UI", sans-serif;
+      font-size: 14px;
+    }
+
+    button, select, input { font: inherit; }
+    button, select {
+      min-height: 38px;
+      border: 1px solid #8d9a9f;
+      border-radius: 6px;
+      background: var(--paper);
+      color: var(--ink);
+    }
+    button { cursor: pointer; padding: 0 12px; font-weight: 700; }
+    button:hover, select:hover { background: #fff; border-color: #65747a; }
+    button:focus-visible, select:focus-visible, input:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--focus) 30%, transparent);
+      outline-offset: 2px;
+    }
+
+    .modebar {
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      height: 52px;
+      border-bottom: 1px solid #88969c;
+      background: #172026;
+      color: #fff;
+    }
+    .modebar-title {
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      font-family: "Bahnschrift SemiCondensed", Bahnschrift, sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+    .mode-tabs { display: flex; align-items: stretch; }
+    .mode-tab {
+      min-width: 150px;
+      min-height: 0;
+      border: 0;
+      border-left: 1px solid #455158;
+      border-radius: 0;
+      background: transparent;
+      color: #cbd4d7;
+      padding: 0 20px;
+    }
+    .mode-tab:hover { border-color: #455158; background: #27343a; color: #fff; }
+    .mode-tab[aria-selected="true"] {
+      background: var(--canvas);
+      color: var(--ink);
+      box-shadow: inset 0 4px 0 var(--orange);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 282px minmax(0, 1fr) 290px;
+      height: calc(100% - 52px);
+      min-height: 0;
+    }
+    [hidden] { display: none !important; }
+
+    .sizing-view {
+      height: calc(100% - 52px);
+      overflow: auto;
+      background: var(--canvas);
+    }
+    .sizing-shell { width: min(1540px, 100%); margin: 0 auto; padding: 30px 32px 48px; }
+    .sizing-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 28px;
+      border-bottom: 1px solid #909da2;
+      padding-bottom: 22px;
+    }
+    .sizing-title {
+      margin: 0;
+      font-family: "Bahnschrift SemiCondensed", Bahnschrift, sans-serif;
+      font-size: clamp(32px, 4vw, 56px);
+      line-height: .95;
+      letter-spacing: -.03em;
+      text-transform: uppercase;
+    }
+    .sizing-copy { max-width: 70ch; margin: 12px 0 0; color: var(--muted); line-height: 1.45; }
+    .sizing-filters { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+    .sizing-filters .field { min-width: 155px; margin: 0; }
+    .sizing-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+      border-bottom: 1px solid #a7b2b6;
+      padding: 14px 0;
+    }
+    .sizing-metric { display: flex; gap: 8px; align-items: baseline; padding: 4px 22px; border-right: 1px solid #b4bec2; }
+    .sizing-metric:first-child { padding-left: 0; }
+    .sizing-metric:last-child { border-right: 0; }
+    .sizing-metric strong { font: 800 20px/1 Consolas, monospace; }
+    .sizing-metric span { color: var(--muted); font-size: 12px; }
+    .sizing-table-wrap { margin-top: 22px; overflow-x: auto; border-top: 2px solid var(--ink); border-bottom: 1px solid #8f9da2; }
+    .sizing-table { width: 100%; min-width: 1250px; border-collapse: collapse; }
+    .sizing-table th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #d7dddf;
+      padding: 11px 10px;
+      color: #38464d;
+      font-size: 11px;
+      text-align: left;
+      text-transform: uppercase;
+    }
+    .sort-button {
+      min-height: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 0;
+      color: inherit;
+      font-size: inherit;
+      text-transform: inherit;
+    }
+    .sort-button:hover { border: 0; background: transparent; color: var(--ink); }
+    .sort-button::after { content: "↕"; margin-left: 6px; color: #718087; }
+    .sort-button[data-active="true"]::after { content: attr(data-arrow); color: var(--orange); }
+    .sizing-table td { border-top: 1px solid #b8c2c6; padding: 12px 10px; vertical-align: middle; }
+    .sizing-table tbody tr:hover { background: #f7f8f8; }
+    .sizing-table .numeric { font-family: Consolas, monospace; text-align: right; white-space: nowrap; }
+    .sizing-table .member-cell strong { display: block; }
+    .sizing-table .member-cell span { color: var(--muted); font-size: 11px; }
+    .jmx-cell strong, .jmx-cell span { display: block; }
+    .jmx-cell span, .table-muted { color: var(--muted); font-size: 11px; }
+    .jmx-na { color: var(--muted); }
+    .empty-table { padding: 34px !important; color: var(--muted); text-align: center; }
+    .state-word { font-weight: 800; text-transform: capitalize; }
+    .state-word.tension { color: #963825; }
+    .state-word.compression { color: #1e5c7d; }
+    .margin-mark { display: inline-flex; min-width: 72px; justify-content: space-between; gap: 8px; border-radius: 4px; padding: 5px 7px; font: 800 12px/1 Consolas, monospace; }
+    .margin-mark.pass { background: #dce9dc; color: #285b30; }
+    .margin-mark.caution { background: #f4e5c8; color: #714710; }
+    .margin-mark.fail { background: #f0d6d2; color: #812b21; }
+    .margin-mark.unrated { background: #dfe4e6; color: #52616a; }
+    .inspect-link { min-height: 30px; padding: 0 9px; white-space: nowrap; }
+    .sizing-foot {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 26px;
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .sizing-foot p { margin: 0; }
+    .sizing-proxy-note {
+      margin: 14px 0 -8px;
+      color: #6d3d18;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .chassis-note { color: var(--muted); }
+    .vector-value { font-family: Consolas, monospace; text-align: right; white-space: nowrap; }
+    .chassis-table .resultant-row { background: #dde4e6; border-top: 2px solid #66767d; }
+    .chassis-table .resultant-row td { font-weight: 800; }
+    .chassis-table .interface-type { display: block; color: var(--muted); font-size: 11px; }
+    .chassis-visual-title { margin-top: 28px; }
+    .chassis-canvas-host {
+      height: max(560px, calc(100vh - 315px));
+      margin-top: 22px;
+      border: 1px solid #9aa7ac;
+      background: #e8edef;
+      overflow: hidden;
+    }
+    .chassis-canvas-host .viewport { width: 100%; height: 100%; min-height: 0; }
+
+    .rail {
+      position: relative;
+      z-index: 2;
+      min-width: 0;
+      overflow: auto;
+      background: var(--chrome);
+    }
+    .rail--controls { border-right: 1px solid var(--hairline); }
+    .rail--inspect { border-left: 1px solid var(--hairline); }
+
+    .rail-inner { padding: 22px 20px 28px; }
+    .brand {
+      margin: 0 0 4px;
+      max-width: 11ch;
+      font-family: "Bahnschrift SemiCondensed", Bahnschrift, Aptos, sans-serif;
+      font-size: clamp(26px, 2.4vw, 38px);
+      line-height: .92;
+      letter-spacing: -.03em;
+      text-transform: uppercase;
+    }
+    .subtitle { margin: 10px 0 28px; color: var(--muted); line-height: 1.45; }
+    .model-note {
+      margin: -15px 0 26px;
+      border: 1px solid #bd7a3b;
+      border-radius: 7px;
+      background: #f5e8da;
+      padding: 10px 11px;
+      color: #6d3d18;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .section { margin-top: 25px; }
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 12px;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+    .field { display: grid; gap: 6px; margin-top: 13px; }
+    .field label { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .field select { width: 100%; padding: 0 34px 0 10px; }
+
+    .switches { display: grid; gap: 9px; }
+    .check {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+      min-height: 28px;
+      color: #2e3b42;
+      cursor: pointer;
+    }
+    .check input { width: 17px; height: 17px; accent-color: var(--orange); }
+    .button-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .button-row .primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+    .button-row .primary:hover { background: #2b3940; }
+
+    .keymap {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 7px 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    kbd {
+      min-width: 24px;
+      border: 1px solid #9eaaaf;
+      border-bottom-width: 2px;
+      border-radius: 4px;
+      background: #f5f7f7;
+      padding: 2px 5px;
+      color: var(--ink);
+      font-family: Consolas, monospace;
+      text-align: center;
+    }
+
+    .viewport { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+    #scene { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+    #scene.dragging { cursor: grabbing; }
+    .viewport-meta {
+      position: absolute;
+      top: 15px;
+      left: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      pointer-events: none;
+    }
+    .tag {
+      border: 1px solid rgba(61, 75, 82, .3);
+      border-radius: 5px;
+      background: rgba(247, 248, 248, .88);
+      padding: 6px 8px;
+      color: #344249;
+      font-size: 11px;
+      font-weight: 700;
+      box-shadow: 2px 3px 8px rgba(36, 49, 55, .08);
+      backdrop-filter: blur(5px);
+    }
+    .tag.warning { border-color: #ca7d35; color: #75431a; }
+
+    .tooltip {
+      position: absolute;
+      z-index: 3;
+      display: none;
+      width: max-content;
+      max-width: 260px;
+      border-radius: 7px;
+      background: #172026;
+      padding: 9px 11px;
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.4;
+      pointer-events: none;
+      box-shadow: 4px 7px 18px rgba(23, 32, 38, .24);
+    }
+    .tooltip strong { display: block; margin-bottom: 2px; }
+    .tooltip .mono { color: #dce4e6; }
+
+    .inspect-heading { margin: 0 0 6px; font-size: 19px; letter-spacing: -.02em; }
+    .inspect-copy { margin: 0 0 20px; color: var(--muted); line-height: 1.45; }
+    .readout {
+      border-top: 1px solid #a8b3b8;
+      border-bottom: 1px solid #a8b3b8;
+      padding: 15px 0;
+    }
+    .readout-name { margin: 0 0 8px; font-weight: 800; overflow-wrap: anywhere; }
+    .readout-force {
+      margin: 0;
+      font-family: Consolas, "SFMono-Regular", monospace;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -.03em;
+    }
+    .readout-state { margin: 4px 0 0; color: var(--muted); text-transform: capitalize; }
+    .data-list { margin: 16px 0 0; }
+    .data-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      border-bottom: 1px solid #bbc4c8;
+      padding: 9px 0;
+    }
+    .data-row dt { color: var(--muted); }
+    .data-row dd { margin: 0; font-family: Consolas, monospace; text-align: right; }
+
+    .legend { display: grid; gap: 8px; }
+    .legend-item { display: grid; grid-template-columns: 17px minmax(0, 1fr); align-items: center; gap: 8px; }
+    .swatch { width: 17px; height: 4px; border-radius: 2px; background: var(--swatch); }
+    .force-table { display: grid; margin-top: 12px; }
+    .force-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid #bec7ca;
+      font-size: 12px;
+    }
+    .force-row span:first-child { overflow-wrap: anywhere; }
+    .force-value { font-family: Consolas, monospace; font-weight: 700; }
+    .force-value.tension { color: #963825; }
+    .force-value.compression { color: #1e5c7d; }
+
+    .status {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      background: var(--canvas);
+      padding: 30px;
+      text-align: center;
+    }
+    .status[hidden] { display: none; }
+    .status strong { display: block; margin-bottom: 8px; font-size: 18px; }
+
+    @media (max-width: 900px) {
+      html, body { overflow: auto; }
+      .modebar { position: sticky; top: 0; z-index: 10; }
+      .modebar-title { display: none; }
+      .mode-tabs, .mode-tab { flex: 1; }
+      .mode-tab { min-width: 0; }
+      .app { grid-template-columns: 1fr; grid-template-rows: auto minmax(58vh, 1fr) auto; height: auto; min-height: calc(100% - 52px); }
+      .rail { overflow: visible; }
+      .rail--controls { border-right: 0; border-bottom: 1px solid var(--hairline); }
+      .rail--inspect { border-left: 0; border-top: 1px solid var(--hairline); }
+      .rail-inner { padding: 16px; }
+      .brand { max-width: none; font-size: 27px; }
+      .subtitle { margin: 7px 0 14px; }
+      .compact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .section { margin-top: 16px; }
+      .key-section { display: none; }
+      .viewport { min-height: 58vh; }
+      .rail--inspect .rail-inner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, .8fr); gap: 18px; }
+      .force-section { grid-column: 1 / -1; }
+      .sizing-view { height: auto; min-height: calc(100vh - 52px); }
+      .sizing-shell { padding: 24px 18px 40px; }
+      .sizing-head { grid-template-columns: 1fr; align-items: start; }
+      .sizing-filters { justify-content: flex-start; }
+    }
+    @media (max-width: 580px) {
+      .compact-grid, .rail--inspect .rail-inner { grid-template-columns: 1fr; }
+      .switches { grid-template-columns: 1fr 1fr; }
+      .force-section { grid-column: auto; }
+      .viewport-meta { top: 9px; left: 9px; right: 9px; }
+      .sizing-filters { display: grid; grid-template-columns: 1fr; }
+      .sizing-filters .field { min-width: 0; }
+      .sizing-metric { padding: 5px 12px; }
+      .sizing-foot { grid-template-columns: 1fr; }
+      .sizing-table-wrap { overflow: visible; }
+      .sizing-table { min-width: 0; }
+      .sizing-table thead { display: none; }
+      .sizing-table tbody { display: grid; }
+      .sizing-table tbody tr {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 14px;
+        border-top: 2px solid #89969c;
+        padding: 12px 0;
+      }
+      .sizing-table tbody tr:first-child { border-top: 0; }
+      .sizing-table td { border: 0; padding: 6px 0; text-align: left !important; white-space: normal !important; }
+      .sizing-table td::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 3px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .sizing-table .member-cell,
+      .sizing-table:not(.chassis-table) td:nth-child(9) { grid-column: 1 / -1; }
+      .chassis-table td:first-child,
+      .chassis-table .resultant-row td:first-child { grid-column: 1 / -1; }
+      .sizing-table td:last-child { align-self: end; }
+      .inspect-link { width: 100%; }
+      .empty-table { grid-column: 1 / -1 !important; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+  <header class="modebar">
+    <div class="modebar-title">Mk11 suspension analysis</div>
+    <div class="mode-tabs" role="tablist" aria-label="Analysis view">
+      <button class="mode-tab" id="geometryTab" type="button" role="tab" aria-controls="geometryView" aria-selected="true">3D Geometry</button>
+      <button class="mode-tab" id="sizingTab" type="button" role="tab" aria-controls="sizingView" aria-selected="false">Member Sizing</button>
+      <button class="mode-tab" id="chassisTab" type="button" role="tab" aria-controls="chassisView" aria-selected="false">Chassis Loads</button>
+    </div>
+  </header>
+
+  <main class="app" id="geometryView" role="tabpanel" aria-labelledby="geometryTab">
+    <aside class="rail rail--controls" aria-label="Viewer controls">
+      <div class="rail-inner">
+        <h1 class="brand">Linkage Inspector</h1>
+        <p class="subtitle">Static geometry and force paths from the active suspension model.</p>
+        <p class="model-note" id="modelNote" hidden></p>
+
+        <div class="compact-grid">
+          <section class="section" aria-labelledby="model-heading">
+            <h2 class="section-title" id="model-heading">Model setup</h2>
+            <div class="field">
+              <label for="assembly">Assembly</label>
+              <select id="assembly"></select>
+            </div>
+            <div class="field">
+              <label for="loadCase">Load case</label>
+              <select id="loadCase"></select>
+            </div>
+            <div class="field">
+              <label for="colorMode">Link encoding</label>
+              <select id="colorMode">
+                <option value="component">Component family</option>
+                <option value="force">Force state + magnitude</option>
+              </select>
+            </div>
+          </section>
+
+          <section class="section" aria-labelledby="display-heading">
+            <h2 class="section-title" id="display-heading">Display</h2>
+            <div class="switches">
+              <label class="check"><input id="labels" type="checkbox" checked> Member labels</label>
+              <label class="check"><input id="nodes" type="checkbox" checked> Pickup nodes</label>
+              <label class="check"><input id="axes" type="checkbox" checked> Datum + axes</label>
+              <input id="mirror" type="checkbox" hidden>
+            </div>
+          </section>
+        </div>
+
+        <section class="section" aria-labelledby="view-heading">
+          <h2 class="section-title" id="view-heading">View</h2>
+          <div class="button-row">
+            <button class="primary" id="reset" type="button">Reset view</button>
+            <button id="projection" type="button" aria-pressed="false">Perspective</button>
+          </div>
+        </section>
+
+        <section class="section key-section" aria-labelledby="keys-heading">
+          <h2 class="section-title" id="keys-heading">Navigation</h2>
+          <div class="keymap">
+            <kbd>drag</kbd><span>orbit</span>
+            <kbd>⇧</kbd><span>drag to pan</span>
+            <kbd>wheel</kbd><span>zoom</span>
+            <kbd>R</kbd><span>reset view</span>
+          </div>
+        </section>
+      </div>
+    </aside>
+
+    <section class="viewport" id="sharedViewport" aria-label="Interactive 3D suspension linkage view">
+      <canvas id="scene" tabindex="0" aria-label="Drag to rotate the 3D suspension linkage model"></canvas>
+      <div class="viewport-meta" aria-hidden="true">
+        <span class="tag" id="unitTag"></span>
+        <span class="tag">CAD coordinates: +X front · +Y right · −Z up</span>
+        <span class="tag">Tire inputs only: +X front · +Y left · +Z sky</span>
+        <span class="tag">Shock chassis pickup</span>
+        <span class="tag warning" id="chassisVectorTag" hidden>Chassis resultants</span>
+        <span class="tag warning" id="mirrorTag" hidden>Mirrored side is illustrative</span>
+      </div>
+      <div class="tooltip" id="tooltip" role="tooltip"></div>
+      <div class="status" id="status"><div><strong>Preparing geometry</strong><span>Building the shared linkage model…</span></div></div>
+    </section>
+
+    <aside class="rail rail--inspect" id="geometryInspectRail" aria-label="Selected component details">
+      <div class="rail-inner">
+        <section>
+          <h2 class="inspect-heading">Live inspection</h2>
+          <p class="inspect-copy" id="inspectionHelp">Hover over a link for a quick read. Click it to keep its coordinates and force visible.</p>
+          <div class="readout" aria-live="polite">
+            <p class="readout-name" id="readoutName">No component selected</p>
+            <p class="readout-force" id="readoutForce">—</p>
+            <p class="readout-state" id="readoutState">Select a linkage</p>
+          </div>
+          <dl class="data-list" id="dataList"></dl>
+        </section>
+
+        <section class="section" aria-labelledby="legend-heading">
+          <h2 class="section-title" id="legend-heading">Color key</h2>
+          <div class="legend" id="legend"></div>
+        </section>
+
+        <section class="section force-section" aria-labelledby="forces-heading">
+          <h2 class="section-title" id="forces-heading">Active load path</h2>
+          <div class="force-table" id="forceTable"></div>
+        </section>
+      </div>
+    </aside>
+  </main>
+
+  <section class="sizing-view" id="sizingView" role="tabpanel" aria-labelledby="sizingTab" hidden>
+    <div class="sizing-shell">
+      <header class="sizing-head">
+        <div>
+          <h1 class="sizing-title">Governing member loads</h1>
+          <p class="sizing-copy">Peak axial force and governing margin across every simulated load case. Select Inspect to return to the exact corner and case in the 3D view.</p>
+        </div>
+        <div class="sizing-filters" aria-label="Sizing filters">
+          <div class="field">
+            <label for="sizingCorner">Corner</label>
+            <select id="sizingCorner"><option value="all">All four corners</option></select>
+          </div>
+          <div class="field">
+            <label for="sizingState">Peak state</label>
+            <select id="sizingState">
+              <option value="all">Tension + compression</option>
+              <option value="tension">Tension</option>
+              <option value="compression">Compression</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="sizingStatus">Margin status</label>
+            <select id="sizingStatus">
+              <option value="all">All statuses</option>
+              <option value="fail">Fail · MS &lt; 0</option>
+              <option value="caution">Caution · MS 0–0.5</option>
+              <option value="pass">Pass · MS &gt; 0.5</option>
+              <option value="unrated">Unrated</option>
+            </select>
+          </div>
+        </div>
+      </header>
+
+      <div class="sizing-metrics" aria-live="polite">
+        <div class="sizing-metric"><strong id="sizingRowCount">0</strong><span>members shown</span></div>
+        <div class="sizing-metric"><strong id="sizingFailCount">0</strong><span>failed margins</span></div>
+        <div class="sizing-metric"><strong id="sizingCautionCount">0</strong><span>caution margins</span></div>
+        <div class="sizing-metric"><strong id="sizingUnratedCount">0</strong><span>unrated components</span></div>
+      </div>
+      <p class="sizing-proxy-note"><strong>JMX screening only:</strong> each displayed JMX margin is an axial-tension proxy from the workbook—not a final radial or misalignment rating.</p>
+
+      <div class="sizing-table-wrap">
+        <table class="sizing-table">
+          <thead>
+            <tr>
+              <th>Corner / member</th>
+              <th class="numeric" aria-sort="none"><button class="sort-button" type="button" data-sizing-sort="peak">Peak axial</button></th>
+              <th>State</th>
+              <th>Peak case</th>
+              <th>Tube ID × OD</th>
+              <th>JMX inboard</th>
+              <th>JMX outboard</th>
+              <th class="numeric" aria-sort="ascending"><button class="sort-button" type="button" data-sizing-sort="margin" data-active="true" data-arrow="↑">Governing MS</button></th>
+              <th>Governing mode / case</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="sizingTableBody"></tbody>
+        </table>
+      </div>
+
+      <footer class="sizing-foot">
+        <p><strong>Margin convention:</strong> MS = allowable ÷ applied − 1. Negative is a predicted failure; zero is the allowable boundary. Tube checks include yield, ultimate, and Euler buckling with the workbook’s safety factors.</p>
+        <p><strong>JMX scope:</strong> selections follow Manufacturing Summary. JMX margin uses the workbook-derived axial tensile allowable as a screening proxy; verify final rod-end radial ratings, misalignment, threads, bolts, tabs, fatigue, and manufacturer data before release.</p>
+      </footer>
+    </div>
+  </section>
+
+  <section class="sizing-view" id="chassisView" role="tabpanel" aria-labelledby="chassisTab" hidden>
+    <div class="sizing-shell">
+      <header class="sizing-head">
+        <div>
+          <h1 class="sizing-title">Loads into the chassis</h1>
+          <p class="sizing-copy">Suspension-on-chassis forces at every physical mounting interface. Push/pull-rod forces are internal and reach the chassis through the rocker axis and shock mount.</p>
+        </div>
+        <div class="sizing-filters" aria-label="Chassis load filters">
+          <div class="field">
+            <label for="chassisCorner">Corner</label>
+            <select id="chassisCorner"><option value="all">All four corners</option></select>
+          </div>
+          <div class="field">
+            <label for="chassisCase">Load case / envelope</label>
+            <select id="chassisCase"></select>
+          </div>
+        </div>
+      </header>
+
+      <div class="sizing-metrics" aria-live="polite">
+        <div class="sizing-metric"><strong id="chassisInterfaceCount">0</strong><span>mounting interfaces</span></div>
+        <div class="sizing-metric"><strong id="chassisCornerCount">0</strong><span>corners shown</span></div>
+      </div>
+      <p class="sizing-proxy-note chassis-note"><strong>Hardpoint resultant:</strong> |F| = √(Fx² + Fy² + Fz²). The envelope chooses the case with the largest |F| independently at each hardpoint; arrow lengths use one shared scale across the displayed corners.</p>
+
+      <div class="sizing-table-wrap">
+        <table class="sizing-table chassis-table">
+          <thead>
+            <tr>
+              <th>Corner / hardpoint</th>
+              <th>Governing case</th>
+              <th>Pickup X, Y, Z</th>
+              <th class="numeric">Fx (lbf)</th>
+              <th class="numeric">Fy (lbf)</th>
+              <th class="numeric">Fz (lbf)</th>
+              <th class="numeric">|F| (lbf)</th>
+              <th class="numeric">Mx (lbf·in)</th>
+              <th class="numeric">My (lbf·in)</th>
+              <th class="numeric">Mz (lbf·in)</th>
+            </tr>
+          </thead>
+          <tbody id="chassisTableBody"></tbody>
+        </table>
+      </div>
+
+      <footer class="sizing-foot">
+        <p><strong>Load convention:</strong> each vector is applied by the suspension to the chassis. Direct links and the shock are two-force members; the rocker row is an equivalent wrench at the physical pivot-axis midpoint.</p>
+        <p><strong>Axes:</strong> tire-load inputs use +X toward the front, +Y toward the left, and +Z skyward. Hardpoint coordinates remain in the original CAD coordinate basis; they are not relabeled or sign-flipped.</p>
+      </footer>
+
+      <h2 class="section-title chassis-visual-title">Hardpoint resultant visualization</h2>
+      <p class="sizing-copy">Each red arrow starts at its hardpoint, follows the suspension-on-chassis load direction, and uses one magnitude scale across the displayed corners. Hover or click an arrow to inspect it.</p>
+      <div class="chassis-canvas-host" id="chassisCanvasHost" aria-label="Interactive chassis hardpoint resultant visualizer"></div>
+    </div>
+  </section>
+
+  <script id="model-data" type="application/json">{"config":{"notes":"All listed coordinates are the ride-height reference geometry. Every applied suspension force is the full opposite of the workbook tire-force vector: Fx, Fy, and Fz are all sign-reversed. Wishbone and tire-load coordinates are adapted from the supplied Mk11 workbook. Front and rear rocker/shock points are transformed from user-supplied CAD coordinates. The rear rocker pivot axis uses two measured CAD points; the front pivot axis is assumed parallel to model X through its supplied chassis pickup center.","tire_force_convention":"Tire-load inputs use vehicle axes: +X toward the front, +Y toward the left side, and +Z upward. CAD coordinates retain their original basis (+Y right and -Z upward).","vehicle":{"full_car_weight_lbf":631.0,"front_weight_fraction":0.504,"rear_weight_fraction":0.496,"total_unsprung_weight_lbf":86.5},"sizing":{"material":{"elastic_modulus_psi":29000000.0,"yield_strength_psi":70000.0,"ultimate_strength_psi":95000.0,"yield_safety_factor":1.3,"ultimate_safety_factor":1.5,"effective_length_factor":1.0},"jmx_safe_axial_load_lbf":{"JMX3":1024.591645,"JMX4":1881.068572,"JMX5":3016.410035},"front":{"steering_tie_rod":{"tube_id_in":0.34,"tube_od_in":0.4375,"chassis_jmx":"JMX4","wheel_jmx":"JMX3"},"lower_fore":{"tube_id_in":0.444,"tube_od_in":0.5,"chassis_jmx":"JMX4","wheel_jmx":"NA"},"lower_aft":{"tube_id_in":0.34,"tube_od_in":0.4375,"chassis_jmx":"JMX3","wheel_jmx":"NA"},"upper_fore":{"tube_id_in":0.34,"tube_od_in":0.4375,"chassis_jmx":"JMX3","wheel_jmx":"NA"},"upper_aft":{"tube_id_in":0.34,"tube_od_in":0.4375,"chassis_jmx":"JMX3","wheel_jmx":"NA"},"pullrod":{"tube_id_in":0.323,"tube_od_in":0.5625,"chassis_jmx":"JMX3","wheel_jmx":"JMX3"}},"rear":{"rear_tie_rod":{"tube_id_in":0.384,"tube_od_in":0.5,"chassis_jmx":"JMX3","wheel_jmx":"JMX3"},"lower_fore":{"tube_id_in":0.402,"tube_od_in":0.5,"chassis_jmx":"JMX4","wheel_jmx":"NA"},"lower_aft":{"tube_id_in":0.402,"tube_od_in":0.5,"chassis_jmx":"JMX5","wheel_jmx":"NA"},"upper_fore":{"tube_id_in":0.34,"tube_od_in":0.4375,"chassis_jmx":"JMX3","wheel_jmx":"NA"},"upper_aft":{"tube_id_in":0.34,"tube_od_in":0.4375,"chassis_jmx":"JMX3","wheel_jmx":"NA"},"pushrod":{"tube_id_in":0.444,"tube_od_in":0.5,"chassis_jmx":"JMX3","wheel_jmx":"JMX3"}},"source_note":"Tube geometry and margins follow Summary Front/Rear. JMX selections follow Manufacturing Summary. JMX safe axial loads are derived from Rod end and plugs using 70 ksi and FSy 1.3."},"assemblies":[{"name":"front_right","axle":"front","spring_rate_lbf_per_in":600.0,"coordinate_units":"in","force_units":"lbf","tire_force_to_coordinate_signs":[1.0,-1.0,-1.0],"contact_patch":[0.0,25.5,0.0],"members":[{"name":"steering_tie_rod","role":"tie_rod","application":[2.15,21.1,-6.89412519],"anchor":[3.9,8.7,-6.15]},{"name":"lower_fore","application":[-0.15484862,20.75,-4.62744094],"anchor":[6.95,7.62636793,-4.395]},{"name":"lower_aft","application":[-0.15484862,20.75,-4.62744094],"anchor":[-2.7,7.62636793,-4.395]},{"name":"upper_fore","application":[-0.76246773,20.3102437,-11.57255906],"anchor":[6.95,9.81018934,-10.0]},{"name":"upper_aft","application":[-0.76246773,20.3102437,-11.57255906],"anchor":[-2.7,9.81018934,-10.0]},{"name":"pullrod","role":"pushrod","application":[-0.20748083,19.48671836,-5.35518379],"anchor":[-0.21,11.35,-23.9]}],"rocker":{"pivot_axis":[[-1.21,8.33,-24.4],[0.79,8.33,-24.4]],"pushrod_pickup":[-0.21,11.35,-23.9],"shock_pickup":[-0.21,9.17,-26.79],"shock_chassis_pickup":[-0.207,2.0,-24.903]},"load_cases":[{"name":"case_1_linear_accel","force":[48.7544,0.0,103.8425]},{"name":"case_2_braking","force":[451.3544,0.0,323.6225]},{"name":"case_3_accel_corner","force":[48.7544,-406.0447,281.8825]},{"name":"case_4_brake_corner","force":[248.1622,339.2734,361.5148]}]},{"name":"front_left","axle":"front","spring_rate_lbf_per_in":600.0,"coordinate_units":"in","force_units":"lbf","tire_force_to_coordinate_signs":[1.0,-1.0,-1.0],"contact_patch":[0.0,-25.5,0.0],"members":[{"name":"steering_tie_rod","role":"tie_rod","application":[2.15,-21.1,-6.89412519],"anchor":[3.9,-8.7,-6.15]},{"name":"lower_fore","application":[-0.15484862,-20.75,-4.62744094],"anchor":[6.95,-7.62636793,-4.395]},{"name":"lower_aft","application":[-0.15484862,-20.75,-4.62744094],"anchor":[-2.7,-7.62636793,-4.395]},{"name":"upper_fore","application":[-0.76246773,-20.3102437,-11.57255906],"anchor":[6.95,-9.81018934,-10.0]},{"name":"upper_aft","application":[-0.76246773,-20.3102437,-11.57255906],"anchor":[-2.7,-9.81018934,-10.0]},{"name":"pullrod","role":"pushrod","application":[-0.20748083,-19.48671836,-5.35518379],"anchor":[-0.21,-11.35,-23.9]}],"rocker":{"pivot_axis":[[-1.21,-8.33,-24.4],[0.79,-8.33,-24.4]],"pushrod_pickup":[-0.21,-11.35,-23.9],"shock_pickup":[-0.21,-9.17,-26.79],"shock_chassis_pickup":[-0.207,-2.0,-24.903]},"load_cases":[{"name":"case_1_linear_accel","force":[48.7544,0.0,103.8425]},{"name":"case_2_braking","force":[451.3544,0.0,323.6225]},{"name":"case_3_accel_corner","force":[48.7544,-51.7802,56.0222]},{"name":"case_4_brake_corner","force":[248.1622,64.1706,162.4825]}]},{"name":"rear_right","axle":"rear","spring_rate_lbf_per_in":450.0,"coordinate_units":"in","force_units":"lbf","tire_force_to_coordinate_signs":[1.0,-1.0,-1.0],"contact_patch":[-61.0,25.5,0.0],"members":[{"name":"rear_tie_rod","role":"tie_rod","application":[-57.85,20.75,-6.6],"anchor":[-52.73306567,11.01527574,-6.31855306]},{"name":"lower_fore","application":[-62.375,20.75,-5.22055],"anchor":[-53.5,10.912,-5.37886759]},{"name":"lower_aft","application":[-62.375,20.75,-5.22055],"anchor":[-60.5,10.912,-5.37886759]},{"name":"upper_fore","application":[-61.42579354,20.44337683,-11.18376063],"anchor":[-52.5,12.017909,-9.665]},{"name":"upper_aft","application":[-61.42579354,20.44337683,-11.18376063],"anchor":[-60.5,12.017909,-9.665]},{"name":"pushrod","role":"pushrod","application":[-61.32233791,19.32992143,-11.75452775],"anchor":[-60.88,16.02,-12.02]}],"rocker":{"pivot_axis":[[-58.94,11.36,-10.67],[-62.34,10.92,-10.86]],"pushrod_pickup":[-60.88,16.02,-12.02],"shock_pickup":[-60.42,14.09,-15.71],"shock_chassis_pickup":[-59.5,6.58,-14.73]},"load_cases":[{"name":"case_1_linear_accel","force":[-488.0456,0.0,349.9128]},{"name":"case_2_braking","force":[317.1544,0.0,130.1328]},{"name":"case_3_accel_corner","force":[-130.2348,-570.4961,439.69]},{"name":"case_4_brake_corner","force":[181.6929,475.8796,328.246]}]},{"name":"rear_left","axle":"rear","spring_rate_lbf_per_in":450.0,"coordinate_units":"in","force_units":"lbf","tire_force_to_coordinate_signs":[1.0,-1.0,-1.0],"contact_patch":[-61.0,-25.5,0.0],"members":[{"name":"rear_tie_rod","role":"tie_rod","application":[-57.85,-20.75,-6.6],"anchor":[-52.73306567,-11.01527574,-6.31855306]},{"name":"lower_fore","application":[-62.375,-20.75,-5.22055],"anchor":[-53.5,-10.912,-5.37886759]},{"name":"lower_aft","application":[-62.375,-20.75,-5.22055],"anchor":[-60.5,-10.912,-5.37886759]},{"name":"upper_fore","application":[-61.42579354,-20.44337683,-11.18376063],"anchor":[-52.5,-12.017909,-9.665]},{"name":"upper_aft","application":[-61.42579354,-20.44337683,-11.18376063],"anchor":[-60.5,-12.017909,-9.665]},{"name":"pushrod","role":"pushrod","application":[-61.32233791,-19.32992143,-11.75452775],"anchor":[-60.88,-16.02,-12.02]}],"rocker":{"pivot_axis":[[-58.94,-11.36,-10.67],[-62.34,-10.92,-10.86]],"pushrod_pickup":[-60.88,-16.02,-12.02],"shock_pickup":[-60.42,-14.09,-15.71],"shock_chassis_pickup":[-59.5,-6.58,-14.73]},"load_cases":[{"name":"case_1_linear_accel","force":[-488.0456,0.0,349.9128]},{"name":"case_2_braking","force":[317.1544,0.0,130.1328]},{"name":"case_3_accel_corner","force":[-130.2348,-57.4241,129.9161]},{"name":"case_4_brake_corner","force":[181.6929,77.4554,55.2674]}]}]},"result":{"model":"3D rigid-body equilibrium with axial two-force members and nonlinear rigid-link kinematics","sign_convention":"positive = tension; negative = compression","ride_height":{"full_car_weight_lbf":631.0,"total_unsprung_weight_lbf":86.5,"unsprung_weight_per_corner_lbf":21.625,"front_tire_load_per_corner_lbf":159.012,"rear_tire_load_per_corner_lbf":156.488,"front_spring_supported_wheel_load_lbf":137.387,"rear_spring_supported_wheel_load_lbf":134.863,"assumption":"symmetric left/right loading and equal unsprung weight at all four corners"},"assemblies":[{"name":"front_right","coordinate_units":"in","force_units":"lbf","condition_number_inf":242.14276447897424,"geometry_warning":null,"member_geometry":[{"name":"steering_tie_rod","application":[2.15,21.1,-6.89412519],"anchor":[3.9,8.7,-6.15],"direction_application_to_anchor":[0.13949816364727627,-0.9884441309864149,0.05931662715924597],"length":12.544968007069311,"role":"tie_rod"},{"name":"lower_fore","application":[-0.15484862,20.75,-4.62744094],"anchor":[6.95,7.62636793,-4.395],"direction_application_to_anchor":[0.4760292828429281,-0.879291522832833,0.0155736877574087],"length":14.92523438383587,"role":"link"},{"name":"lower_aft","application":[-0.15484862,20.75,-4.62744094],"anchor":[-2.7,7.62636793,-4.395],"direction_application_to_anchor":[-0.19036038344488865,-0.9815603318003182,0.017385035253459212],"length":13.370173635612833,"role":"link"},{"name":"upper_fore","application":[-0.76246773,20.3102437,-11.57255906],"anchor":[6.95,9.81018934,-10.0],"direction_application_to_anchor":[0.5877178959680438,-0.8001420650364632,0.11983467994733309],"length":13.122737597255934,"role":"link"},{"name":"upper_aft","application":[-0.76246773,20.3102437,-11.57255906],"anchor":[-2.7,9.81018934,-10.0],"direction_application_to_anchor":[-0.17952576164494083,-0.9729026377931148,0.14570847017590685],"length":10.79250271519236,"role":"link"},{"name":"pullrod","application":[-0.20748083,19.48671836,-5.35518379],"anchor":[-0.21,11.35,-23.9],"direction_application_to_anchor":[-0.00012439528154848607,-0.4017868469666363,-0.9157332112195247],"length":20.251330827352,"role":"pushrod"}],"ride_height_reference":{"wheel_load_supported_by_spring":137.387,"shock_force":-201.87403476476254,"shock_compression_force":201.87403476476254,"spring_rate":600.0,"spring_compression_from_free_length":0.3364567246079376},"load_cases":[{"name":"case_1_linear_accel","external_wrench":[48.7544,-0.0,-103.8425,0.0,0.0,0.0],"members":[{"name":"steering_tie_rod","force":-106.29536846833247,"state":"compression","length":12.544968007069315},{"name":"lower_fore","force":-54.79350512614817,"state":"compression","length":14.92523438383587},{"name":"lower_aft","force":260.4071963313439,"state":"tension","length":13.370173635612833},{"name":"upper_fore","force":43.719181537920115,"state":"tension","length":13.122737597255947},{"name":"upper_aft","force":-89.2240848732392,"state":"compression","length":10.792502715192375},{"name":"pullrod","force":-125.11340184482195,"state":"compression","length":20.25133082735115}],"rocker":{"shock_force":-152.1183878723008,"shock_state":"compression","shock_length":7.49707997458824,"shock_direction_rocker_to_chassis":[0.0004001557953454729,-0.9690242941410129,0.24696509316065524],"pushrod_force_on_rocker":[-0.015574111082704267,-50.425983567601314,-114.50145527403117],"pivot_reaction":[0.07644516556841592,-96.98042986622377,152.06938710636263],"pivot_reaction_magnitude":180.36160377365704,"pivot_reaction_moment":[-0.0,-152.20304835532949,-97.08402033092986],"pushrod_axis_moment":-311.95043445587214,"shock_axis_moment_per_unit_force":-2.0507082596598774},"max_equilibrium_residual":1.9895196601282805e-13,"kinematics":{"upright_translation":[-6.2791226237016035e-06,-0.008169322253305893,0.12167369086601157],"upright_rotation_vector_rad":[0.0020881378130069538,8.773413637750199e-08,1.408916560768907e-06],"rocker_rotation_rad":0.03997877780599771,"shock_travel_from_ride_height":-0.08292607815474362,"spring_force":152.11838787191635,"geometry":{"contact_patch":[-6.2791226237016035e-06,25.491830677746695,0.12167369086601157],"members":[{"name":"steering_tie_rod","role":"tie_rod","application":[2.1499993047095787,21.10623917285052,-6.781624454011215],"anchor":[3.9,8.7,-6.15]},{"name":"lower_fore","application":[-0.15484862000000163,20.751503542705592,-4.515675794623366],"anchor":[6.95,7.62636793,-4.395]},{"name":"lower_aft","application":[-0.15484862000000163,20.751503542705592,-4.515675794623366],"anchor":[-2.7,7.62636793,-4.395]},{"name":"upper_fore","application":[-0.7624677299999987,20.32624969852759,-11.461696991837918],"anchor":[6.95,9.81018934,-10.0]},{"name":"upper_aft","application":[-0.7624677299999987,20.32624969852759,-11.461696991837918],"anchor":[-2.7,9.81018934,-10.0]},{"name":"pullrod","role":"pushrod","application":[-0.20747911517689407,19.489744208961326,-5.246054957732065],"anchor":[-0.20999999999999996,11.327602819914514,-23.77969577299477]}],"rocker":{"pivot_axis":[[-1.21,8.33,-24.4],[0.79,8.33,-24.4]],"pushrod_pickup":[-0.20999999999999996,11.327602819914514,-23.77969577299477],"shock_pickup":[-0.20999999999999996,9.264852630494092,-26.754517054357066],"shock_chassis_pickup":[-0.207,2.0,-24.903]}},"iterations":3,"max_constraint_residual":8.490985692333197e-13}},{"name":"case_2_braking","external_wrench":[451.3544,-0.0,-323.6225,0.0,0.0,0.0],"members":[{"name":"steering_tie_rod","force":-856.059024157937,"state":"compression","length":12.544968007121659},{"name":"lower_fore","force":-796.9053972676159,"state":"compression","length":14.925234383862417},{"name":"lower_aft","force":1731.756278887043,"state":"tension","length":13.370173635643505},{"name":"upper_fore","force":512.3002939096191,"state":"tension","length":13.122737597292163},{"name":"upper_aft","force":-422.98637778178977,"state":"compression","length":10.792502715265426},{"name":"pullrod","force":-384.25437144902264,"state":"compression","length":20.25133082911376}],"rocker":{"shock_force":-475.5306815733939,"shock_state":"compression","shock_length":6.9580594830722715,"shock_direction_rocker_to_chassis":[0.0004311546929569149,-0.9574327844054756,0.28865598461006997],"pushrod_force_on_rocker":[-0.04877255433977368,-153.01630224202904,-352.47330515529455],"pivot_reaction":[0.25379983934514283,-302.27236228701906,489.7380822571602],"pivot_reaction_magnitude":575.510238510015,"pivot_reaction_moment":[-0.0,-490.2593519842211,-302.4895688050881],"pushrod_axis_moment":-1097.896237312921,"shock_axis_moment_per_unit_force":-2.308781073137697},"max_equilibrium_residual":9.094947017729282e-13,"kinematics":{"upright_translation":[-0.0001877941202271216,0.03036775522748502,-0.6716860831871568],"upright_rotation_vector_rad":[-0.012094386670227527,2.922756807006406e-06,4.211808123210718e-05],"rocker_rotation_rad":-0.20659741117402444,"shock_travel_from_ride_height":0.4560944133612246,"spring_force":475.53068278149726,"geometry":{"contact_patch":[-0.0001877941202271216,25.530367755227484,-0.6716860831871568],"members":[{"name":"steering_tie_rod","role":"tie_rod","application":[2.1499792032957235,21.047401888604107,-7.512099890648332],"anchor":[3.9,8.7,-6.15]},{"name":"lower_fore","application":[-0.15484861999856522,20.724743941471793,-5.241341161845371],"anchor":[6.95,7.62636793,-4.395]},{"name":"lower_aft","application":[-0.15484861999856522,20.724743941471793,-5.241341161845371],"anchor":[-2.7,7.62636793,-4.395]},{"name":"upper_fore","application":[-0.7624677299675465,20.2009993269129,-12.180630958568107],"anchor":[6.95,9.81018934,-10.0]},{"name":"upper_aft","application":[-0.7624677299675465,20.2009993269129,-12.180630958568107],"anchor":[-2.7,9.81018934,-10.0]},{"name":"pullrod","role":"pushrod","application":[-0.20742954353494783,19.452751089537685,-5.9537523761909155],"anchor":[-0.20999999999999996,11.388343787506265,-24.530127927140278]}],"rocker":{"pivot_axis":[[-1.21,8.33,-24.4],[0.79,8.33,-24.4]],"pushrod_pickup":[-0.20999999999999996,11.388343787506265,-24.530127927140278],"shock_pickup":[-0.20999999999999996,8.66187426493681,-26.91148551106166],"shock_chassis_pickup":[-0.207,2.0,-24.903]}},"iterations":3,"max_constraint_residual":2.013505593367881e-09}},{"name":"case_3_accel_corner","external_wrench":[48.7544,406.0447,-281.8825,0.0,0.0,0.0],"members":[{"name":"steering_tie_rod","force":-182.67581009546066,"state":"compression","length":12.544968007063199},{"name":"lower_fore","force":241.39788982583332,"state":"tension","length":14.925234383823714},{"name":"lower_aft","force":976.0726365037557,"state":"tension","length":13.370173635599642},{"name":"upper_fore","force":-47.3613009333388,"state":"compression","length":13.122737597246543},{"name":"upper_aft","force":-420.06578243205365,"state":"compression","length":10.792502715193654},{"name":"pullrod","force":-351.04096872983655,"state":"compression","length":20.251330827767372}],"rocker":{"shock_force":-434.3012987231205,"shock_state":"compression","shock_length":7.026775122706528,"shock_direction_rocker_to_chassis":[0.00042693838177710946,-0.9587473457789464,0.28425929129132],"pushrod_force_on_rocker":[-0.04431056922338031,-139.86722161828524,-321.9734772929861],"pivot_reaction":[0.2297304629039264,-276.51799580085583,445.4276566749202],"pivot_reaction_magnitude":524.2786016124617,"pivot_reaction_moment":[1.1368683772161603e-13,-445.8929924413769,-276.729072351123],"pushrod_axis_moment":-990.9067198494708,"shock_axis_moment_per_unit_force":-2.2816112288008656},"max_equilibrium_residual":5.115907697472721e-13,"kinematics":{"upright_translation":[-0.00013576976317953513,0.02737552325166065,-0.5705752474680995],"upright_rotation_vector_rad":[-0.01021108196535783,2.0843763357966782e-06,3.045207905077419e-05],"rocker_rotation_rad":-0.17665988028128166,"shock_travel_from_ride_height":0.38737877372696783,"spring_force":434.30129900094323,"geometry":{"contact_patch":[-0.00013576976317953513,25.52737552325166,-0.5705752474680995],"members":[{"name":"steering_tie_rod","role":"tie_rod","application":[2.149984965027037,21.057275102599867,-7.419417864327268],"anchor":[3.9,8.7,-6.15]},{"name":"lower_fore","application":[-0.15484861999947777,20.730368084027457,-5.149272803575447],"anchor":[6.95,7.62636793,-4.395]},{"name":"lower_aft","application":[-0.15484861999947777,20.730368084027457,-5.149272803575447],"anchor":[-2.7,7.62636793,-4.395]},{"name":"upper_fore","application":[-0.7624677299857812,20.219700275191734,-12.089537185656118],"anchor":[6.95,9.81018934,-10.0]},{"name":"upper_aft","application":[-0.7624677299857812,20.219700275191734,-12.089537185656118],"anchor":[-2.7,9.81018934,-10.0]},{"name":"pullrod","role":"pushrod","application":[-0.2074437513668099,19.459719787874274,-5.864078348360991],"anchor":[-0.20999999999999996,11.390868487693242,-24.438524032064205]}],"rocker":{"pivot_axis":[[-1.21,8.33,-24.4],[0.79,8.33,-24.4]],"pushrod_pickup":[-0.20999999999999996,11.390868487693242,-24.438524032064205],"shock_pickup":[-0.20999999999999996,8.736901998280414,-26.900426116444034],"shock_chassis_pickup":[-0.207,2.0,-24.903]}},"iterations":3,"max_constraint_residual":4.6303786878828153e-10}},{"name":"case_4_brake_corner","external_wrench":[248.1622,-339.2734,-361.5148,0.0,0.0,0.0],"members":[{"name":"steering_tie_rod","force":-475.5624942084511,"state":"compression","length":12.544968007482542},{"name":"lower_fore","force":-546.0827348307988,"state":"compression","length":14.9252343841396},{"name":"lower_aft","force":721.8949456876123,"state":"tension","length":13.370173635954202},{"name":"upper_fore","force":310.28201856129533,"state":"tension","length":13.122737597599949},{"name":"upper_aft","force":-184.58918168807784,"state":"compression","length":10.792502715672386},{"name":"pullrod","force":-420.3140666635611,"state":"compression","length":20.25133083321729}],"rocker":{"shock_force":-520.0899189227024,"shock_state":"compression","shock_length":6.8837940825025585,"shock_direction_rocker_to_chassis":[0.00043580617956389306,-0.9560740650949419,0.2931248746282144],"pushrod_force_on_rocker":[-0.053720769222466706,-167.32334368553893,-385.5733528230788],"pivot_reaction":[0.28037916981786454,-329.9211393137879,538.0246451026941],"pivot_reaction_magnitude":631.1248335444159,"pivot_reaction_moment":[2.2737367544323206e-13,-538.6082474188362,-330.1421142177227],"pushrod_axis_moment":-1215.1306550786267,"shock_axis_moment_per_unit_force":-2.336385711139353},"max_equilibrium_residual":5.186961971048731e-13,"kinematics":{"upright_translation":[-0.0002532894778183282,0.03297591836177838,-0.7808111081006291],"upright_rotation_vector_rad":[-0.014152524761042503,4.000601963353626e-06,5.680330715337863e-05],"rocker_rotation_rad":-0.2385710494895237,"shock_travel_from_ride_height":0.5303598139309376,"spring_force":520.0899231233251,"geometry":{"contact_patch":[-0.0002532894778183282,25.532975918361778,-0.7808111081006291],"members":[{"name":"steering_tie_rod","role":"tie_rod","application":[2.149971949155836,21.035972605849388,-7.611986319276809],"anchor":[3.9,8.7,-6.15]},{"name":"lower_fore","application":[-0.15484861999679295,20.717955038208196,-5.340565701910554],"anchor":[6.95,7.62636793,-4.395]},{"name":"lower_aft","application":[-0.15484861999679295,20.717955038208196,-5.340565701910554],"anchor":[-2.7,7.62636793,-4.395]},{"name":"upper_fore","application":[-0.762467729930956,20.179920606275783,-12.278762171763306],"anchor":[6.95,9.81018934,-10.0]},{"name":"upper_aft","application":[-0.762467729930956,20.179920606275783,-12.278762171763306],"anchor":[-2.7,9.81018934,-10.0]},{"name":"pullrod","role":"pushrod","application":[-0.20741165676710524,19.444497868913047,-6.050357412451729],"anchor":[-0.20999999999999996,11.382620673143872,-24.627831134603333]}],"rocker":{"pivot_axis":[[-1.21,8.33,-24.4],[0.79,8.33,-24.4]],"pushrod_pickup":[-0.20999999999999996,11.382620673143872,-24.627831134603333],"shock_pickup":[-0.20999999999999996,8.581416991734727,-26.920811277400006],"shock_chassis_pickup":[-0.207,2.0,-24.903]}},"iterations":3,"max_constraint_residual":7.0010378294682595e-09}}],"chassis_loads":[{"name":"case_1_linear_accel","reference_point":[-6.2791226237016035e-06,25.491830677746695,0.12167369086601157],"interfaces":[{"name":"steering_tie_rod","type":"two_force_member","point":[3.9,8.7,-6.15],"force":[14.828014596841493,-105.11989854747182,5.3518473729783524],"force_magnitude":106.29536846833247,"local_moment":[0.0,0.0,0.0]},{"name":"lower_fore","type":"two_force_member","point":[6.95,7.62636793,-4.395],"force":[26.083312949650626,-48.184984368154524,0.4430248531613379],"force_magnitude":54.793505126148176,"local_moment":[0.0,0.0,0.0]},{"name":"lower_aft","type":"two_force_member","point":[-2.7,7.62636793,-4.395],"force":[49.57121374544301,255.63465812212524,-2.350369277121775],"force_magnitude":260.4071963313439,"local_moment":[0.0,0.0,0.0]},{"name":"upper_fore","type":"two_force_member","point":[6.95,9.81018934,-10.0],"force":[-25.694545386911326,35.03488113443117,-4.8697305471501995],"force_magnitude":43.719181537920115,"local_moment":[0.0,0.0,0.0]},{"name":"upper_aft","type":"two_force_member","point":[-2.7,9.81018934,-10.0],"force":[-16.0180217939411,-86.93867277332875,12.084182872163417],"force_magnitude":89.2240848732392,"local_moment":[0.0,0.0,0.0]},{"name":"rocker_pivot_axis","type":"rocker_axis_resultant","point":[-0.20999999999999996,8.33,-24.4],"force":[-0.07644516556841592,96.98042986622377,-152.06938710636263],"force_magnitude":180.36160377365704,"local_moment":[0.0,0.1336612489668596,0.10359046470608746]},{"name":"shock_chassis_pickup","type":"shock_mount","point":[-0.207,2.0,-24.903],"force":[0.06087105448571166,-147.4064134338251,37.56793183233145],"force_magnitude":152.1183878723008,"local_moment":[0.0,0.0,0.0]}],"resultant_force":[48.75439999999998,0.0,-103.84250000000003],"resultant_force_magnitude":114.71816040021739,"resultant_moment":[0.0,1.1812772982011666e-13,1.1723955140041653e-13]},{"name":"case_2_braking","reference_point":[-0.0001877941202271216,25.530367755227484,-0.6716860831871568],"interfaces":[{"name":"steering_tie_rod","type":"two_force_member","point":[3.9,8.7,-6.15],"force":[119.42008099441061,-842.5772633014092,92.94865499314903],"force_magnitude":856.059024157937,"local_moment":[0.0,0.0,0.0]},{"name":"lower_fore","type":"two_force_member","point":[6.95,7.62636793,-4.395],"force":[379.35030475421047,-699.3636595930833,45.188827354936535],"force_magnitude":796.9053972676159,"local_moment":[0.0,0.0,0.0]},{"name":"lower_aft","type":"two_force_member","point":[-2.7,7.62636793,-4.395],"force":[329.6577892814606,1696.5520059229925,-109.62136027904586],"force_magnitude":1731.756278887043,"local_moment":[0.0,0.0,0.0]},{"name":"upper_fore","type":"two_force_member","point":[6.95,9.81018934,-10.0],"force":[-301.0880508382736,405.64820951330404,-85.12994127181008],"force_magnitude":512.3002939096191,"local_moment":[0.0,0.0,0.0]},{"name":"upper_aft","type":"two_force_member","point":[-2.7,9.81018934,-10.0],"force":[-75.93695163746831,-407.24299029977504,85.46462435806497],"force_magnitude":422.9863777817898,"local_moment":[0.0,0.0,0.0]},{"name":"rocker_pivot_axis","type":"rocker_axis_resultant","point":[-0.20999999999999996,8.33,-24.4],"force":[-0.25379983934514283,302.27236228701906,-489.7380822571602],"force_magnitude":575.510238510015,"local_moment":[0.0,0.5212697270608828,0.2172065180690197]},{"name":"shock_chassis_pickup","type":"shock_mount","point":[-0.207,2.0,-24.903],"force":[0.20502728500536913,-455.2886645290481,137.26477710186566],"force_magnitude":475.5306815733939,"local_moment":[0.0,0.0,0.0]}],"resultant_force":[451.35440000000006,5.684341886080802e-14,-323.62249999999995],"resultant_force_magnitude":555.384836762411,"resultant_moment":[3.637978807091713e-12,2.984279490192421e-13,6.110667527536862e-13]},{"name":"case_3_accel_corner","reference_point":[-0.00013576976317953513,25.52737552325166,-0.5705752474680995],"interfaces":[{"name":"steering_tie_rod","type":"two_force_member","point":[3.9,8.7,-6.15],"force":[25.48315898557329,-179.94268607691362,18.484856763689706],"force_magnitude":182.6758100954607,"local_moment":[0.0,0.0,0.0]},{"name":"lower_fore","type":"two_force_member","point":[6.95,7.62636793,-4.395],"force":[-114.91246437367275,211.94159529501601,-12.199464239802511],"force_magnitude":241.39788982583337,"local_moment":[0.0,0.0,0.0]},{"name":"lower_aft","type":"two_force_member","point":[-2.7,7.62636793,-4.395],"force":[185.80556135513982,956.640977723066,-55.06473319603582],"force_magnitude":976.0726365037558,"local_moment":[0.0,0.0,0.0]},{"name":"upper_fore","type":"two_force_member","point":[6.95,9.81018934,-10.0],"force":[27.835084134819834,-37.56898865934356,7.541353222061381],"force_magnitude":47.36130093333881,"local_moment":[0.0,0.0,0.0]},{"name":"upper_aft","type":"two_force_member","point":[-2.7,9.81018934,-10.0],"force":[-75.41262953263681,-405.15897666353965,81.3289647430734],"force_magnitude":420.0657824320537,"local_moment":[0.0,0.0,0.0]},{"name":"rocker_pivot_axis","type":"rocker_axis_resultant","point":[-0.20999999999999996,8.33,-24.4],"force":[-0.2297304629039264,276.51799580085583,-445.4276566749202],"force_magnitude":524.2786016124617,"local_moment":[-1.1368683772161603e-13,0.46533576645674657,0.21107655026719385]},{"name":"shock_chassis_pickup","type":"shock_mount","point":[-0.207,2.0,-24.903],"force":[0.1854198936805461,-416.3852174191411,123.4541793819341],"force_magnitude":434.3012987231205,"local_moment":[0.0,0.0,0.0]}],"resultant_force":[48.7544,406.04470000000003,-281.88249999999994],"resultant_force_magnitude":496.6961180880116,"resultant_moment":[-3.637978807091713e-12,1.5631940186722204e-13,2.4158453015843406e-13]},{"name":"case_4_brake_corner","reference_point":[-0.0002532894778183282,25.532975918361778,-0.7808111081006291],"interfaces":[{"name":"steering_tie_rod","type":"two_force_member","point":[3.9,8.7,-6.15],"force":[66.34115800835875,-467.6397657949966,55.42189187562819],"force_magnitude":475.56249420845114,"local_moment":[0.0,0.0,0.0]},{"name":"lower_fore","type":"two_force_member","point":[6.95,7.62636793,-4.395],"force":[259.9513726290026,-478.9934621678697,34.59624761472624],"force_magnitude":546.0827348307987,"local_moment":[0.0,0.0,0.0]},{"name":"lower_aft","type":"two_force_member","point":[-2.7,7.62636793,-4.395],"force":[137.42019866468547,706.8532407859128,-51.053869576471904],"force_magnitude":721.8949456876123,"local_moment":[0.0,0.0,0.0]},{"name":"upper_fore","type":"two_force_member","point":[6.95,9.81018934,-10.0],"force":[-182.3582950991489,245.18825628477785,-53.88044386448416],"force_magnitude":310.2820185612953,"local_moment":[0.0,0.0,0.0]},{"name":"upper_aft","type":"two_force_member","point":[-2.7,9.81018934,-10.0],"force":[-33.138513433675506,-177.3583254222854,38.97472677368048],"force_magnitude":184.58918168807787,"local_moment":[0.0,0.0,0.0]},{"name":"rocker_pivot_axis","type":"rocker_axis_resultant","point":[-0.20999999999999996,8.33,-24.4],"force":[-0.28037916981786454,329.9211393137879,-538.0246451026941],"force_magnitude":631.1248335444159,"local_moment":[-2.2737367544323206e-13,0.5836023161421053,0.22097490393480257]},{"name":"shock_chassis_pickup","type":"shock_mount","point":[-0.207,2.0,-24.903],"force":[0.22665840059539782,-497.2444829993268,152.45129227961533],"force_magnitude":520.0899189227023,"local_moment":[0.0,0.0,0.0]}],"resultant_force":[248.1621999999999,-339.27340000000004,-361.5147999999999],"resultant_force_magnitude":554.4221028020437,"resultant_moment":[1.8189894035458565e-12,7.958078640513122e-13,-9.521272659185342e-13]}],"sizing_summary":[{"member":"steering_tie_rod","peak_force":-856.059024157937,"peak_state":"compression","peak_case":"case_2_braking","max_tension_force":null,"max_tension_case":null,"max_compression_force":-856.059024157937,"max_compression_case":"case_2_braking","tube_id_in":0.34,"tube_od_in":0.4375,"critical_buckling_load_lbf":2077.6900315565067,"chassis_jmx":"JMX4","wheel_jmx":"JMX3","chassis_jmx_margin":1.1973584985571692,"wheel_jmx_margin":0.19687032796347226,"governing_margin":0.19687032796347226,"governing_margin_mode":"wheel JMX3 axial proxy","governing_margin_case":"case_2_braking"},{"member":"lower_fore","peak_force":-796.9053972676159,"peak_state":"compression","peak_case":"case_2_braking","max_tension_force":241.39788982583332,"max_tension_case":"case_3_accel_corner","max_compression_force":-796.9053972676159,"max_compression_case":"case_2_braking","tube_id_in":0.444,"tube_od_in":0.5,"critical_buckling_load_lbf":1490.819211819677,"chassis_jmx":"JMX4","wheel_jmx":"NA","chassis_jmx_margin":1.3604665979797619,"wheel_jmx_margin":null,"governing_margin":0.2471737272130532,"governing_margin_mode":"tube Euler buckling","governing_margin_case":"case_2_braking"},{"member":"lower_aft","peak_force":1731.756278887043,"peak_state":"tension","peak_case":"case_2_braking","max_tension_force":1731.756278887043,"max_tension_case":"case_2_braking","max_compression_force":null,"max_compression_case":null,"tube_id_in":0.34,"tube_od_in":0.4375,"critical_buckling_load_lbf":1829.1350740268138,"chassis_jmx":"JMX3","wheel_jmx":"NA","chassis_jmx_margin":-0.40835113029965175,"wheel_jmx_margin":null,"governing_margin":-0.40835113029965175,"governing_margin_mode":"chassis JMX3 axial proxy","governing_margin_case":"case_2_braking"},{"member":"upper_fore","peak_force":512.3002939096191,"peak_state":"tension","peak_case":"case_2_braking","max_tension_force":512.3002939096191,"max_tension_case":"case_2_braking","max_compression_force":-47.3613009333388,"max_compression_case":"case_3_accel_corner","tube_id_in":0.34,"tube_od_in":0.4375,"critical_buckling_load_lbf":1898.7639727090902,"chassis_jmx":"JMX3","wheel_jmx":"NA","chassis_jmx_margin":0.9999825437944414,"wheel_jmx_margin":null,"governing_margin":0.9999825437944414,"governing_margin_mode":"chassis JMX3 axial proxy","governing_margin_case":"case_2_braking"},{"member":"upper_aft","peak_force":-422.98637778178977,"peak_state":"compression","peak_case":"case_2_braking","max_tension_force":null,"max_tension_case":null,"max_compression_force":-422.98637778178977,"max_compression_case":"case_2_braking","tube_id_in":0.34,"tube_od_in":0.4375,"critical_buckling_load_lbf":2807.2141163479773,"chassis_jmx":"JMX3","wheel_jmx":"NA","chassis_jmx_margin":1.4222804771471065,"wheel_jmx_margin":null,"governing_margin":1.4222804771471065,"governing_margin_mode":"chassis JMX3 axial proxy","governing_margin_case":"case_2_braking"},{"member":"pullrod","peak_force":-420.3140666635611,"peak_state":"compression","peak_case":"case_4_brake_corner","max_tension_force":null,"max_tension_case":null,"max_compression_force":-420.3140666635611,"max_compression_case":"case_4_brake_corner","tube_id_in":0.323,"tube_od_in":0.5625,"critical_buckling_load_lbf":3056.7751074142616,"chassis_jmx":"JMX3","wheel_jmx":"JMX3","chassis_jmx_margin":1.4376810729490304,"wheel_jmx_margin":1.4376810729490304,"governing_margin":1.4376810729490304,"governing_margin_mode":"chassis JMX3 axial proxy","governing_margin_case":"case_4_brake_corner"},{"member":"shock","peak_force":-520.0899189227024,"peak_state":"compression","peak_case":"case_4_brake_corner","chassis_jmx":"NA","wheel_jmx":"NA","chassis_jmx_margin":null,"wheel_jmx_margin":null,"governing_margin":null,"governing_margin_mode":"damper rating not supplied","governing_margin_case":"case_4_brake_corner"}]},{"name":"front_left","coordinate_units":"in","force_units":"lbf","condition_number_inf":242.14276447897424,"geometry_warning":null,"member_geometry":[{"name":"steering_tie_rod","application":[2.15,-21.1,-6.89412519],"anchor":[3.9,-8.7,-6.15],"direction_application_to_anchor":[0.13949816364727627,0.9884441309864149,0.05931662715924597],"length":12.544968007069311,"role":"tie_rod"},{"name":"lower_fore","application":[-0.15484862,-20.75,-4.62744094],"anchor":[6.95,-7.62636793,-4.395],"direction_application_to_anchor":[0.4760292828429281,0.879291522832833,0.0155736877574087],"length":14.92523438383587,"role":"link"},{"name":"lower_aft","application":[-0.15484862,-20.75,-4.62744094],"anchor":[-2.7,-7.62636793,-4.395],"direction_application_to_anchor":[-0.19036038344488865,0.9815603318003182,0.017385035253459212],"length":13.370173635612833,"role":"link"},{"name":"upper_fore","application":[-0.76246773,-20.3102437,-11.57255906],"anchor":[6.95,-9.81018934,-10.0],"direction_application_to_anchor":[0.5877178959680438,0.8001420650364632,0.11983467994733309],"length":13.122737597255934,"role":"link"},{"name":"upper_aft","application":[-0.76246773,-20.3102437,-11.57255906],"anchor":[-2.7,-9.81018934,-10.0],"direction_application_to_anchor":[-0.17952576164494083,0.9729026377931148,0.14570847017590685],"length":10.79250271519236,"role":"link"},{"name":"pullrod","application":[-0.20748083,-19.48671836,-5.35518379],"anchor":[-0.21,-11.35,-23.9],"direction_application_to_anchor":[-0.00012439528154848607,0.4017868469666363,-0.9157332112195247],"length":20.251330827352,"role":"pushrod"}],"ride_height_reference":{"wheel_load_supported_by_spring":137.387,"shock_force":-201.87403476476254,"shock_compression_force":201.87403476476254,"spring_rate":600.0,"spring_compression_from_free_length":0.3364567246079376},"load_cases":[{"name":"case_1_linear_accel","external_wrench":[48.7544,-0.0,-103.8425,0.0,0.0,0.0],"members":[{"name":"steering_tie_rod","force":-106.2953684683319,"state":"compression","length":12.544968007069336},{"name":"lower_fore","force":-54.79350512614986,"state":"compression","length":14.925234383835885},{"name":"lower_aft","force":260.4071963313377,"state":"tension","length":13.370173635612852},{"name":"upper_fore","force":43.719181537919006,"state":"tension","length":13.122737597255957},{"name":"upper_aft","force":-89.22408487323905,"state":"compression","length":10.792502715192406},{"name":"pullrod","force":-125.11340184481912,"state":"compression","length":20.251330827352934}],"rocker":{"shock_force":-152.1183878723169,"shock_state":"compression","shock_length":7.497079974586892,"shock_direction_rocker_to_chassis":[0.0004001557953455448,0.9690242941409809,0.24696509316078116],"pushrod_force_on_rocker":[-0.01557411108274524,50.425983567593384,-114.5014552740316],"pivot_reaction":[0.07644516556847429,96.98042986624245,152.0693871063862],"pivot_reaction_magnitude":180.36160377368694,"pivot_reaction_moment":[5.684341886080802e-14,-152.20304835535313,97.08402033094859],"pushrod_axis_moment":311.95043445602397,"shock_axis_moment_per_unit_force":2.050708259660658},"max_equilibrium_residual":5.115907697472721e-13,"kinematics":{"upright_translation":[-6.279122635887892e-06,0.00816932225330226,0.12167369086619041],"upright_rotation_vector_rad":[-0.0020881378130107957,8.773413410499787e-08,-1.4089165619135322e-06],"rocker_rotation_rad":-0.03997877780534144,"shock_travel_from_ride_height":-0.08292607815339625,"spring_force":152.11838787272478,"geometry":{"contact_patch":[-6.279122635887892e-06,-25.491830677746698,0.12167369086619041],"members":[{"name":"steering_tie_rod","role":"tie_rod","application":[2.149999304709587,-21.10623917285055,-6.781624454011049],"anchor":[3.9,-8.7,-6.15]},{"name":"lower_fore","application":[-0.15484861999999786,-20.751503542705613,-4.515675794623206],"anchor":[6.95,-7.62636793,-4.395]},{"name":"lower_aft","application":[-0.15484861999999786,-20.751503542705613,-4.515675794623206],"anchor":[-2.7,-7.62636793,-4.395]},{"name":"upper_fore","application":[-0.7624677299999786,-20.32624969852764,-11.46169699183776],"anchor":[6.95,-9.81018934,-10.0]},{"name":"upper_aft","application":[-0.7624677299999786,-20.32624969852764,-11.46169699183776],"anchor":[-2.7,-9.81018934,-10.0]},{"name":"pullrod","role":"pushrod","application":[-0.20747911517688716,-19.48974420896135,-5.246054957731911],"anchor":[-0.20999999999999996,-11.32760281991492,-23.779695772996735]}],"rocker":{"pivot_axis":[[-1.21,-8.33,-24.4],[0.79,-8.33,-24.4]],"pushrod_pickup":[-0.20999999999999996,-11.32760281991492,-23.779695772996735],"shock_pickup":[-0.20999999999999996,-9.264852630492546,-26.754517054357677],"shock_chassis_pickup":[-0.207,-2.0,-24.903]}},"iterations":3,"max_constraint_residual":9.343636975245317e-13}},{"name":"case_2_braking","external_wrench":[451.3544,-0.0,-323.6225,0.0,0.0,0.0],"members":[{"name":"steering_tie_rod","force":-856.0590241629493,"state":"compression","length":12.544968007216298},{"name":"lower_fore","force":-796.9053972851615,"state":"compression","length":14.92523438395825},{"name":"lower_aft","force":1731.7562789026163,"state":"tension","length":13.370173635751069},{"name":"upper_fore","force":512.3002939234245,"state":"tension","length":13.122737597398679},{"name":"upper_aft","force":-422.98637779272354,"state":"compression","length":10.792502715358298},{"name":"pullrod","force":-384.2543714468547,"state":"compression","length":20.251330829973202}],"rocker":{"shock_force":-475.5306815728055,"shock_state":"compression","shock_length":6.958059482257607,"shock_direction_rocker_to_chassis":[0.0004311546930073954,0.9574327843902123,0.2886559846606965],"pushrod_force_on_rocker":[-0.04877255413529765,153.0163022372978,-352.4733051549851],"pivot_reaction":[0.2537998391644181,302.2723622839288,489.7380822807554],"pivot_reaction_magnitude":575.5102385284705,"pivot_reaction_moment":[-0.0,-490.25935200792594,302.48956880119647],"pushrod_axis_moment":1097.8962374603032,"shock_axis_moment_per_unit_force":2.308781073450486},"max_equilibrium_residual":1.1368683772161603e-12,"kinematics":{"upright_translation":[-0.00018779406562327217,-0.03036775534784626,-0.6716860834241],"upright_rotation_vector_rad":[0.012094386675737819,2.9227624210663796e-06,-4.211807537687697e-05],"rocker_rotation_rad":0.20659741152688024,"shock_travel_from_ride_height":0.45609441417588936,"spring_force":475.53068327029615,"geometry":{"contact_patch":[-0.00018779406562327217,-25.530367755347847,-0.6716860834241],"members":[{"name":"steering_tie_rod","role":"tie_rod","application":[2.149979203285768,-21.047401888674113,-7.512099890872567],"anchor":[3.9,-8.7,-6.15]},{"name":"lower_fore","application":[-0.1548486199977532,-20.724743941567887,-5.241341162054971],"anchor":[6.95,-7.62636793,-4.395]},{"name":"lower_aft","application":[-0.1548486199977532,-20.724743941567887,-5.241341162054971],"anchor":[-2.7,-7.62636793,-4.395]},{"name":"upper_fore","application":[-0.7624677300085291,-20.200999326974333,-12.180630958771433],"anchor":[6.95,-9.81018934,-10.0]},{"name":"upper_aft","application":[-0.7624677300085291,-20.200999326974333,-12.180630958771433],"anchor":[-2.7,-9.81018934,-10.0]},{"name":"pullrod","role":"pushrod","application":[-0.20742954354560073,-19.452751089630162,-5.953752376393212],"anchor":[-0.20999999999999996,-11.38834378746035,-24.530127928219432]}],"rocker":{"pivot_axis":[[-1.21,-8.33,-24.4],[0.79,-8.33,-24.4]],"pushrod_pickup":[-0.20999999999999996,-11.38834378746035,-24.530127928219432],"shock_pickup":[-0.20999999999999996,-8.661874264050619,-26.911485511178764],"shock_chassis_pickup":[-0.207,-2.0,-24.903]}},"iterations":3,"max_constraint_residual":2.829151052689364e-09}},{"name":"case_3_accel_corner","external_wrench":[48.7544,51.7802,-56.0222,0.0,0.0,0.0],"members":[{"name":"steering_tie_rod","force":-91.26448202635567,"state":"compression","length":12.544968007070391},{"name":"lower_fore","force":-103.47061650941369,"state":"compression","length":14.925234383836276},{"name":"lower_aft","force":139.50398474891375,"state":"tension","length":13.37017363561344},{"name":"upper_fore","force":58.59612683851671,"state":"tension","length":13.122737597256426},{"name":"upper_aft","force":-29.75677209434487,"state":"compression","length":10.792502715194415},{"name":"pullrod","force":-62.71835050750683,"state":"compression","length":20.25133082740758}],"rocker":{"shock_force":-75.36030163778557,"shock_state":"compression","shock_length":7.6250101182749415,"shock_direction_rocker_to_chassis":[0.0003934421008583114,0.9721382968740392,0.2344077152189229],"pushrod_force_on_rocker":[-0.00783618442488598,25.427504331224547,-57.332656073674556],"pivot_reaction":[0.03748609982257238,47.833130954846176,74.99769219879673],"pivot_reaction_magnitude":88.95315428525623,"pivot_reaction_moment":[-2.842170943040401e-14,-75.05925773152347,47.888362356906995],"pushrod_axis_moment":148.66977822091692,"shock_axis_moment_per_unit_force":1.972786400663424},"max_equilibrium_residual":8.526512829121202e-14,"kinematics":{"upright_translation":[-4.0574654862396374e-05,0.022322596810740728,0.30841879078392304],"upright_rotation_vector_rad":[-0.005233469247815194,5.526084986939667e-07,-9.10507734172962e-06],"rocker_rotation_rad":-0.10355932733450066,"shock_travel_from_ride_height":-0.21085622184144537,"spring_force":75.36030165989533,"geometry":{"contact_patch":[-4.0574654862396374e-05,-25.477677403189258,0.30841879078392304],"members":[{"name":"steering_tie_rod","role":"tie_rod","application":[2.1499955070597223,-21.11383726586437,-6.6086402836052915],"anchor":[3.9,-8.7,-6.15]},{"name":"lower_fore","application":[-0.15484861999978866,-20.75195850175618,-4.343817561986494],"anchor":[6.95,-7.62636793,-4.395]},{"name":"lower_aft","application":[-0.15484861999978866,-20.75195850175618,-4.343817561986494],"anchor":[-2.7,-7.62636793,-4.395]},{"name":"upper_fore","application":[-0.7624677299983695,-20.348549586941225,-11.291141690857378],"anchor":[6.95,-9.81018934,-10.0]},{"name":"upper_aft","application":[-0.7624677299983695,-20.348549586941225,-11.291141690857378],"anchor":[-2.7,-9.81018934,-10.0]},{"name":"pullrod","role":"pushrod","application":[-0.207469749093705,-19.492502285049866,-5.078161733468365],"anchor":[-0.20999999999999996,-11.282133259714392,-23.590488284897567]}],"rocker":{"pivot_axis":[[-1.21,-8.33,-24.4],[0.79,-8.33,-24.4]],"pushrod_pickup":[-0.20999999999999996,-11.282133259714392,-23.590488284897567],"shock_pickup":[-0.20999999999999996,-9.412564350027118,-26.690361200345997],"shock_chassis_pickup":[-0.207,-2.0,-24.903]}},"iterations":3,"max_constraint_residual":5.5578652791155037e-11}},{"name":"case_4_brake_corner","external_wrench":[248.1622,-64.1706,-162.4825,0.0,0.0,0.0],"members":[{"name":"steering_tie_rod","force":-473.2914894536995,"state":"compression","length":12.544968007069325},{"name":"lower_fore","force":-402.0427568493183,"state":"compression","length":14.925234383835882},{"name":"lower_aft","force":1011.4655090646338,"state":"tension","length":13.370173635612849},{"name":"upper_fore","force":267.44933034183924,"state":"tension","length":13.12273759725595},{"name":"upper_aft","force":-248.31332293740738,"state":"compression","length":10.792502715192382},{"name":"pullrod","force":-199.29829381671664,"state":"compression","length":20.251330827352447}],"rocker":{"shock_force":-244.6051989005892,"shock_state":"compression","shock_length":7.342935289540097,"shock_direction_rocker_to_chassis":[0.0004085559632090767,0.9654343914707256,0.2606458686562561],"pushrod_force_on_rocker":[-0.024804196139428598,79.89347805145356,-182.58379300433015],"pivot_reaction":[0.12473910878220659,156.25679329971257,246.3391275496105],"pivot_reaction_magnitude":291.7176147819285,"pivot_reaction_moment":[-1.1368683772161603e-13,-246.57078574778012,156.40793960954647],"pushrod_axis_moment":522.3548541612614,"shock_axis_moment_per_unit_force":2.1355018475038765},"max_equilibrium_residual":3.943512183468556e-13,"kinematics":{"upright_translation":[-4.624424648871259e-06,-0.006371826904635036,-0.10474563875236727],"upright_rotation_vector_rad":[0.0018224318852971852,6.66428313292138e-08,-1.03750520047382e-06],"rocker_rotation_rad":0.03364746918440094,"shock_travel_from_ride_height":0.07121860689339865,"spring_force":244.60519890080172,"geometry":{"contact_patch":[-4.624424648871259e-06,-25.506371826904633,-0.10474563875236727],"members":[{"name":"steering_tie_rod","role":"tie_rod","application":[2.1499994879356144,-21.093817297563945,-6.99084082962952],"anchor":[3.9,-8.7,-6.15]},{"name":"lower_fore","application":[-0.15484861999999663,-20.74794636299754,-4.723522337162756],"anchor":[6.95,-7.62636793,-4.395]},{"name":"lower_aft","application":[-0.15484861999999663,-20.74794636299754,-4.723522337162756],"anchor":[-2.7,-7.62636793,-4.395]},{"name":"upper_fore","application":[-0.762467729999995,-20.295533165195806,-11.667827457374344],"anchor":[6.95,-9.81018934,-10.0]},{"name":"upper_aft","application":[-0.762467729999995,-20.295533165195806,-11.667827457374344],"anchor":[-2.7,-9.81018934,-10.0]},{"name":"pullrod","role":"pushrod","application":[-0.20747956707352413,-19.483340505196765,-5.448961731628489],"anchor":[-0.20999999999999996,-11.365111171754783,-24.001879195357358]}],"rocker":{"pivot_axis":[[-1.21,-8.33,-24.4],[0.79,-8.33,-24.4]],"pushrod_pickup":[-0.20999999999999996,-11.365111171754783,-24.001879195357358],"shock_pickup":[-0.20999999999999996,-9.089122262866061,-26.816905747028855],"shock_chassis_pickup":[-0.207,-2.0,-24.903]}},"iterations":3,"max_constraint_residual":4.476419235288631e-13}}],"chassis_loads":[{"name":"case_1_linear_accel","reference_point":[-6.279122635887892e-06,-25.491830677746698,0.12167369086619041],"interfaces":[{"name":"steering_tie_rod","type":"two_force_member","point":[3.9,-8.7,-6.15],"force":[14.828014596841319,105.11989854747137,5.351847372976908],"force_magnitude":106.29536846833192,"local_moment":[0.0,0.0,0.0]},{"name":"lower_fore","type":"two_force_member","point":[6.95,-7.62636793,-4.395],"force":[26.08331294965138,48.18498436815603,0.4430248531607642],"force_magnitude":54.79350512614985,"local_moment":[0.0,0.0,0.0]},{"name":"lower_aft","type":"two_force_member","point":[-2.7,-7.62636793,-4.395],"force":[49.57121374544181,-255.63465812211913,-2.350369277118601],"force_magnitude":260.4071963313377,"local_moment":[0.0,0.0,0.0]},{"name":"upper_fore","type":"two_force_member","point":[6.95,-9.81018934,-10.0],"force":[-25.694545386910587,-35.034881134430414,-4.869730547149544],"force_magnitude":43.719181537919,"local_moment":[0.0,0.0,0.0]},{"name":"upper_aft","type":"two_force_member","point":[-2.7,-9.81018934,-10.0],"force":[-16.01802179394119,86.93867277332876,12.084182872162053],"force_magnitude":89.22408487323905,"local_moment":[0.0,0.0,0.0]},{"name":"rocker_pivot_axis","type":"rocker_axis_resultant","point":[-0.20999999999999996,-8.33,-24.4],"force":[-0.07644516556847429,-96.98042986624245,-152.0693871063862],"force_magnitude":180.36160377368694,"local_moment":[-5.684341886080802e-14,0.13366124896694487,-0.1035904647061443]},{"name":"shock_chassis_pickup","type":"shock_mount","point":[-0.207,-2.0,-24.903],"force":[0.06087105448572905,147.40641343383584,37.56793183235459],"force_magnitude":152.1183878723169,"local_moment":[0.0,0.0,0.0]}],"resultant_force":[48.75439999999999,0.0,-103.84250000000003],"resultant_force_magnitude":114.71816040021739,"resultant_moment":[0.0,1.3855583347321954e-13,-2.842170943040401e-14]},{"name":"case_2_braking","reference_point":[-0.00018779406562327217,-25.530367755347847,-0.6716860834241],"interfaces":[{"name":"steering_tie_rod","type":"two_force_member","point":[3.9,-8.7,-6.15],"force":[119.42008099488828,842.5772633047634,92.94865500829368],"force_magnitude":856.0590241629493,"local_moment":[0.0,0.0,0.0]},{"name":"lower_fore","type":"two_force_member","point":[6.95,-7.62636793,-4.395],"force":[379.35030476008365,699.3636596091216,45.1888273668325],"force_magnitude":796.9053972851614,"local_moment":[0.0,0.0,0.0]},{"name":"lower_aft","type":"two_force_member","point":[-2.7,-7.62636793,-4.395],"force":[329.65778928187825,-1696.5520059370467,-109.62136030629789],"force_magnitude":1731.756278902616,"local_moment":[0.0,0.0,0.0]},{"name":"upper_fore","type":"two_force_member","point":[6.95,-9.81018934,-10.0],"force":[-301.0880508455433,-405.6482095233411,-85.1299412813508],"force_magnitude":512.3002939234245,"local_moment":[0.0,0.0,0.0]},{"name":"upper_aft","type":"two_force_member","point":[-2.7,-9.81018934,-10.0],"force":[-75.93695163717153,407.24299030920514,85.46462436750755],"force_magnitude":422.98637779272354,"local_moment":[0.0,0.0,0.0]},{"name":"rocker_pivot_axis","type":"rocker_axis_resultant","point":[-0.20999999999999996,-8.33,-24.4],"force":[-0.2537998391644181,-302.2723622839288,-489.7380822807554],"force_magnitude":575.5102385284705,"local_moment":[0.0,0.5212697271705338,-0.21720651726764117]},{"name":"shock_chassis_pickup","type":"shock_mount","point":[-0.207,-2.0,-24.903],"force":[0.20502728502912046,455.2886645212266,137.26477712577028],"force_magnitude":475.5306815728056,"local_moment":[0.0,0.0,0.0]}],"resultant_force":[451.3544000000001,1.1368683772161603e-13,-323.62250000000006],"resultant_force_magnitude":555.3848367624112,"resultant_moment":[-1.8189894035458565e-12,1.0196288258157438e-12,-1.8332002582610585e-12]},{"name":"case_3_accel_corner","reference_point":[-4.0574654862396374e-05,-25.477677403189258,0.30841879078392304],"interfaces":[{"name":"steering_tie_rod","type":"two_force_member","point":[3.9,-8.7,-6.15],"force":[12.731260334978506,90.31050755889153,3.3366022054473694],"force_magnitude":91.26448202635568,"local_moment":[0.0,0.0,0.0]},{"name":"lower_fore","type":"two_force_member","point":[6.95,-7.62636793,-4.395],"force":[49.25504337228902,90.99441345997008,-0.3548271524263346],"force_magnitude":103.4706165094137,"local_moment":[0.0,0.0,0.0]},{"name":"lower_aft","type":"two_force_member","point":[-2.7,-7.62636793,-4.395],"force":[26.55603202889412,-136.95201250531466,0.5340360003275805],"force_magnitude":139.50398474891375,"local_moment":[0.0,0.0,0.0]},{"name":"upper_fore","type":"two_force_member","point":[6.95,-9.81018934,-10.0],"force":[-34.43799237740109,-47.05627077606524,-5.76525299871829],"force_magnitude":58.5961268385167,"local_moment":[0.0,0.0,0.0]},{"name":"upper_aft","type":"two_force_member","point":[-2.7,-9.81018934,-10.0],"force":[-5.342107174335662,29.056057931293743,3.5598980190442306],"force_magnitude":29.75677209434487,"local_moment":[0.0,0.0,0.0]},{"name":"rocker_pivot_axis","type":"rocker_axis_resultant","point":[-0.20999999999999996,-8.33,-24.4],"force":[-0.03748609982257238,-47.833130954846176,-74.99769219879673],"force_magnitude":88.95315428525623,"local_moment":[2.842170943040401e-14,0.06156553272674614,-0.055231402060819335]},{"name":"shock_chassis_pickup","type":"shock_mount","point":[-0.207,-2.0,-24.903],"force":[0.0296499153976864,73.26063528607072,17.665036125122167],"force_magnitude":75.36030163778555,"local_moment":[0.0,0.0,0.0]}],"resultant_force":[48.75440000000001,51.78019999999999,-56.0222],"resultant_force_magnitude":90.5354489923146,"resultant_moment":[0.0,-7.771561172376096e-14,9.237055564881302e-14]},{"name":"case_4_brake_corner","reference_point":[-4.624424648871259e-06,-25.506371826904633,-0.10474563875236727],"interfaces":[{"name":"steering_tie_rod","type":"two_force_member","point":[3.9,-8.7,-6.15],"force":[66.02331296763367,467.58893649433986,31.722903432243132],"force_magnitude":473.2914894536995,"local_moment":[0.0,0.0,0.0]},{"name":"lower_fore","type":"two_force_member","point":[6.95,-7.62636793,-4.395],"force":[191.3841252151745,353.45746885758905,8.84944401694217],"force_magnitude":402.0427568493184,"local_moment":[0.0,0.0,0.0]},{"name":"lower_aft","type":"two_force_member","point":[-2.7,-7.62636793,-4.395],"force":[192.54296214682324,-992.6590612190673,-24.85300655425631],"force_magnitude":1011.4655090646339,"local_moment":[0.0,0.0,0.0]},{"name":"upper_fore","type":"two_force_member","point":[6.95,-9.81018934,-10.0],"force":[-157.18475770656772,-213.69764987444037,-33.99133247118913],"force_magnitude":267.4493303418392,"local_moment":[0.0,0.0,0.0]},{"name":"upper_aft","type":"two_force_member","point":[-2.7,-9.81018934,-10.0],"force":[-44.57863842692423,241.2462276901252,38.373284580590266],"force_magnitude":248.31332293740735,"local_moment":[0.0,0.0,0.0]},{"name":"rocker_pivot_axis","type":"rocker_axis_resultant","point":[-0.20999999999999996,-8.33,-24.4],"force":[-0.12473910878220659,-156.25679329971257,-246.3391275496105],"force_magnitude":291.7176147819285,"local_moment":[1.1368683772161603e-13,0.23165819816961175,-0.15114630983390498]},{"name":"shock_chassis_pickup","type":"shock_mount","point":[-0.207,-2.0,-24.903],"force":[0.099934912642778,236.15027135116614,63.75533454528037],"force_magnitude":244.60519890058916,"local_moment":[0.0,0.0,0.0]}],"resultant_force":[248.16220000000004,-64.17060000000001,-162.48250000000002],"resultant_force_magnitude":303.48460623143643,"resultant_moment":[-9.094947017729282e-13,-9.592326932761353e-14,-6.110667527536862e-13]}],"sizing_summary":[{"member":"steering_tie_rod","peak_force":-856.0590241629493,"peak_state":"compression","peak_case":"case_2_braking","max_tension_force":null,"max_tension_case":null,"max_compression_force":-856.0590241629493,"max_compression_case":"case_2_braking","tube_id_in":0.34,"tube_od_in":0.4375,"critical_buckling_load_lbf":2077.6900315565067,"chassis_jmx":"JMX4","wheel_jmx":"JMX3","chassis_jmx_margin":1.1973584985443035,"wheel_jmx_margin":0.1968703279564643,"governing_margin":0.1968703279564643,"governing_margin_mode":"wheel JMX3 axial proxy","governing_margin_case":"case_2_braking"},{"member":"lower_fore","peak_force":-796.9053972851615,"peak_state":"compression","peak_case":"case_2_braking","max_tension_force":null,"max_tension_case":null,"max_compression_force":-796.9053972851615,"max_compression_case":"case_2_braking","tube_id_in":0.444,"tube_od_in":0.5,"critical_buckling_load_lbf":1490.819211819677,"chassis_jmx":"JMX4","wheel_jmx":"NA","chassis_jmx_margin":1.360466597927791,"wheel_jmx_margin":null,"governing_margin":0.24717372718559405,"governing_margin_mode":"tube Euler buckling","governing_margin_case":"case_2_braking"},{"member":"lower_aft","peak_force":1731.7562789026163,"peak_state":"tension","peak_case":"case_2_braking","max_tension_force":1731.7562789026163,"max_tension_case":"case_2_braking","max_compression_force":null,"max_compression_case":null,"tube_id_in":0.34,"tube_od_in":0.4375,"critical_buckling_load_lbf":1829.1350740268138,"chassis_jmx":"JMX3","wheel_jmx":"NA","chassis_jmx_margin":-0.4083511303049724,"wheel_jmx_margin":null,"governing_margin":-0.4083511303049724,"governing_margin_mode":"chassis JMX3 axial proxy","governing_margin_case":"case_2_braking"},{"member":"upper_fore","peak_force":512.3002939234245,"peak_state":"tension","peak_case":"case_2_braking","max_tension_force":512.3002939234245,"max_tension_case":"case_2_braking","max_compression_force":null,"max_compression_case":null,"tube_id_in":0.34,"tube_od_in":0.4375,"critical_buckling_load_lbf":1898.7639727090902,"chassis_jmx":"JMX3","wheel_jmx":"NA","chassis_jmx_margin":0.9999825437405461,"wheel_jmx_margin":null,"governing_margin":0.9999825437405461,"governing_margin_mode":"chassis JMX3 axial proxy","governing_margin_case":"case_2_braking"},{"member":"upper_aft","peak_force":-422.98637779272354,"peak_state":"compression","peak_case":"case_2_braking","max_tension_force":null,"max_tension_case":null,"max_compression_force":-422.98637779272354,"max_compression_case":"case_2_braking","tube_id_in":0.34,"tube_od_in":0.4375,"critical_buckling_load_lbf":2807.2141163479773,"chassis_jmx":"JMX3","wheel_jmx":"NA","chassis_jmx_margin":1.422280477084493,"wheel_jmx_margin":null,"governing_margin":1.422280477084493,"governing_margin_mode":"chassis JMX3 axial proxy","governing_margin_case":"case_2_braking"},{"member":"pullrod","peak_force":-384.2543714468547,"peak_state":"compression","peak_case":"case_2_braking","max_tension_force":null,"max_tension_case":null,"max_compression_force":-384.2543714468547,"max_compression_case":"case_2_braking","tube_id_in":0.323,"tube_od_in":0.5625,"critical_buckling_load_lbf":3056.7751074142616,"chassis_jmx":"JMX3","wheel_jmx":"JMX3","chassis_jmx_margin":1.666441089901065,"wheel_jmx_margin":1.666441089901065,"governing_margin":1.666441089901065,"governing_margin_mode":"chassis JMX3 axial proxy","governing_margin_case":"case_2_braking"},{"member":"shock","peak_force":-475.5306815728055,"peak_state":"compression","peak_case":"case_2_braking","chassis_jmx":"NA","wheel_jmx":"NA","chassis_jmx_margin":null,"wheel_jmx_margin":null,"governing_margin":null,"governing_margin_mode":"damper rating not supplied","governing_margin_case":"case_2_braking"}]},{"name":"rear_right","coordinate_units":"in","force_units":"lbf","condition_number_inf":303.61392325776103,"geometry_warning":null,"member_geometry":[{"name":"rear_tie_rod","application":[-57.85,20.75,-6.6],"anchor":[-52.73306567,11.01527574,-6.31855306],"direction_application_to_anchor":[0.46512379233385265,-0.8848758989516987,0.02558322222469446],"length":11.001231100917773,"role":"tie_rod"},{"name":"lower_fore","application":[-62.375,20.75,-5.22055],"anchor":[-53.5,10.912,-5.37886759],"direction_application_to_anchor":[0.6697837889686727,-0.7424600468590199,-0.011948006229925454],"length":13.250544647647635,"role":"link"},{"name":"lower_aft","application":[-62.375,20.75,-5.22055],"anchor":[-60.5,10.912,-5.37886759],"direction_application_to_anchor":[0.18719424937879642,-0.9821957468739195,-0.01580594262587196],"length":10.01633333407507,"role":"link"},{"name":"upper_fore","application":[-61.42579354,20.44337683,-11.18376063],"anchor":[-52.5,12.017909,-9.665],"direction_application_to_anchor":[0.7216903490218355,-0.6812367765012124,0.12279859311481714],"length":12.367899268845484,"role":"link"},{"name":"upper_aft","application":[-61.42579354,20.44337683,-11.18376063],"anchor":[-60.5,12.017909,-9.665],"direction_application_to_anchor":[0.10751078212145536,-0.9784348205135028,0.17637101160435215],"length":8.611169240254695,"role":"link"},{"name":"pushrod","application":[-61.32233791,19.32992143,-11.75452775],"anchor":[-60.88,16.02,-12.02],"direction_application_to_anchor":[0.13204576654972253,-0.9880706639946474,-0.07924820811521598],"length":3.349883313626979,"role":"pushrod"}],"ride_height_reference":{"wheel_load_supported_by_spring":134.863,"shock_force":-209.56472542817986,"shock_compression_force":209.56472542817986,"spring_rate":450.0,"spring_compression_from_free_length":0.46569938984039966},"load_cases":[{"name":"case_1_linear_accel","external_wrench":[-488.0456,-0.0,-349.9128,0.0,0.0,0.0],"members":[{"name":"rear_tie_rod","force":604.2476146517351,"state":"tension","length":11.001231100917808},{"name":"lower_fore","force":1376.9253180909873,"state":"tension","length":13.250544647647674},{"name":"lower_aft","force":-1240.5972513879365,"state":"compression","length":10.01633333407511},{"name":"upper_fore","force":-607.2055584838436,"state":"compression","length":12.36789926884553},{"name":"upper_aft","force":1350.2861508855515,"state":"tension","length":8.611169240254716},{"name":"pushrod","force":-1232.031969162416,"state":"compression","length":3.349883313628722}],"rocker":{"shock_force":-543.2070270315538,"shock_state":"compression","shock_length":6.887917326963142,"shock_direction_rocker_to_chassis":[0.11521692307041569,-0.9731411991151167,0.19930194987249616],"pushrod_force_on_rocker":[189.97119830828436,-1216.9726576662383,-28.12947465395612],"pivot_reaction":[-127.3845560634806,688.3555200129945,136.39169432578652],"pivot_reaction_magnitude":713.2060300760986,"pivot_reaction_moment":[13.488597623754686,257.5579565500992,-837.8249094884802],"pushrod_axis_moment":2629.460804356255,"shock_axis_moment_per_unit_force":4.840623691349108},"max_equilibrium_residual":2.7284841053187847e-12,"kinematics":{"upright_translation":[-0.0015281544689120235,0.140853253769494,-1.152891522852671],"upright_rotation_vector_rad":[-0.03390261098946667,2.330050946017738e-05,0.00034062851388509945],"rocker_rotation_rad":0.1577155406431786,"shock_travel_from_ride_height":0.7414273368988864,"spring_force":543.2070270326788,"geometry":{"contact_patch":[-61.001528154468915,25.640853253769492,-1.152891522852671],"members":[{"name":"rear_tie_rod","role":"tie_rod","application":[-57.85002443512969,20.670940199350838,-7.5881839434432115],"anchor":[-52.73306567,11.01527574,-6.31855306]},{"name":"lower_fore","application":[-62.375000000000014,20.71615894061221,-6.209395088953431],"anchor":[-53.5,10.912,-5.37886759]},{"name":"lower_aft","application":[-62.375000000000014,20.71615894061221,-6.209395088953431],"anchor":[-60.5,10.912,-5.37886759]},{"name":"upper_fore","application":[-61.42579354000005,20.20790517193035,-12.158813286789805],"anchor":[-52.5,12.017909,-9.665]},{"name":"upper_aft","application":[-61.42579354000005,20.20790517193035,-12.158813286789805],"anchor":[-60.5,12.017909,-9.665]},{"name":"pushrod","role":"pushrod","application":[-61.32196827555345,19.07577807228357,-12.691513620137657],"anchor":[-60.80543837761938,15.76684088469578,-12.767997396632914]}],"rocker":{"pivot_axis":[[-58.94,11.36,-10.67],[-62.34,10.92,-10.86]],"pushrod_pickup":[-60.80543837761938,15.76684088469578,-12.767997396632914],"shock_pickup":[-60.293604640776095,13.2829161269667,-16.102775353824306],"shock_chassis_pickup":[-59.5,6.58,-14.73]}},"iterations":4,"max_constraint_residual":2.4998472427897567e-12}},{"name":"case_2_braking","external_wrench":[317.1544,-0.0,-130.1328,0.0,0.0,0.0],"members":[{"name":"rear_tie_rod","force":-358.34632001746405,"state":"compression","length":11.001231100933884},{"name":"lower_fore","force":-1032.9438892359665,"state":"compression","length":13.250544647674483},{"name":"lower_aft","force":1096.5243132059102,"state":"tension","length":10.016333334087644},{"name":"upper_fore","force":538.3617268229501,"state":"tension","length":12.367899268881615},{"name":"upper_aft","force":196.7860731230996,"state":"tension","length":8.611169240254915},{"name":"pushrod","force":-559.196278960816,"state":"compression","length":3.3498833139737}],"rocker":{"shock_force":-202.15766234088403,"shock_state":"compression","shock_length":7.645804803692702,"shock_direction_rocker_to_chassis":[0.12070414738190094,-0.9845565350707144,0.12680275255039797],"pushrod_force_on_rocker":[73.58006125931942,-552.5124297655238,-44.90509930169],"pivot_reaction":[-49.17879298974479,353.47678219318766,70.53924733566802],"pivot_reaction_magnitude":363.7858912111092,"pivot_reaction_moment":[15.013668714831738,100.51053968381783,-501.42690048057045],"pushrod_axis_moment":919.7395172954647,"shock_axis_moment_per_unit_force":4.54961492255769},"max_equilibrium_residual":1.3642420526593924e-12,"kinematics":{"upright_translation":[-7.441227314951589e-07,-0.004150196562250646,0.025572222009111644],"upright_rotation_vector_rad":[0.0007217407011209711,8.481432250378944e-09,1.6604106091681907e-07],"rocker_rotation_rad":-0.0036151929132950626,"shock_travel_from_ride_height":-0.016460139830673626,"spring_force":202.15766250437673,"geometry":{"contact_patch":[-61.00000074412273,25.49584980343775,0.025572222009111644],"members":[{"name":"rear_tie_rod","role":"tie_rod","application":[-57.85000001181526,20.75061505185093,-6.577854353549606],"anchor":[-52.73306567,11.01527574,-6.31855306]},{"name":"lower_fore","application":[-62.37500000003283,20.74961869537762,-5.19840467472665],"anchor":[-53.5,10.912,-5.37886759]},{"name":"lower_aft","application":[-62.37500000003283,20.74961869537762,-5.19840467472665],"anchor":[-60.5,10.912,-5.37886759]},{"name":"upper_fore","application":[-61.42579354005562,20.447299654296607,-11.161835061976001],"anchor":[-52.5,12.017909,-9.665]},{"name":"upper_aft","application":[-61.42579354005562,20.447299654296607,-11.161835061976001],"anchor":[-60.5,12.017909,-9.665]},{"name":"pushrod","role":"pushrod","application":[-61.322337730054855,19.334256507305234,-11.73340566019951],"anchor":[-60.88155400396889,16.0244130071408,-12.0024111034092]}],"rocker":{"pivot_axis":[[-58.94,11.36,-10.67],[-62.34,10.92,-10.86]],"pushrod_pickup":[-60.88155400396889,16.0244130071408,-12.0024111034092],"shock_pickup":[-60.42288034987817,14.10772708535071,-15.69950909457129],"shock_chassis_pickup":[-59.5,6.58,-14.73]}},"iterations":2,"max_constraint_residual":3.6331711170431745e-10}},{"name":"case_3_accel_corner","external_wrench":[-130.2348,570.4961,-439.69,0.0,0.0,0.0],"members":[{"name":"rear_tie_rod","force":516.7358119820934,"state":"tension","length":11.001231100917904},{"name":"lower_fore","force":-294.5763251593221,"state":"compression","length":13.250544647647812},{"name":"lower_aft","force":1214.663791355447,"state":"tension","length":10.016333334075245},{"name":"upper_fore","force":57.40251957633161,"state":"tension","length":12.367899268845703},{"name":"upper_aft","force":660.3197784418414,"state":"tension","length":8.611169240254695},{"name":"pushrod","force":-1519.0784176281531,"state":"compression","length":3.349883313648965}],"rocker":{"shock_force":-713.7221996073779,"shock_state":"compression","shock_length":6.508994721207086,"shock_direction_rocker_to_chassis":[0.11242123721176443,-0.965936902931233,0.2330823137421495],"pushrod_force_on_rocker":[252.6079506027413,-1497.8432711725955,15.937289572430148],"pivot_reaction":[-172.370417897378,808.4326601305776,150.41873208119375],"pivot_reaction_magnitude":840.1789820584853,"pivot_reaction_moment":[3.70458142199368,356.49353420983186,-891.8564836163337],"pushrod_axis_moment":3546.224462434009,"shock_axis_moment_per_unit_force":4.968634104956809},"max_equilibrium_residual":1.5916157281026244e-12,"kinematics":{"upright_translation":[-0.0034963650981516907,0.1789179702163641,-1.7356524746538033],"upright_rotation_vector_rad":[-0.05218439627361,6.040246280685965e-05,0.0007787939969906667],"rocker_rotation_rad":0.23496379169245069,"shock_travel_from_ride_height":1.1203499426549417,"spring_force":713.7221996229036,"geometry":{"contact_patch":[-61.00349636509815,25.678917970216364,-1.7356524746538033],"members":[{"name":"rear_tie_rod","role":"tie_rod","application":[-57.850056639870836,20.59357185644484,-8.07915882386692],"anchor":[-52.73306567,11.01527574,-6.31855306]},{"name":"lower_fore","application":[-62.375000000000085,20.662009666065465,-6.701221540701777],"anchor":[-53.5,10.912,-5.37886759]},{"name":"lower_aft","application":[-62.375000000000085,20.662009666065465,-6.701221540701777],"anchor":[-60.5,10.912,-5.37886759]},{"name":"upper_fore","application":[-61.42579354000034,20.045495962591918,-12.640397379111988],"anchor":[-52.5,12.017909,-9.665]},{"name":"upper_aft","application":[-61.42579354000034,20.045495962591918,-12.640397379111988],"anchor":[-60.5,12.017909,-9.665]},{"name":"pushrod","role":"pushrod","application":[-61.321492292818114,18.903865382971954,-13.152317265377178],"anchor":[-60.764439313327806,15.600809976262404,-13.117172232846972]}],"rocker":{"pivot_axis":[[-58.94,11.36,-10.67],[-62.34,10.92,-10.86]],"pushrod_pickup":[-60.764439313327806,15.600809976262404,-13.117172232846972],"shock_pickup":[-60.231749239562944,12.867278202198518,-16.247131549754386],"shock_chassis_pickup":[-59.5,6.58,-14.73]}},"iterations":4,"max_constraint_residual":3.4501681511756035e-11}},{"name":"case_4_brake_corner","external_wrench":[181.6929,-475.8796,-328.246,0.0,0.0,0.0],"members":[{"name":"rear_tie_rod","force":-443.1551667314857,"state":"compression","length":11.001231101112763},{"name":"lower_fore","force":-310.88351920792024,"state":"compression","length":13.250544647814335},{"name":"lower_aft","force":-145.04048545311113,"state":"compression","length":10.016333334300818},{"name":"upper_fore","force":408.8743144404818,"state":"tension","length":12.36789926905649},{"name":"upper_aft","force":1067.6182224240742,"state":"tension","length":8.611169240576459},{"name":"pushrod","force":-1025.4056959443608,"state":"compression","length":3.3498833190946167}],"rocker":{"shock_force":-428.6799462725997,"shock_state":"compression","shock_length":7.142421943628861,"shock_direction_rocker_to_chassis":[0.117078510794388,-0.9774548246881033,0.17571194610531632],"pushrod_force_on_rocker":[150.05609784268887,-1013.3717932978684,-44.91789536060772],"pivot_reaction":[-99.86688812567465,594.3565115666789,120.24208297648866],"pivot_reaction_magnitude":614.5658766187255,"pivot_reaction_moment":[16.813979399059463,201.14332703442386,-766.6873360628824],"pushrod_axis_moment":2035.5200719444545,"shock_axis_moment_per_unit_force":4.74834451586419},"max_equilibrium_residual":1.8189894035458565e-12,"kinematics":{"upright_translation":[-0.0006573924913150166,0.10263215094121,-0.7581123993305363],"upright_rotation_vector_rad":[-0.021976458820185372,9.152070460116835e-06,0.0001465941209282403],"rocker_rotation_rad":0.10463594351988163,"shock_travel_from_ride_height":0.4869227202331672,"spring_force":428.67994953310506,"geometry":{"contact_patch":[-61.00065739249131,25.60263215094121,-0.7581123993305363],"members":[{"name":"rear_tie_rod","role":"tie_rod","application":[-57.850010450665984,20.70920765745653,-7.252172806697477],"anchor":[-52.73306567,11.01527574,-6.31855306]},{"name":"lower_fore","application":[-62.374999999992525,20.7388578142749,-5.873007207798546],"anchor":[-53.5,10.912,-5.37886759]},{"name":"lower_aft","application":[-62.374999999992525,20.7388578142749,-5.873007207798546],"anchor":[-60.5,10.912,-5.37886759]},{"name":"upper_fore","application":[-61.42579353997987,20.30140802225735,-11.82805015185576],"anchor":[-52.5,12.017909,-9.665]},{"name":"upper_aft","application":[-61.42579353997987,20.30140802225735,-11.82805015185576],"anchor":[-60.5,12.017909,-9.665]},{"name":"pushrod","role":"pushrod","application":[-61.32217889016917,19.17569422681428,-12.374212724296164],"anchor":[-60.831962753200365,15.865124293532258,-12.520954359331418]}],"rocker":{"pivot_axis":[[-58.94,11.36,-10.67],[-62.34,10.92,-10.86]],"pushrod_pickup":[-60.831962753200365,15.865124293532258,-12.520954359331418],"shock_pickup":[-60.336224124625225,13.56139478875821,-15.985008859620343],"shock_chassis_pickup":[-59.5,6.58,-14.73]}},"iterations":3,"max_constraint_residual":7.245567480317226e-09}}],"chassis_loads":[{"name":"case_1_linear_accel","reference_point":[-61.001528154468915,25.640853253769492,-1.152891522852671],"interfaces":[{"name":"rear_tie_rod","type":"two_force_member","point":[-52.73306567,11.01527574,-6.31855306],"force":[-281.0512841460944,530.3417557470934,-69.7350529019186],"force_magnitude":604.2476146517351,"local_moment":[0.0,0.0,0.0]},{"name":"lower_fore","type":"two_force_member","point":[-53.5,10.912,-5.37886759],"force":[-922.2422566778752,1018.7954553485922,-86.30394984426401],"force_magnitude":1376.9253180909873,"local_moment":[0.0,0.0,0.0]},{"name":"lower_aft","type":"two_force_member","point":[-60.5,10.912,-5.37886759],"force":[232.2326712549636,-1214.317877432848,102.86699713741754],"force_magnitude":1240.5972513879365,"local_moment":[0.0,0.0,0.0]},{"name":"upper_fore","type":"two_force_member","point":[-52.5,12.017909,-9.665],"force":[438.2143914302044,-402.0902088105145,122.43447788857843],"force_magnitude":607.2055584838436,"local_moment":[0.0,0.0,0.0]},{"name":"upper_aft","type":"two_force_member","point":[-60.5,12.017909,-9.665],"force":[-145.17032016948258,1284.2435328139152,-391.04579762585723],"force_magnitude":1350.2861508855515,"local_moment":[0.0,0.0,0.0]},{"name":"rocker_pivot_axis","type":"rocker_axis_resultant","point":[-60.64,11.14,-10.765],"force":[127.3845560634806,-688.3555200129945,-136.39169432578652],"force_magnitude":713.2060300760986,"local_moment":[21.899004025807358,-13.590543370231018,-360.40407686757794]},{"name":"shock_chassis_pickup","type":"shock_mount","point":[-59.5,6.58,-14.73],"force":[62.58664224480375,-528.6171376532438,108.26221967183041],"force_magnitude":543.2070270315538,"local_moment":[0.0,0.0,0.0]}],"resultant_force":[-488.04559999999987,0.0,-349.91280000000006],"resultant_force_magnitude":600.5226684174378,"resultant_moment":[-3.637978807091713e-12,-9.094947017729282e-13,1.7053025658242404e-12]},{"name":"case_2_braking","reference_point":[-61.00000074412273,25.49584980343775,0.025572222009111644],"interfaces":[{"name":"rear_tie_rod","type":"two_force_member","point":[-52.73306567,11.01527574,-6.31855306],"force":[166.6753997200211,-317.11205632494944,8.446296915931669],"force_magnitude":358.34632001746405,"local_moment":[0.0,0.0,0.0]},{"name":"lower_fore","type":"two_force_member","point":[-53.5,10.912,-5.37886759],"force":[691.8490719256599,-766.8898438682088,-14.067954980101895],"force_magnitude":1032.9438892359665,"local_moment":[0.0,0.0,0.0]},{"name":"lower_aft","type":"two_force_member","point":[-60.5,10.912,-5.37886759],"force":[-205.26304573951666,1076.959773974329,19.755929403408857],"force_magnitude":1096.5243132059102,"local_moment":[0.0,0.0,0.0]},{"name":"upper_fore","type":"two_force_member","point":[-52.5,12.017909,-9.665],"force":[-388.530462532139,366.92256381246546,-65.15566558357061],"force_magnitude":538.3617268229501,"local_moment":[0.0,0.0,0.0]},{"name":"upper_aft","type":"two_force_member","point":[-60.5,12.017909,-9.665],"force":[-21.156624633344887,192.63199217188767,-34.206306453978044],"force_magnitude":196.7860731230996,"local_moment":[0.0,0.0,0.0]},{"name":"rocker_pivot_axis","type":"rocker_axis_resultant","point":[-60.64,11.14,-10.765],"force":[49.17879298974479,-353.47678219318766,-70.53924733566802],"force_magnitude":363.7858912111092,"local_moment":[3.0479911796744332,24.078166120843804,-110.30296370559336]},{"name":"shock_chassis_pickup","type":"shock_mount","point":[-59.5,6.58,-14.73],"force":[24.401268269574633,-199.03564757233622,25.634148033978025],"force_magnitude":202.15766234088403,"local_moment":[0.0,0.0,0.0]}],"resultant_force":[317.15439999999995,-2.842170943040401e-14,-130.13280000000003],"resultant_force_magnitude":342.81402986925724,"resultant_moment":[4.547473508864641e-13,1.7053025658242404e-13,-6.252776074688882e-13]},{"name":"case_3_accel_corner","reference_point":[-61.00349636509815,25.678917970216364,-1.7356524746538033],"interfaces":[{"name":"rear_tie_rod","type":"two_force_member","point":[-52.73306567,11.01527574,-6.31855306],"force":[-240.34878091967616,449.89952267461155,-82.69693097313612],"force_magnitude":516.7358119820934,"local_moment":[0.0,0.0,0.0]},{"name":"lower_fore","type":"two_force_member","point":[-53.5,10.912,-5.37886759],"force":[197.3024472056778,-216.7550160443618,29.397596681189228],"force_magnitude":294.57632515932215,"local_moment":[0.0,0.0,0.0]},{"name":"lower_aft","type":"two_force_member","point":[-60.5,10.912,-5.37886759],"force":[-227.37807667039226,1182.3671708733857,-160.35962559362727],"force_magnitude":1214.663791355447,"local_moment":[0.0,0.0,0.0]},{"name":"upper_fore","type":"two_force_member","point":[-52.5,12.017909,-9.665],"force":[-41.426844387776356,37.2580425951265,-13.80956479262966],"force_magnitude":57.40251957633161,"local_moment":[0.0,0.0,0.0]},{"name":"upper_aft","type":"two_force_member","point":[-60.5,12.017909,-9.665],"force":[-70.99149583057465,615.5696510738335,-228.1587648942263],"force_magnitude":660.3197784418413,"local_moment":[0.0,0.0,0.0]},{"name":"rocker_pivot_axis","type":"rocker_axis_resultant","point":[-60.64,11.14,-10.765],"force":[172.370417897378,-808.4326601305776,-150.41873208119375],"force_magnitude":840.1789820584853,"local_moment":[40.004400232549244,-84.40649997155106,-520.4005305430735]},{"name":"shock_chassis_pickup","type":"shock_mount","point":[-59.5,6.58,-14.73],"force":[80.23753270536331,-689.4106110420179,166.3560216536239],"force_magnitude":713.7221996073778,"local_moment":[0.0,0.0,0.0]}],"resultant_force":[-130.2348000000003,570.4961,-439.69000000000005],"resultant_force_magnitude":731.9523204049906,"resultant_moment":[1.8189894035458565e-12,1.5916157281026244e-12,-9.094947017729282e-13]},{"name":"case_4_brake_corner","reference_point":[-61.00065739249131,25.60263215094121,-0.7581123993305363],"interfaces":[{"name":"rear_tie_rod","type":"two_force_member","point":[-52.73306567,11.01527574,-6.31855306],"force":[206.1224327159597,-390.4941161293841,37.608374072759766],"force_magnitude":443.1551667314857,"local_moment":[0.0,0.0,0.0]},{"name":"lower_fore","type":"two_force_member","point":[-53.5,10.912,-5.37886759],"force":[208.224741420201,-230.55717491292353,11.593475396244045],"force_magnitude":310.88351920792024,"local_moment":[0.0,0.0,0.0]},{"name":"lower_aft","type":"two_force_member","point":[-60.5,10.912,-5.37886759],"force":[27.150744803211218,-142.29680465807118,7.155337952031009],"force_magnitude":145.04048545311116,"local_moment":[0.0,0.0,0.0]},{"name":"upper_fore","type":"two_force_member","point":[-52.5,12.017909,-9.665],"force":[-295.0806466889152,273.8468280031724,-71.50896273493609],"force_magnitude":408.8743144404818,"local_moment":[0.0,0.0,0.0]},{"name":"upper_aft","type":"two_force_member","point":[-60.5,12.017909,-9.665],"force":[-114.78047009314555,1026.9934609950749,-268.176329325491],"force_magnitude":1067.6182224240742,"local_moment":[0.0,0.0,0.0]},{"name":"rocker_pivot_axis","type":"rocker_axis_resultant","point":[-60.64,11.14,-10.765],"force":[99.86688812567465,-594.3565115666789,-120.24208297648866],"force_magnitude":614.5658766187255,"local_moment":[13.196630944948048,12.755568397546341,-265.68944898812174]},{"name":"shock_chassis_pickup","type":"shock_mount","point":[-59.5,6.58,-14.73],"force":[50.18920971701423,-419.0152817311895,75.32418761588093],"force_magnitude":428.6799462725997,"local_moment":[0.0,0.0,0.0]}],"resultant_force":[181.69290000000004,-475.8796,-328.24600000000004],"resultant_force_magnitude":605.9860890503759,"resultant_moment":[1.8189894035458565e-12,-1.1368683772161603e-13,-1.1368683772161603e-13]}],"sizing_summary":[{"member":"rear_tie_rod","peak_force":604.2476146517351,"peak_state":"tension","peak_case":"case_1_linear_accel","max_tension_force":604.2476146517351,"max_tension_case":"case_1_linear_accel","max_compression_force":-443.1551667314857,"max_compression_case":"case_4_brake_corner","tube_id_in":0.384,"tube_od_in":0.5,"critical_buckling_load_lbf":4731.342394135225,"chassis_jmx":"JMX3","wheel_jmx":"JMX3","chassis_jmx_margin":0.6956486383327054,"wheel_jmx_margin":0.6956486383327054,"governing_margin":0.6956486383327054,"governing_margin_mode":"chassis JMX3 axial proxy","governing_margin_case":"case_1_linear_accel"},{"member":"lower_fore","peak_force":1376.9253180909873,"peak_state":"tension","peak_case":"case_1_linear_accel","max_tension_force":1376.9253180909873,"max_tension_case":"case_1_linear_accel","max_compression_force":-1032.9438892359665,"max_compression_case":"case_2_braking","tube_id_in":0.402,"tube_od_in":0.5,"critical_buckling_load_lbf":2911.4704210397263,"chassis_jmx":"JMX4","wheel_jmx":"NA","chassis_jmx_margin":0.36613696275697283,"wheel_jmx_margin":null,"governing_margin":0.36613696275697283,"governing_margin_mode":"chassis JMX4 axial proxy","governing_margin_case":"case_1_linear_accel"},{"member":"lower_aft","peak_force":-1240.5972513879365,"peak_state":"compression","peak_case":"case_1_linear_accel","max_tension_force":1214.663791355447,"max_tension_case":"case_3_accel_corner","max_compression_force":-1240.5972513879365,"max_compression_case":"case_1_linear_accel","tube_id_in":0.402,"tube_od_in":0.5,"critical_buckling_load_lbf":5095.212529255465,"chassis_jmx":"JMX5","wheel_jmx":"NA","chassis_jmx_margin":1.431417635034534,"wheel_jmx_margin":null,"governing_margin":1.431417635034534,"governing_margin_mode":"chassis JMX5 axial proxy","governing_margin_case":"case_1_linear_accel"},{"member":"upper_fore","peak_force":-607.2055584838436,"peak_state":"compression","peak_case":"case_1_linear_accel","max_tension_force":538.3617268229501,"max_tension_case":"case_2_braking","max_compression_force":-607.2055584838436,"max_compression_case":"case_1_linear_accel","tube_id_in":0.34,"tube_od_in":0.4375,"critical_buckling_load_lbf":2137.6076418622956,"chassis_jmx":"JMX3","wheel_jmx":"NA","chassis_jmx_margin":0.6873884480872423,"wheel_jmx_margin":null,"governing_margin":0.6873884480872423,"governing_margin_mode":"chassis JMX3 axial proxy","governing_margin_case":"case_1_linear_accel"},{"member":"upper_aft","peak_force":1350.2861508855515,"peak_state":"tension","peak_case":"case_1_linear_accel","max_tension_force":1350.2861508855515,"max_tension_case":"case_1_linear_accel","max_compression_force":null,"max_compression_case":null,"tube_id_in":0.34,"tube_od_in":0.4375,"critical_buckling_load_lbf":4409.563720579543,"chassis_jmx":"JMX3","wheel_jmx":"NA","chassis_jmx_margin":-0.2412040630587471,"wheel_jmx_margin":null,"governing_margin":-0.2412040630587471,"governing_margin_mode":"chassis JMX3 axial proxy","governing_margin_case":"case_1_linear_accel"},{"member":"pushrod","peak_force":-1519.0784176281531,"peak_state":"compression","peak_case":"case_3_accel_corner","max_tension_force":null,"max_tension_case":null,"max_compression_force":-1519.0784176281531,"max_compression_case":"case_3_accel_corner","tube_id_in":0.444,"tube_od_in":0.5,"critical_buckling_load_lbf":29594.291116268752,"chassis_jmx":"JMX3","wheel_jmx":"JMX3","chassis_jmx_margin":-0.3255176078403056,"wheel_jmx_margin":-0.3255176078403056,"governing_margin":-0.3255176078403056,"governing_margin_mode":"chassis JMX3 axial proxy","governing_margin_case":"case_3_accel_corner"},{"member":"shock","peak_force":-713.7221996073779,"peak_state":"compression","peak_case":"case_3_accel_corner","chassis_jmx":"NA","wheel_jmx":"NA","chassis_jmx_margin":null,"wheel_jmx_margin":null,"governing_margin":null,"governing_margin_mode":"damper rating not supplied","governing_margin_case":"case_3_accel_corner"}]},{"name":"rear_left","coordinate_units":"in","force_units":"lbf","condition_number_inf":303.61392325776103,"geometry_warning":null,"member_geometry":[{"name":"rear_tie_rod","application":[-57.85,-20.75,-6.6],"anchor":[-52.73306567,-11.01527574,-6.31855306],"direction_application_to_anchor":[0.46512379233385265,0.8848758989516987,0.02558322222469446],"length":11.001231100917773,"role":"tie_rod"},{"name":"lower_fore","application":[-62.375,-20.75,-5.22055],"anchor":[-53.5,-10.912,-5.37886759],"direction_application_to_anchor":[0.6697837889686727,0.7424600468590199,-0.011948006229925454],"length":13.250544647647635,"role":"link"},{"name":"lower_aft","application":[-62.375,-20.75,-5.22055],"anchor":[-60.5,-10.912,-5.37886759],"direction_application_to_anchor":[0.18719424937879642,0.9821957468739195,-0.01580594262587196],"length":10.01633333407507,"role":"link"},{"name":"upper_fore","application":[-61.42579354,-20.44337683,-11.18376063],"anchor":[-52.5,-12.017909,-9.665],"direction_application_to_anchor":[0.7216903490218355,0.6812367765012124,0.12279859311481714],"length":12.367899268845484,"role":"link"},{"name":"upper_aft","application":[-61.42579354,-20.44337683,-11.18376063],"anchor":[-60.5,-12.017909,-9.665],"direction_application_to_anchor":[0.10751078212145536,0.9784348205135028,0.17637101160435215],"length":8.611169240254695,"role":"link"},{"name":"pushrod","application":[-61.32233791,-19.32992143,-11.75452775],"anchor":[-60.88,-16.02,-12.02],"direction_application_to_anchor":[0.13204576654972253,0.9880706639946474,-0.07924820811521598],"length":3.349883313626979,"role":"pushrod"}],"ride_height_reference":{"wheel_load_supported_by_spring":134.863,"shock_force":-209.56472542817986,"shock_compression_force":209.56472542817986,"spring_rate":450.0,"spring_compression_from_free_length":0.46569938984039966},"load_cases":[{"name":"case_1_linear_accel","external_wrench":[-488.0456,-0.0,-349.9128,0.0,0.0,0.0],"members":[{"name":"rear_tie_rod","force":604.2476146514158,"state":"tension","length":11.001231100917757},{"name":"lower_fore","force":1376.9253180913,"state":"tension","length":13.250544647647613},{"name":"lower_aft","force":-1240.5972513889935,"state":"compression","length":10.016333334075052},{"name":"upper_fore","force":-607.2055584835437,"state":"compression","length":12.36789926884546},{"name":"upper_aft","force":1350.2861508935305,"state":"tension","length":8.611169240254695},{"name":"pushrod","force":-1232.0319691690786,"state":"compression","length":3.349883313625528}],"rocker":{"shock_force":-543.207027030797,"shock_state":"compression","shock_length":6.887917326969408,"shock_direction_rocker_to_chassis":[0.1152169230704625,0.973141199115228,0.19930194987192437],"pushrod_force_on_rocker":[189.97119830921315,1216.9726576728945,-28.12947465152049],"pivot_reaction":[-127.38455606447117,-688.3555200203266,136.39169432288946],"pivot_reaction_magnitude":713.2060300827982,"pivot_reaction_moment":[-13.488597624757404,257.55795654638337,837.8249094977963],"pushrod_axis_moment":-2629.460804351392,"shock_axis_moment_per_unit_force":-4.8406236913469005},"max_equilibrium_residual":1.8189894035458565e-12,"kinematics":{"upright_translation":[-0.0015281544689572577,-0.14085325376952773,-1.1528915228540646],"upright_rotation_vector_rad":[0.0339026109895037,2.3300509449738092e-05,-0.0003406285138887248],"rocker_rotation_rad":-0.1577155406418841,"shock_travel_from_ride_height":0.7414273368926203,"spring_force":543.207027029859,"geometry":{"contact_patch":[-61.00152815446896,-25.640853253769528,-1.1528915228540646],"members":[{"name":"rear_tie_rod","role":"tie_rod","application":[-57.850024435129654,-20.670940199350643,-7.588183943444387],"anchor":[-52.73306567,-11.01527574,-6.31855306]},{"name":"lower_fore","application":[-62.374999999999986,-20.71615894061205,-6.209395088954656],"anchor":[-53.5,-10.912,-5.37886759]},{"name":"lower_aft","application":[-62.374999999999986,-20.71615894061205,-6.209395088954656],"anchor":[-60.5,-10.912,-5.37886759]},{"name":"upper_fore","application":[-61.425793539999965,-20.207905171929973,-12.158813286791],"anchor":[-52.5,-12.017909,-9.665]},{"name":"upper_aft","application":[-61.425793539999965,-20.207905171929973,-12.158813286791],"anchor":[-60.5,-12.017909,-9.665]},{"name":"pushrod","role":"pushrod","application":[-61.32196827555335,-19.075778072283175,-12.691513620138808],"anchor":[-60.80543837762004,-15.766840884698336,-12.767997396626956]}],"rocker":{"pivot_axis":[[-58.94,-11.36,-10.67],[-62.34,-10.92,-10.86]],"pushrod_pickup":[-60.80543837762004,-15.766840884698336,-12.767997396626956],"shock_pickup":[-60.29360464077714,-13.282916126973566,-16.102775353821617],"shock_chassis_pickup":[-59.5,-6.58,-14.73]}},"iterations":4,"max_constraint_residual":2.0845113289801196e-12}},{"name":"case_2_braking","external_wrench":[317.1544,-0.0,-130.1328,0.0,0.0,0.0],"members":[{"name":"rear_tie_rod","force":-358.34632004731463,"state":"compression","length":11.001231100916318},{"name":"lower_fore","force":-1032.9438892357932,"state":"compression","length":13.250544647646551},{"name":"lower_aft","force":1096.5243131110578,"state":"tension","length":10.016333334068698},{"name":"upper_fore","force":538.3617268637986,"state":"tension","length":12.367899268842638},{"name":"upper_aft","force":196.78607408116218,"state":"tension","length":8.611169240250115},{"name":"pushrod","force":-559.1962797812007,"state":"compression","length":3.3498833133904786}],"rocker":{"shock_force":-202.15766222439217,"shock_state":"compression","shock_length":7.645804804537813,"shock_direction_rocker_to_chassis":[0.12070414738791144,0.9845565350808908,0.12680275246566294],"pushrod_force_on_rocker":[73.5800613567646,552.5124306022738,-44.90509906277159],"pivot_reaction":[-49.17879310003595,-353.47678314257314,70.5392470648483],"pivot_reaction_magnitude":363.7858920959876,"pivot_reaction_moment":[-15.013668835645603,100.5105393211201,501.42690180256915],"pushrod_axis_moment":-919.7395166941395,"shock_axis_moment_per_unit_force":-4.549614922204836},"max_equilibrium_residual":1.8189894035458565e-12,"kinematics":{"upright_translation":[-7.441313243630787e-07,0.004150196394900369,0.025572220852897107],"upright_rotation_vector_rad":[-0.0007217406704142092,8.476614474162208e-09,-1.660429986150314e-07],"rocker_rotation_rad":0.0036151930990495633,"shock_travel_from_ride_height":-0.016460140675785162,"spring_force":202.15766212407652,"geometry":{"contact_patch":[-61.00000074413133,-25.4958498036051,0.025572220852897107],"members":[{"name":"rear_tie_rod","role":"tie_rod","application":[-57.850000011782846,-20.750615051821605,-6.5778543545449315],"anchor":[-52.73306567,-11.01527574,-6.31855306]},{"name":"lower_fore","application":[-62.37500000000706,-20.749618695381898,-5.198404675743749],"anchor":[-53.5,-10.912,-5.37886759]},{"name":"lower_aft","application":[-62.37500000000706,-20.749618695381898,-5.198404675743749],"anchor":[-60.5,-10.912,-5.37886759]},{"name":"upper_fore","application":[-61.425793540000534,-20.447299654119604,-11.161835062979245],"anchor":[-52.5,-12.017909,-9.665]},{"name":"upper_aft","application":[-61.425793540000534,-20.447299654119604,-11.161835062979245],"anchor":[-60.5,-12.017909,-9.665]},{"name":"pushrod","role":"pushrod","application":[-61.32233772999486,-19.334256507110883,-11.733405661168076],"anchor":[-60.881554004048546,-16.024413007365922,-12.00241110250503]}],"rocker":{"pivot_axis":[[-58.94,-11.36,-10.67],[-62.34,-10.92,-10.86]],"pushrod_pickup":[-60.881554004048546,-16.024413007365922,-12.00241110250503],"shock_pickup":[-60.422880350026134,-14.107727086260576,-15.699509094030585],"shock_chassis_pickup":[-59.5,-6.58,-14.73]}},"iterations":2,"max_constraint_residual":2.3650059688407055e-10}},{"name":"case_3_accel_corner","external_wrench":[-130.2348,57.4241,-129.9161,0.0,0.0,0.0],"members":[{"name":"rear_tie_rod","force":130.79389699607452,"state":"tension","length":11.001231101712921},{"name":"lower_fore","force":394.21561869001533,"state":"tension","length":13.250544648849406},{"name":"lower_aft","force":-429.4133038111734,"state":"compression","length":10.01633333448101},{"name":"upper_fore","force":-151.19700119230257,"state":"compression","length":12.367899270364253},{"name":"upper_aft","force":587.6143672518057,"state":"tension","length":8.611169240341544},{"name":"pushrod","force":-523.0074831160732,"state":"compression","length":3.349883316419645}],"rocker":{"shock_force":-186.67981877665883,"shock_state":"compression","shock_length":7.680200008419043,"shock_direction_rocker_to_chassis":[0.12094852632215115,0.9849655210968045,0.12334656959559144],"pushrod_force_on_rocker":[68.31354815589475,516.7298300053169,-43.13199875310846],"pivot_reaction":[-45.73489918077162,-332.8566450257081,66.15831401193601],"pivot_reaction_magnitude":342.43561388054763,"pivot_reaction_moment":[-14.417316000684991,93.60934991820247,474.77362298072694],"pushrod_axis_moment":-846.6299731106911,"shock_axis_moment_per_unit_force":-4.535198173315068},"max_equilibrium_residual":5.684341886080801e-13,"kinematics":{"upright_translation":[-7.087048431775878e-06,0.012964057302428398,0.07897064472725522],"upright_rotation_vector_rad":[-0.002224964938950143,7.96340892169426e-08,-1.5811992303194798e-06],"rocker_rotation_rad":0.011187206232553268,"shock_travel_from_ride_height":-0.050855344557015236,"spring_force":186.67982037752301,"geometry":{"contact_patch":[-61.00000708704843,-25.48703594269757,0.07897064472725522],"members":[{"name":"rear_tie_rod","role":"tie_rod","application":[-57.850000113977366,-20.751737437595587,-6.531581838778381],"anchor":[-52.73306567,-11.01527574,-6.31855306]},{"name":"lower_fore","application":[-62.37500000169401,-20.7486610569215,-5.152134900854965],"anchor":[-53.5,-10.912,-5.37886759]},{"name":"lower_aft","application":[-62.37500000169401,-20.7486610569215,-5.152134900854965],"anchor":[-60.5,-10.912,-5.37886759]},{"name":"upper_fore","application":[-61.42579354225452,-20.455308070481053,-11.116013069675686],"anchor":[-52.5,-12.017909,-9.665]},{"name":"upper_aft","application":[-61.42579354225452,-20.455308070481053,-11.116013069675686],"anchor":[-60.5,-12.017909,-9.665]},{"name":"pushrod","role":"pushrod","application":[-61.32233619821642,-19.343125525919987,-11.689256182132516],"anchor":[-60.88478525938583,-16.03345082238041,-11.965518315450414]}],"rocker":{"pivot_axis":[[-58.94,-11.36,-10.67],[-62.34,-10.92,-10.86]],"pushrod_pickup":[-60.88478525938583,-16.03345082238041,-11.965518315450414],"shock_pickup":[-60.428908872877656,-14.144732203420146,-15.677326324846522],"shock_chassis_pickup":[-59.5,-6.58,-14.73]}},"iterations":2,"max_constraint_residual":3.557475957273305e-09}},{"name":"case_4_brake_corner","external_wrench":[181.6929,-77.4554,-55.2674,0.0,0.0,0.0],"members":[{"name":"rear_tie_rod","force":-164.8102938820244,"state":"compression","length":11.001231100917733},{"name":"lower_fore","force":-646.3106941298383,"state":"compression","length":13.250544647646274},{"name":"lower_aft","force":772.6087948893485,"state":"tension","length":10.01633333407432},{"name":"upper_fore","force":301.56963141439286,"state":"tension","length":12.367899268843109},{"name":"upper_aft","force":59.07600178908219,"state":"tension","length":8.6111692402587},{"name":"pushrod","force":-324.1169550537145,"state":"compression","length":3.3498833136016906}],"rocker":{"shock_force":-107.49011278884068,"shock_state":"compression","shock_length":7.856177136416511,"shock_direction_rocker_to_chassis":[0.12219098011965006,0.9868917196655135,0.1054234226016427],"pushrod_force_on_rocker":[40.76637548128318,320.13730341954306,-30.033483691940024],"pivot_reaction":[-27.632053246443004,-214.0562011623241,41.365459277976214],"pivot_reaction_magnitude":219.76052612773188,"pivot_reaction_moment":[-10.145358035847778,56.91375275876027,313.34878176703626],"pushrod_axis_moment":-479.3685290720773,"shock_axis_moment_per_unit_force":-4.459652303219501},"max_equilibrium_residual":6.821210263296962e-13,"kinematics":{"upright_translation":[-0.00013979140321839355,0.061001043128895344,0.35105346425958045],"upright_rotation_vector_rad":[-0.009805150892348931,1.450867522558886e-06,-3.119992189784915e-05],"rocker_rotation_rad":0.05031435292417617,"shock_travel_from_ride_height":-0.22683247255448258,"spring_force":107.49011277866269,"geometry":{"contact_patch":[-61.00013979140322,-25.438998956871103,0.35105346425958045],"members":[{"name":"rear_tie_rod","role":"tie_rod","application":[-57.85000221457171,-20.754038551565635,-6.295207081923822],"anchor":[-52.73306567,-11.01527574,-6.31855306]},{"name":"lower_fore","application":[-62.374999999998494,-20.74037184335843,-4.915817519302191],"anchor":[-53.5,-10.912,-5.37886759]},{"name":"lower_aft","application":[-62.374999999998494,-20.74037184335843,-4.915817519302191],"anchor":[-60.5,-10.912,-5.37886759]},{"name":"upper_fore","application":[-61.42579353999202,-20.492262277354,-10.88174916736611],"anchor":[-52.5,-12.017909,-9.665]},{"name":"upper_aft","application":[-61.42579353999202,-20.492262277354,-10.88174916736611],"anchor":[-60.5,-12.017909,-9.665]},{"name":"pushrod","role":"pushrod","application":[-61.32230409419559,-19.384459998355517,-11.463406408097672],"anchor":[-60.90096667616962,-16.075708036864206,-11.773814932860855]}],"rocker":{"pivot_axis":[[-58.94,-11.36,-10.67],[-62.34,-10.92,-10.86]],"pushrod_pickup":[-60.90096667616962,-16.075708036864206,-11.773814932860855],"shock_pickup":[-60.45995398429232,-14.33319616415498,-15.558225082285801],"shock_chassis_pickup":[-59.5,-6.58,-14.73]}},"iterations":3,"max_constraint_residual":2.5288660054911816e-11}}],"chassis_loads":[{"name":"case_1_linear_accel","reference_point":[-61.00152815446896,-25.640853253769528,-1.1528915228540646],"interfaces":[{"name":"rear_tie_rod","type":"two_force_member","point":[-52.73306567,-11.01527574,-6.31855306],"force":[-281.05128414594526,-530.3417557468049,-69.73505290194667],"force_magnitude":604.2476146514157,"local_moment":[0.0,0.0,0.0]},{"name":"lower_fore","type":"two_force_member","point":[-53.5,-10.912,-5.37886759],"force":[-922.2422566780858,-1018.7954553488115,-86.30394984441126],"force_magnitude":1376.9253180913,"local_moment":[0.0,0.0,0.0]},{"name":"lower_aft","type":"two_force_member","point":[-60.5,-10.912,-5.37886759],"force":[232.2326712551593,1214.31787743387,102.8669971376575],"force_magnitude":1240.5972513889933,"local_moment":[0.0,0.0,0.0]},{"name":"upper_fore","type":"two_force_member","point":[-52.5,-12.017909,-9.665],"force":[438.2143914299862,402.0902088102997,122.43447788857735],"force_magnitude":607.2055584835437,"local_moment":[0.0,0.0,0.0]},{"name":"upper_aft","type":"two_force_member","point":[-60.5,-12.017909,-9.665],"force":[-145.1703201703274,-1284.2435328214478,-391.0457976283564],"force_magnitude":1350.2861508935305,"local_moment":[0.0,0.0,0.0]},{"name":"rocker_pivot_axis","type":"rocker_axis_resultant","point":[-60.64,-11.14,-10.765],"force":[127.38455606447117,688.3555200203266,-136.39169432288946],"force_magnitude":713.2060300827982,"local_moment":[-21.899004026138535,-13.590543371346058,360.40407687094455]},{"name":"shock_chassis_pickup","type":"shock_mount","point":[-59.5,-6.58,-14.73],"force":[62.58664224474198,528.6171376525679,108.26221967136897],"force_magnitude":543.2070270307969,"local_moment":[0.0,0.0,0.0]}],"resultant_force":[-488.04559999999964,0.0,-349.91279999999995],"resultant_force_magnitude":600.5226684174374,"resultant_moment":[3.637978807091713e-12,-5.684341886080801e-13,3.410605131648481e-13]},{"name":"case_2_braking","reference_point":[-61.00000074413133,-25.4958498036051,0.025572220852897107],"interfaces":[{"name":"rear_tie_rod","type":"two_force_member","point":[-52.73306567,-11.01527574,-6.31855306],"force":[166.67539973311557,317.1120563509163,8.44629694906977],"force_magnitude":358.34632004731463,"local_moment":[0.0,0.0,0.0]},{"name":"lower_fore","type":"two_force_member","point":[-53.5,-10.912,-5.37886759],"force":[691.8490719249938,766.8898438700301,-14.067954900841391],"force_magnitude":1032.9438892357932,"local_moment":[0.0,0.0,0.0]},{"name":"lower_aft","type":"two_force_member","point":[-60.5,-10.912,-5.37886759],"force":[-205.2630457193286,-1076.9597738836744,19.755929290391737],"force_magnitude":1096.5243131110578,"local_moment":[0.0,0.0,0.0]},{"name":"upper_fore","type":"two_force_member","point":[-52.5,-12.017909,-9.665],"force":[-388.5304625604454,-366.9225638337574,-65.15566563238981],"force_magnitude":538.3617268637985,"local_moment":[0.0,0.0,0.0]},{"name":"upper_aft","type":"two_force_member","point":[-60.5,-12.017909,-9.665],"force":[-21.15662473509983,-192.63199310578833,-34.206306643458724],"force_magnitude":196.78607408116218,"local_moment":[0.0,0.0,0.0]},{"name":"rocker_pivot_axis","type":"rocker_axis_resultant","point":[-60.64,-11.14,-10.765],"force":[49.17879310003595,353.47678314257314,-70.5392470648483],"force_magnitude":363.7858920959876,"local_moment":[-3.0479912086325243,24.078166033625635,110.30296402181403]},{"name":"shock_chassis_pickup","type":"shock_mount","point":[-59.5,-6.58,-14.73],"force":[24.40126825672865,199.03564745970064,25.6341480020767],"force_magnitude":202.1576622243922,"local_moment":[0.0,0.0,0.0]}],"resultant_force":[317.1544000000002,1.4210854715202004e-13,-130.13280000000003],"resultant_force_magnitude":342.8140298692574,"resultant_moment":[-2.2737367544323206e-12,-3.410605131648481e-13,5.684341886080802e-14]},{"name":"case_3_accel_corner","reference_point":[-61.00000708704843,-25.48703594269757,0.07897064472725522],"interfaces":[{"name":"rear_tie_rod","type":"two_force_member","point":[-52.73306567,-11.01527574,-6.31855306],"force":[-60.835354735619994,-115.75702361013572,-2.5327041938425214],"force_magnitude":130.7938969960745,"local_moment":[0.0,0.0,0.0]},{"name":"lower_fore","type":"two_force_member","point":[-53.5,-10.912,-5.37886759],"force":[-264.0392307832791,-292.6495119379873,6.745501388603076],"force_magnitude":394.2156186900153,"local_moment":[0.0,0.0,0.0]},{"name":"lower_aft","type":"two_force_member","point":[-60.5,-10.912,-5.37886759],"force":[80.38370114956841,421.7105183972228,-9.720326777923253],"force_magnitude":429.4133038111734,"local_moment":[0.0,0.0,0.0]},{"name":"upper_fore","type":"two_force_member","point":[-52.5,-12.017909,-9.665],"force":[109.11741657568953,103.1468165637708,17.738568210326324],"force_magnitude":151.19700119230257,"local_moment":[0.0,0.0,0.0]},{"name":"upper_aft","type":"two_force_member","point":[-60.5,-12.017909,-9.665],"force":[-63.17488036225369,-575.7565294181875,-99.01513987405514],"force_magnitude":587.6143672518057,"local_moment":[0.0,0.0,0.0]},{"name":"rocker_pivot_axis","type":"rocker_axis_resultant","point":[-60.64,-11.14,-10.765],"force":[45.73489918077162,332.8566450257081,-66.15831401193601],"force_magnitude":342.43561388054763,"local_moment":[-2.6492361941316425,23.20459932426229,101.14435138274746]},{"name":"shock_chassis_pickup","type":"shock_mount","point":[-59.5,-6.58,-14.73],"force":[22.578648975123127,183.8731849796088,23.026315258827548],"force_magnitude":186.6798187766588,"local_moment":[0.0,0.0,0.0]}],"resultant_force":[-130.2348000000001,57.42409999999998,-129.91609999999997],"resultant_force_magnitude":192.7091679995013,"resultant_moment":[-4.547473508864641e-13,3.979039320256561e-13,7.958078640513122e-13]},{"name":"case_4_brake_corner","reference_point":[-61.00013979140322,-25.438998956871103,0.35105346425958045],"interfaces":[{"name":"rear_tie_rod","type":"two_force_member","point":[-52.73306567,-11.01527574,-6.31855306],"force":[76.65722208273424,145.89715880866896,-0.34974790297580927],"force_magnitude":164.81029388202438,"local_moment":[0.0,0.0,0.0]},{"name":"lower_fore","type":"two_force_member","point":[-53.5,-10.912,-5.37886759],"force":[432.88842556522707,479.390243734283,-22.585804626735257],"force_magnitude":646.3106941298383,"local_moment":[0.0,0.0,0.0]},{"name":"lower_aft","type":"two_force_member","point":[-60.5,-10.912,-5.37886759],"force":[-144.62792342266272,-758.1104055103144,35.717317421757336],"force_magnitude":772.6087948893486,"local_moment":[0.0,0.0,0.0]},{"name":"upper_fore","type":"two_force_member","point":[-52.5,-12.017909,-9.665],"force":[-217.63989254968666,-206.63230988345924,-29.66830420835812],"force_magnitude":301.56963141439286,"local_moment":[0.0,0.0,0.0]},{"name":"upper_aft","type":"two_force_member","point":[-60.5,-12.017909,-9.665],"force":[-6.351307156895027,-58.13739056872135,-8.347376991748119],"force_magnitude":59.07600178908219,"local_moment":[0.0,0.0,0.0]},{"name":"rocker_pivot_axis","type":"rocker_axis_resultant","point":[-60.64,-11.14,-10.765],"force":[27.632053246443004,214.0562011623241,-41.365459277976214],"force_magnitude":219.76052612773188,"local_moment":[-1.089580033418427,16.032573072211505,56.625811923132744]},{"name":"shock_chassis_pickup","type":"shock_mount","point":[-59.5,-6.58,-14.73],"force":[13.134322234840173,106.08110225721897,11.331975586036188],"force_magnitude":107.49011278884065,"local_moment":[0.0,0.0,0.0]}],"resultant_force":[181.69290000000007,-77.45540000000004,-55.2674],"resultant_force_magnitude":205.1003032721552,"resultant_moment":[4.547473508864641e-13,-1.7053025658242404e-13,7.389644451905042e-13]}],"sizing_summary":[{"member":"rear_tie_rod","peak_force":604.2476146514158,"peak_state":"tension","peak_case":"case_1_linear_accel","max_tension_force":604.2476146514158,"max_tension_case":"case_1_linear_accel","max_compression_force":-358.34632004731463,"max_compression_case":"case_2_braking","tube_id_in":0.384,"tube_od_in":0.5,"critical_buckling_load_lbf":4731.342394135225,"chassis_jmx":"JMX3","wheel_jmx":"JMX3","chassis_jmx_margin":0.6956486383336016,"wheel_jmx_margin":0.6956486383336016,"governing_margin":0.6956486383336016,"governing_margin_mode":"chassis JMX3 axial proxy","governing_margin_case":"case_1_linear_accel"},{"member":"lower_fore","peak_force":1376.9253180913,"peak_state":"tension","peak_case":"case_1_linear_accel","max_tension_force":1376.9253180913,"max_tension_case":"case_1_linear_accel","max_compression_force":-1032.9438892357932,"max_compression_case":"case_2_braking","tube_id_in":0.402,"tube_od_in":0.5,"critical_buckling_load_lbf":2911.4704210397263,"chassis_jmx":"JMX4","wheel_jmx":"NA","chassis_jmx_margin":0.36613696275666263,"wheel_jmx_margin":null,"governing_margin":0.36613696275666263,"governing_margin_mode":"chassis JMX4 axial proxy","governing_margin_case":"case_1_linear_accel"},{"member":"lower_aft","peak_force":-1240.5972513889935,"peak_state":"compression","peak_case":"case_1_linear_accel","max_tension_force":1096.5243131110578,"max_tension_case":"case_2_braking","max_compression_force":-1240.5972513889935,"max_compression_case":"case_1_linear_accel","tube_id_in":0.402,"tube_od_in":0.5,"critical_buckling_load_lbf":5095.212529255465,"chassis_jmx":"JMX5","wheel_jmx":"NA","chassis_jmx_margin":1.4314176350324623,"wheel_jmx_margin":null,"governing_margin":1.4314176350324623,"governing_margin_mode":"chassis JMX5 axial proxy","governing_margin_case":"case_1_linear_accel"},{"member":"upper_fore","peak_force":-607.2055584835437,"peak_state":"compression","peak_case":"case_1_linear_accel","max_tension_force":538.3617268637986,"max_tension_case":"case_2_braking","max_compression_force":-607.2055584835437,"max_compression_case":"case_1_linear_accel","tube_id_in":0.34,"tube_od_in":0.4375,"critical_buckling_load_lbf":2137.6076418622956,"chassis_jmx":"JMX3","wheel_jmx":"NA","chassis_jmx_margin":0.6873884480880756,"wheel_jmx_margin":null,"governing_margin":0.6873884480880756,"governing_margin_mode":"chassis JMX3 axial proxy","governing_margin_case":"case_1_linear_accel"},{"member":"upper_aft","peak_force":1350.2861508935305,"peak_state":"tension","peak_case":"case_1_linear_accel","max_tension_force":1350.2861508935305,"max_tension_case":"case_1_linear_accel","max_compression_force":null,"max_compression_case":null,"tube_id_in":0.34,"tube_od_in":0.4375,"critical_buckling_load_lbf":4409.563720579543,"chassis_jmx":"JMX3","wheel_jmx":"NA","chassis_jmx_margin":-0.24120406306323094,"wheel_jmx_margin":null,"governing_margin":-0.24120406306323094,"governing_margin_mode":"chassis JMX3 axial proxy","governing_margin_case":"case_1_linear_accel"},{"member":"pushrod","peak_force":-1232.0319691690786,"peak_state":"compression","peak_case":"case_1_linear_accel","max_tension_force":null,"max_tension_case":null,"max_compression_force":-1232.0319691690786,"max_compression_case":"case_1_linear_accel","tube_id_in":0.444,"tube_od_in":0.5,"critical_buckling_load_lbf":29594.291116268752,"chassis_jmx":"JMX3","wheel_jmx":"JMX3","chassis_jmx_margin":-0.168372517402274,"wheel_jmx_margin":-0.168372517402274,"governing_margin":-0.168372517402274,"governing_margin_mode":"chassis JMX3 axial proxy","governing_margin_case":"case_1_linear_accel"},{"member":"shock","peak_force":-543.207027030797,"peak_state":"compression","peak_case":"case_1_linear_accel","chassis_jmx":"NA","wheel_jmx":"NA","chassis_jmx_margin":null,"wheel_jmx_margin":null,"governing_margin":null,"governing_margin_mode":"damper rating not supplied","governing_margin_case":"case_1_linear_accel"}]}]}}</script>
+  <script>
+    (() => {
+      "use strict";
+      const COLORS = {
+        upper: "#6b4c9a", lower: "#1f758d", tie: "#d47a24", pushrod: "#b43f72",
+        shock: "#568421", rocker: "#343e43", upright: "#68757b", wheel: "#8c969a",
+        load: "#e56a2f", chassisLoad: "#c2362b", tension: "#c84d35", compression: "#266d93", selected: "#e56a2f"
+      };
+      const canvas = document.getElementById("scene");
+      const ctx = canvas.getContext("2d");
+      const controls = {
+        assembly: document.getElementById("assembly"), loadCase: document.getElementById("loadCase"),
+        colorMode: document.getElementById("colorMode"), labels: document.getElementById("labels"),
+        nodes: document.getElementById("nodes"), axes: document.getElementById("axes"),
+        mirror: document.getElementById("mirror"), projection: document.getElementById("projection")
+      };
+      const tooltip = document.getElementById("tooltip");
+      const status = document.getElementById("status");
+      let payload;
+      try {
+        payload = JSON.parse(document.getElementById("model-data").textContent);
+        if (!payload.config?.assemblies?.length || !payload.result?.assemblies?.length) throw new Error("No assemblies found");
+      } catch (error) {
+        status.innerHTML = `<div><strong>Geometry could not be loaded</strong><span>${escapeHtml(error.message)}. Regenerate this file from a valid configuration.</span></div>`;
+        return;
+      }
+
+      const configAssemblies = payload.config.assemblies;
+      const resultByName = new Map(payload.result.assemblies.map(a => [a.name, a]));
+      const geometryView = document.getElementById("geometryView");
+      const sizingView = document.getElementById("sizingView");
+      const chassisView = document.getElementById("chassisView");
+      const geometryTab = document.getElementById("geometryTab");
+      const sizingTab = document.getElementById("sizingTab");
+      const chassisTab = document.getElementById("chassisTab");
+      const sharedViewport = document.getElementById("sharedViewport");
+      const geometryInspectRail = document.getElementById("geometryInspectRail");
+      const chassisCanvasHost = document.getElementById("chassisCanvasHost");
+      const sizingControls = {
+        corner: document.getElementById("sizingCorner"),
+        state: document.getElementById("sizingState"),
+        status: document.getElementById("sizingStatus"),
+        body: document.getElementById("sizingTableBody")
+      };
+      const chassisControls = {
+        corner: document.getElementById("chassisCorner"),
+        loadCase: document.getElementById("chassisCase"),
+        body: document.getElementById("chassisTableBody")
+      };
+      const sizingRows = payload.result.assemblies.flatMap(assembly =>
+        (assembly.sizing_summary || []).map(row => ({...row, assembly: assembly.name, forceUnits: assembly.force_units || "lbf"}))
+      );
+      const sizingSort = {key: "margin", direction: "asc"};
+      const state = {
+        yaw: -0.68, pitch: 0.54, zoom: 1, panX: 0, panY: 0, perspective: true,
+        dragging: false, shifted: false, lastX: 0, lastY: 0, downX: 0, downY: 0, hover: null, selected: null,
+        projected: [], width: 0, height: 0, dpr: 1,
+        chassisOverlayCase: "envelope", chassisOverlayCorner: "all", showChassisVectors: false
+      };
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
+      }
+      function vAdd(a,b) { return a.map((n,i) => n+b[i]); }
+      function vSub(a,b) { return a.map((n,i) => n-b[i]); }
+      function vScale(a,s) { return a.map(n => n*s); }
+      function vMag(a) { return Math.hypot(...a); }
+      function vAvg(points) { return points.reduce((a,p) => vAdd(a,p), [0,0,0]).map(n => n/points.length); }
+      function labelName(value) { return value.replaceAll("_", " ").replace(/\b\w/g, c => c.toUpperCase()); }
+      function family(name) {
+        const n = name.toLowerCase();
+        if (n.includes("upper")) return "upper";
+        if (n.includes("lower")) return "lower";
+        if (n.includes("tie") || n.includes("steering")) return "tie";
+        if (n.includes("push") || n.includes("pull")) return "pushrod";
+        if (n.includes("shock")) return "shock";
+        if (n.includes("rocker")) return "rocker";
+        if (n.includes("upright")) return "upright";
+        return "wheel";
+      }
+      function marginStatus(value) {
+        if (!Number.isFinite(value)) return "unrated";
+        if (value < 0) return "fail";
+        if (value <= .5) return "caution";
+        return "pass";
+      }
+      function setAnalysisView(view) {
+        const geometryActive = view === "geometry";
+        const sizingActive = view === "sizing";
+        const chassisActive = view === "chassis";
+        geometryView.hidden = !geometryActive;
+        sizingView.hidden = !sizingActive;
+        chassisView.hidden = !chassisActive;
+        geometryTab.setAttribute("aria-selected", String(geometryActive));
+        sizingTab.setAttribute("aria-selected", String(sizingActive));
+        chassisTab.setAttribute("aria-selected", String(chassisActive));
+        state.showChassisVectors=chassisActive;
+        if(chassisActive){
+          state.chassisOverlayCase=chassisControls.loadCase.value;
+          state.chassisOverlayCorner=chassisControls.corner.value;
+          chassisCanvasHost.appendChild(sharedViewport);
+        }else if(geometryActive){
+          geometryInspectRail.before(sharedViewport);
+        }
+        if (sizingActive) renderSizing();
+        else if (chassisActive) renderChassisLoads();
+        else requestAnimationFrame(resize);
+      }
+      function formatJmx(selection, margin) {
+        if (!selection || selection === "NA") return `<span class="jmx-na">—</span>`;
+        const detail = Number.isFinite(margin) ? `MS ${margin.toFixed(2)}` : "unrated";
+        return `<strong>${escapeHtml(selection)}</strong><span>${escapeHtml(detail)}</span>`;
+      }
+      function renderSizing() {
+        const visible = sizingRows.filter(row => {
+          if (sizingControls.corner.value !== "all" && row.assembly !== sizingControls.corner.value) return false;
+          if (sizingControls.state.value !== "all" && row.peak_state !== sizingControls.state.value) return false;
+          return sizingControls.status.value === "all" || marginStatus(row.governing_margin) === sizingControls.status.value;
+        }).sort((a,b) => {
+          let comparison;
+          if (sizingSort.key === "peak") {
+            comparison = Math.abs(a.peak_force) - Math.abs(b.peak_force);
+          } else {
+            const aRated = Number.isFinite(a.governing_margin);
+            const bRated = Number.isFinite(b.governing_margin);
+            if (aRated !== bRated) return aRated ? -1 : 1;
+            const am = aRated ? a.governing_margin : 0;
+            const bm = bRated ? b.governing_margin : 0;
+            comparison = am - bm;
+          }
+          return (sizingSort.direction === "asc" ? comparison : -comparison)
+            || Math.abs(b.peak_force) - Math.abs(a.peak_force);
+        });
+        sizingControls.body.innerHTML = visible.length ? visible.map(row => {
+          const statusName = marginStatus(row.governing_margin);
+          const marginLabel = Number.isFinite(row.governing_margin) ? row.governing_margin.toFixed(2) : "N/A";
+          const tube = Number.isFinite(row.tube_id_in) && Number.isFinite(row.tube_od_in) ? `${row.tube_id_in.toFixed(3)} × ${row.tube_od_in.toFixed(3)} in` : "—";
+          return `<tr>
+            <td class="member-cell" data-label="Corner / member"><strong>${escapeHtml(labelName(row.assembly))}</strong><span>${escapeHtml(labelName(row.member))}</span></td>
+            <td class="numeric" data-label="Peak axial">${row.peak_force.toFixed(1)} ${escapeHtml(row.forceUnits)}</td>
+            <td data-label="State"><span class="state-word ${escapeHtml(row.peak_state)}">${escapeHtml(row.peak_state)}</span></td>
+            <td data-label="Peak case">${escapeHtml(labelName(row.peak_case))}</td>
+            <td class="numeric" data-label="Tube ID × OD">${escapeHtml(tube)}</td>
+            <td class="jmx-cell" data-label="JMX inboard">${formatJmx(row.chassis_jmx,row.chassis_jmx_margin)}</td>
+            <td class="jmx-cell" data-label="JMX outboard">${formatJmx(row.wheel_jmx,row.wheel_jmx_margin)}</td>
+            <td class="numeric" data-label="Governing MS"><span class="margin-mark ${statusName}"><span>${marginLabel}</span><span>${statusName.toUpperCase()}</span></span></td>
+            <td data-label="Governing mode / case"><strong>${escapeHtml(labelName(row.governing_margin_mode))}</strong><br><span class="table-muted">${escapeHtml(labelName(row.governing_margin_case))}</span></td>
+            <td data-label="Action"><button class="inspect-link" type="button" data-inspect-corner="${escapeHtml(row.assembly)}" data-inspect-case="${escapeHtml(row.peak_case)}">Inspect</button></td>
+          </tr>`;
+        }).join("") : `<tr><td colspan="10" class="empty-table">No members match these filters.</td></tr>`;
+        document.getElementById("sizingRowCount").textContent = String(visible.length);
+        document.getElementById("sizingFailCount").textContent = String(visible.filter(row=>marginStatus(row.governing_margin)==="fail").length);
+        document.getElementById("sizingCautionCount").textContent = String(visible.filter(row=>marginStatus(row.governing_margin)==="caution").length);
+        document.getElementById("sizingUnratedCount").textContent = String(visible.filter(row=>marginStatus(row.governing_margin)==="unrated").length);
+      }
+      function formatVector(values) {
+        return values.map(value=>Number(value).toFixed(2)).join(", ");
+      }
+      function chassisSelection(assembly, selection) {
+        const cases = assembly?.chassis_loads || [];
+        if (selection === "envelope") {
+          if (!cases.length) return null;
+          const interfaceNames = cases[0].interfaces.map(item=>item.name);
+          const interfaces = interfaceNames.map(name=>{
+            const candidates = cases.map(chassis=>({...chassis.interfaces.find(item=>item.name===name),sourceCase:chassis.name}));
+            return candidates.reduce((best,item)=>item.force_magnitude>best.force_magnitude?item:best);
+          });
+          const resultantCase = cases.reduce((best,item)=>item.resultant_force_magnitude>best.resultant_force_magnitude?item:best);
+          return {
+            interfaces,
+            reference_point: resultantCase.reference_point,
+            resultant_force: resultantCase.resultant_force,
+            resultant_force_magnitude: resultantCase.resultant_force_magnitude,
+            resultant_moment: resultantCase.resultant_moment,
+            sourceCase: resultantCase.name
+          };
+        }
+        const selectedCase = cases.find(item=>item.name===selection);
+        return selectedCase ? {...selectedCase,interfaces:selectedCase.interfaces.map(item=>({...item,sourceCase:selectedCase.name})),sourceCase:selectedCase.name} : null;
+      }
+      function chassisOverlayMaximumForce() {
+        const visibleNames = new Set(selectedAssemblies().map(item=>item.name));
+        let maximum = 1;
+        for (const assembly of payload.result.assemblies) {
+          if (!visibleNames.has(assembly.name)) continue;
+          if (state.chassisOverlayCorner !== "all" && state.chassisOverlayCorner !== assembly.name) continue;
+          const chassis = chassisSelection(assembly,state.chassisOverlayCase);
+          for (const item of chassis?.interfaces || []) maximum=Math.max(maximum,item.force_magnitude);
+        }
+        return maximum;
+      }
+      function renderChassisLoads() {
+        const selected = payload.result.assemblies.filter(assembly=>
+          chassisControls.corner.value === "all" || assembly.name === chassisControls.corner.value
+        );
+        let interfaceCount=0;
+        const rows=[];
+        for(const assembly of selected){
+          const active=chassisSelection(assembly,chassisControls.loadCase.value);
+          if(!active)continue;
+          interfaceCount+=active.interfaces.length;
+          for(const item of active.interfaces){
+            rows.push(`<tr>
+              <td class="member-cell" data-label="Corner / hardpoint"><strong>${escapeHtml(labelName(assembly.name))}</strong><span>${escapeHtml(labelName(item.name))}</span><span class="interface-type">${escapeHtml(labelName(item.type))}</span></td>
+              <td data-label="Governing case">${escapeHtml(labelName(item.sourceCase))}</td>
+              <td class="vector-value" data-label="Pickup X, Y, Z">${escapeHtml(formatVector(item.point))} ${escapeHtml(assembly.coordinate_units||"in")}</td>
+              <td class="vector-value" data-label="Fx">${item.force[0].toFixed(1)}</td>
+              <td class="vector-value" data-label="Fy">${item.force[1].toFixed(1)}</td>
+              <td class="vector-value" data-label="Fz">${item.force[2].toFixed(1)}</td>
+              <td class="vector-value" data-label="|F|">${item.force_magnitude.toFixed(1)}</td>
+              <td class="vector-value" data-label="Mx">${item.local_moment[0].toFixed(1)}</td>
+              <td class="vector-value" data-label="My">${item.local_moment[1].toFixed(1)}</td>
+              <td class="vector-value" data-label="Mz">${item.local_moment[2].toFixed(1)}</td>
+            </tr>`);
+          }
+          rows.push(`<tr class="resultant-row">
+            <td class="member-cell" data-label="Corner / hardpoint"><strong>${escapeHtml(labelName(assembly.name))}</strong><span>Corner resultant into chassis</span></td>
+            <td data-label="Governing case">${escapeHtml(labelName(active.sourceCase))}</td>
+            <td class="vector-value" data-label="Reference X, Y, Z">about ${escapeHtml(formatVector(active.reference_point))} ${escapeHtml(assembly.coordinate_units||"in")}</td>
+            <td class="vector-value" data-label="Fx">${active.resultant_force[0].toFixed(1)}</td>
+            <td class="vector-value" data-label="Fy">${active.resultant_force[1].toFixed(1)}</td>
+            <td class="vector-value" data-label="Fz">${active.resultant_force[2].toFixed(1)}</td>
+            <td class="vector-value" data-label="|F|">${active.resultant_force_magnitude.toFixed(1)}</td>
+            <td class="vector-value" data-label="Mx">${active.resultant_moment[0].toFixed(1)}</td>
+            <td class="vector-value" data-label="My">${active.resultant_moment[1].toFixed(1)}</td>
+            <td class="vector-value" data-label="Mz">${active.resultant_moment[2].toFixed(1)}</td>
+          </tr>`);
+        }
+        chassisControls.body.innerHTML=rows.join("")||`<tr><td colspan="10" class="empty-table">No chassis loads are available for this selection.</td></tr>`;
+        state.chassisOverlayCase=chassisControls.loadCase.value;
+        state.chassisOverlayCorner=chassisControls.corner.value;
+        if(chassisControls.corner.value==="all")controls.assembly.value="all";
+        else{
+          const index=configAssemblies.findIndex(item=>item.name===chassisControls.corner.value);
+          if(index>=0)controls.assembly.value=String(index);
+        }
+        syncLoadCases();
+        if(state.chassisOverlayCase!=="envelope"&&[...controls.loadCase.options].some(item=>item.value===state.chassisOverlayCase))controls.loadCase.value=state.chassisOverlayCase;
+        document.getElementById("chassisInterfaceCount").textContent=String(interfaceCount);
+        document.getElementById("chassisCornerCount").textContent=String(selected.length);
+        if(!chassisView.hidden)requestAnimationFrame(resize);
+      }
+      function resultCase(assembly, caseName) {
+        const result = resultByName.get(assembly.name);
+        return result?.load_cases.find(item => item.name === caseName) || null;
+      }
+      function forceMap(assembly, caseName) {
+        const active = resultCase(assembly, caseName);
+        const map = new Map((active?.members || []).map(member => [member.name, member]));
+        if (active?.rocker) map.set("shock", {name:"shock", force:active.rocker.shock_force, state:active.rocker.shock_state, length:active.rocker.shock_length});
+        return map;
+      }
+
+      function populateControls() {
+        controls.assembly.innerHTML = `<option value="all">All assemblies</option>` + configAssemblies.map((a,i) => `<option value="${i}">${escapeHtml(labelName(a.name))}</option>`).join("");
+        sizingControls.corner.innerHTML = `<option value="all">All four corners</option>` + configAssemblies.map(a => `<option value="${escapeHtml(a.name)}">${escapeHtml(labelName(a.name))}</option>`).join("");
+        chassisControls.corner.innerHTML = `<option value="all">All four corners</option>` + configAssemblies.map(a => `<option value="${escapeHtml(a.name)}">${escapeHtml(labelName(a.name))}</option>`).join("");
+        chassisControls.loadCase.innerHTML = `<option value="envelope">Maximum resultant envelope</option>` + configAssemblies[0].load_cases.map(item=>`<option value="${escapeHtml(item.name)}">${escapeHtml(labelName(item.name))}</option>`).join("");
+        const names = configAssemblies.map(item => item.name.toLowerCase());
+        const hasBothSides = names.some(name => name.includes("left")) && names.some(name => name.includes("right"));
+        if (hasBothSides) {
+          controls.mirror.checked = false;
+          controls.mirror.disabled = true;
+          controls.mirror.title = "Both physical sides are already included";
+        }
+        syncLoadCases();
+      }
+      function selectedAssemblies() {
+        return controls.assembly.value === "all" ? configAssemblies : [configAssemblies[Number(controls.assembly.value)]];
+      }
+      function syncLoadCases() {
+        const assembly = controls.assembly.value === "all" ? configAssemblies[0] : configAssemblies[Number(controls.assembly.value)];
+        const old = controls.loadCase.value;
+        controls.loadCase.innerHTML = assembly.load_cases.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(labelName(c.name))}</option>`).join("");
+        controls.loadCase.value = assembly.load_cases.some(c => c.name === old) ? old : assembly.load_cases[0].name;
+        const visible = selectedAssemblies();
+        const coordinateUnits = [...new Set(visible.map(item => item.coordinate_units || "units"))];
+        const forceUnits = [...new Set(visible.map(item => item.force_units || "force"))];
+        document.getElementById("unitTag").textContent = `${coordinateUnits.join("/")} · ${forceUnits.join("/")}`;
+      }
+
+      function segment(name, a, b, kind, extra={}) { return {name, a:[...a], b:[...b], kind, family:family(kind === "member" ? name : kind), ...extra}; }
+      function buildAssembly(assembly, caseName, mirrored=false) {
+        const reflect = p => mirrored ? [p[0], -p[1], p[2]] : [...p];
+        const activeResult = resultCase(assembly, caseName);
+        const moved = activeResult?.kinematics?.geometry;
+        const geometryMembers = moved?.members || assembly.members;
+        const geometryRocker = moved?.rocker || assembly.rocker;
+        const geometryContactPatch = moved?.contact_patch || assembly.contact_patch;
+        const forces = forceMap(assembly, caseName);
+        const segments = geometryMembers.map(member => {
+          const item = forces.get(member.name);
+          return segment(member.name, reflect(member.application), reflect(member.anchor), "member", {
+            force:item?.force, forceState:item?.state, length:item?.length, assembly:assembly.name, mirrored,
+            forceUnits:assembly.force_units || "", coordinateUnits:assembly.coordinate_units || ""
+          });
+        });
+        const rocker = geometryRocker;
+        const pa = reflect(rocker.pivot_axis[0]), pb = reflect(rocker.pivot_axis[1]);
+        const pm = vAvg([pa,pb]), rp = reflect(rocker.pushrod_pickup), sp = reflect(rocker.shock_pickup), sc = reflect(rocker.shock_chassis_pickup);
+        segments.push(segment("rocker pivot axis", pa, pb, "rocker", {assembly:assembly.name, mirrored}));
+        segments.push(segment("rocker arm · pushrod", pm, rp, "rocker", {assembly:assembly.name, mirrored}));
+        segments.push(segment("rocker arm · shock", pm, sp, "rocker", {assembly:assembly.name, mirrored}));
+        segments.push(segment("rocker web", rp, sp, "rocker", {assembly:assembly.name, mirrored}));
+        const shock = forces.get("shock");
+        segments.push(segment("shock", sp, sc, "shock", {force:shock?.force, forceState:shock?.state, length:shock?.length, assembly:assembly.name, mirrored, forceUnits:assembly.force_units || "", coordinateUnits:assembly.coordinate_units || "", fixedB:true}));
+
+        const upper = geometryMembers.filter(m => family(m.name) === "upper").map(m => reflect(m.application));
+        const lower = geometryMembers.filter(m => family(m.name) === "lower").map(m => reflect(m.application));
+        const tie = geometryMembers.find(m => family(m.name) === "tie");
+        if (upper.length && lower.length) {
+          const ua=vAvg(upper), la=vAvg(lower);
+          segments.push(segment("upright", ua, la, "upright", {assembly:assembly.name, mirrored, structural:true}));
+          if (tie) segments.push(segment("steering arm", reflect(tie.application), la, "upright", {assembly:assembly.name, mirrored, structural:true}));
+        }
+
+        const applications = geometryMembers.map(m => reflect(m.application));
+        const cp = reflect(geometryContactPatch);
+        const wheelCenterZ = applications.reduce((sum,p) => sum+p[2],0) / applications.length;
+        const radius = Math.max(2, Math.abs(cp[2]-wheelCenterZ));
+        const center=[cp[0],cp[1],wheelCenterZ];
+        const wheel=[];
+        for(let i=0;i<36;i++) {
+          const a=i*Math.PI*2/36, b=(i+1)*Math.PI*2/36;
+          const p1=[center[0]+Math.cos(a)*radius,center[1],center[2]+Math.sin(a)*radius];
+          const p2=[center[0]+Math.cos(b)*radius,center[1],center[2]+Math.sin(b)*radius];
+          wheel.push(segment("wheel envelope", p1,p2,"wheel",{assembly:assembly.name,mirrored,decorative:true}));
+        }
+        segments.push(...wheel);
+
+        if (state.showChassisVectors && !mirrored && (state.chassisOverlayCorner === "all" || state.chassisOverlayCorner === assembly.name)) {
+          const chassis = chassisSelection(resultByName.get(assembly.name), state.chassisOverlayCase);
+          if (chassis?.interfaces?.length) {
+            const maxResultant = chassisOverlayMaximumForce();
+            for (const item of chassis.interfaces) {
+              const start = [...item.point];
+              const vectorMagnitude = Math.max(item.force_magnitude,1e-9);
+              const displayLength = Math.max(1.8,radius*1.7*vectorMagnitude/maxResultant);
+              const end = vAdd(start,vScale(item.force,displayLength/vectorMagnitude));
+              segments.push(segment(`resultant · ${item.name}`,start,end,"chassisLoad",{
+                force:item.force_magnitude,forceState:labelName(item.sourceCase),assembly:assembly.name,mirrored:false,
+                vector:item.force,forceUnits:assembly.force_units||"",coordinateUnits:assembly.coordinate_units||"",hardpoint:item.point
+              }));
+            }
+          }
+        }
+
+        const f=activeResult?.external_wrench ? reflect(activeResult.external_wrench.slice(0,3)) : null, fm=f ? vMag(f) : 0;
+        if (f && fm > 1e-9 && !mirrored) {
+          const displayLength=Math.max(4,radius*1.25);
+          segments.push(segment("tire force", cp, vAdd(cp,vScale(f,displayLength/fm)), "load", {force:fm, forceState:"applied", assembly:assembly.name, vector:f, forceUnits:assembly.force_units || "", coordinateUnits:assembly.coordinate_units || ""}));
+        }
+        return segments;
+      }
+
+      function buildScene() {
+        const caseName=controls.loadCase.value;
+        let segments=[];
+        for (const assembly of selectedAssemblies()) {
+          segments.push(...buildAssembly(assembly,caseName,false));
+          if (controls.mirror.checked) segments.push(...buildAssembly(assembly,caseName,true));
+        }
+        return segments;
+      }
+
+      function sceneBounds(segments) {
+        // Keep framing tied to the ride-height reference geometry. Re-fitting the
+        // camera to every moved load case would make fixed chassis pickups appear
+        // to move on screen even though their coordinates are unchanged.
+        let points=[];
+        for (const assembly of selectedAssemblies()) {
+          const base=[assembly.contact_patch, ...assembly.members.flatMap(m=>[m.application,m.anchor]), ...assembly.rocker.pivot_axis, assembly.rocker.pushrod_pickup, assembly.rocker.shock_pickup, assembly.rocker.shock_chassis_pickup];
+          points.push(...base);
+          if (controls.mirror.checked) points.push(...base.map(p=>[p[0],-p[1],p[2]]));
+        }
+        const min=[Infinity,Infinity,Infinity], max=[-Infinity,-Infinity,-Infinity];
+        for(const p of points) for(let i=0;i<3;i++){ min[i]=Math.min(min[i],p[i]); max[i]=Math.max(max[i],p[i]); }
+        return {min,max,center:min.map((n,i)=>(n+max[i])/2),span:max.map((n,i)=>Math.max(1,n-min[i]))};
+      }
+
+      function transformPoint(point, bounds) {
+        const dx=point[0]-bounds.center[0], dy=point[1]-bounds.center[1], dz=-(point[2]-bounds.center[2]);
+        const cy=Math.cos(state.yaw), sy=Math.sin(state.yaw), cp=Math.cos(state.pitch), sp=Math.sin(state.pitch);
+        const x1=dx*cy-dy*sy, y1=dx*sy+dy*cy;
+        const y2=y1*cp-dz*sp, z2=y1*sp+dz*cp;
+        const margin=52;
+        const fit=Math.min((state.width-margin*2)/Math.max(bounds.span[0],bounds.span[1]),(state.height-margin*2)/Math.max(bounds.span[1],bounds.span[2]))*.72;
+        const scale=fit*state.zoom;
+        const perspective=state.perspective ? Math.max(.42, 1/(1-y2/(Math.max(...bounds.span)*3.2))) : 1;
+        return {x:state.width/2+state.panX+x1*scale*perspective,y:state.height/2+state.panY-z2*scale*perspective,depth:y2,scale:perspective};
+      }
+
+      function colorFor(seg, maxForce) {
+        if (seg.mirrored) return "rgba(84,99,106,.28)";
+        if (seg.kind === "chassisLoad") return COLORS.chassisLoad;
+        if (seg.kind === "load") return COLORS.load;
+        if (controls.colorMode.value === "force" && Number.isFinite(seg.force)) return seg.force >= 0 ? COLORS.tension : COLORS.compression;
+        return COLORS[seg.family] || COLORS.upright;
+      }
+      function lineWidth(seg,maxForce) {
+        if (seg.decorative) return 1.2;
+        if (seg.kind === "load" || seg.kind === "chassisLoad") return seg.kind === "chassisLoad" ? 4 : 3;
+        if (controls.colorMode.value === "force" && Number.isFinite(seg.force) && maxForce>0) return 2.5+5*Math.sqrt(Math.abs(seg.force)/maxForce);
+        return seg.kind === "member" || seg.kind === "shock" ? 5 : 3;
+      }
+
+      function drawGrid(bounds) {
+        if (!controls.axes.checked) return;
+        const extent=Math.ceil(Math.max(bounds.span[0],bounds.span[1])*.65/10)*10+10;
+        const origin=[bounds.center[0],bounds.center[1],0];
+        ctx.save();
+        ctx.lineWidth=1;
+        for(let n=-extent;n<=extent;n+=10){
+          const alpha=n===0?.25:.09;
+          ctx.strokeStyle=`rgba(42,58,65,${alpha})`;
+          for(const pair of [[[origin[0]-extent,origin[1]+n,0],[origin[0]+extent,origin[1]+n,0]],[[origin[0]+n,origin[1]-extent,0],[origin[0]+n,origin[1]+extent,0]]]){
+            const a=transformPoint(pair[0],bounds),b=transformPoint(pair[1],bounds);
+            ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+          }
+        }
+        const axisLength=Math.max(12,extent*.32);
+        const axes=[[[origin[0]+axisLength,origin[1],0],"X","#b84c35"],[[origin[0],origin[1]+axisLength,0],"Y","#37764e"],[[origin[0],origin[1],-axisLength],"−Z↑","#2a668e"]];
+        const o=transformPoint(origin,bounds);
+        ctx.font="700 12px Bahnschrift, sans-serif";
+        for(const [point,label,color] of axes){const p=transformPoint(point,bounds);ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(o.x,o.y);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.fillStyle=color;ctx.fillText(label,p.x+5,p.y-5);}
+        ctx.restore();
+      }
+
+      function drawArrowHead(a,b,color) {
+        const angle=Math.atan2(b.y-a.y,b.x-a.x), size=10;
+        ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-Math.cos(angle-.45)*size,b.y-Math.sin(angle-.45)*size);ctx.lineTo(b.x-Math.cos(angle+.45)*size,b.y-Math.sin(angle+.45)*size);ctx.closePath();ctx.fill();
+      }
+
+      function render() {
+        const segments=buildScene(), bounds=sceneBounds(segments);
+        const chassisTag=document.getElementById("chassisVectorTag");
+        chassisTag.hidden=!state.showChassisVectors;
+        chassisTag.textContent=state.chassisOverlayCase==="envelope"?"Chassis resultant envelope":`Chassis resultants · ${labelName(state.chassisOverlayCase)}`;
+        ctx.clearRect(0,0,state.width,state.height);
+        const bg=ctx.createLinearGradient(0,0,0,state.height);bg.addColorStop(0,"#f4f6f6");bg.addColorStop(1,"#e4e9ea");ctx.fillStyle=bg;ctx.fillRect(0,0,state.width,state.height);
+        drawGrid(bounds);
+        const maxForce=Math.max(1,...segments.filter(s=>Number.isFinite(s.force)).map(s=>Math.abs(s.force)));
+        state.projected=segments.map(seg=>({...seg,pa:transformPoint(seg.a,bounds),pb:transformPoint(seg.b,bounds)})).sort((a,b)=>(a.pa.depth+a.pb.depth)-(b.pa.depth+b.pb.depth));
+        for(const seg of state.projected){
+          const active=state.hover===seg || state.selected?.name===seg.name && state.selected?.assembly===seg.assembly && !seg.mirrored;
+          const color=active?COLORS.selected:colorFor(seg,maxForce);
+          ctx.save();ctx.strokeStyle=color;ctx.lineCap="round";ctx.lineJoin="round";ctx.lineWidth=(active?2:0)+lineWidth(seg,maxForce)*((seg.pa.scale+seg.pb.scale)/2);
+          if(seg.mirrored) ctx.setLineDash([6,6]);
+          if(active){ctx.shadowColor="rgba(229,106,47,.3)";ctx.shadowBlur=10;ctx.shadowOffsetY=3;}
+          ctx.beginPath();ctx.moveTo(seg.pa.x,seg.pa.y);ctx.lineTo(seg.pb.x,seg.pb.y);ctx.stroke();
+          if(seg.kind==="load"||seg.kind==="chassisLoad") drawArrowHead(seg.pa,seg.pb,color);
+          ctx.restore();
+        }
+        if(controls.nodes.checked) drawNodes();
+        drawFixedAnchors();
+        if(controls.labels.checked) drawLabels();
+        updateLegend();updateForceTable();
+      }
+
+      function drawNodes(){
+        const seen=new Set();
+        for(const seg of state.projected){
+          if(seg.decorative||seg.kind==="load"||seg.kind==="chassisLoad") continue;
+          for(const p of [seg.pa,seg.pb]){
+            const key=`${Math.round(p.x)}:${Math.round(p.y)}:${seg.mirrored}`;if(seen.has(key))continue;seen.add(key);
+            ctx.beginPath();ctx.fillStyle=seg.mirrored?"rgba(90,104,110,.34)":"#f8f9f9";ctx.strokeStyle=seg.mirrored?"rgba(66,78,84,.3)":"#26333a";ctx.lineWidth=1.5;ctx.arc(p.x,p.y,seg.mirrored?3:4.2,0,Math.PI*2);ctx.fill();ctx.stroke();
+          }
+        }
+      }
+      function drawFixedAnchors(){
+        for(const seg of state.projected){
+          if(!seg.fixedB||seg.mirrored)continue;
+          const p=seg.pb;
+          ctx.save();ctx.translate(p.x,p.y);ctx.strokeStyle="#172026";ctx.fillStyle="#f7f8f8";ctx.lineWidth=1.7;
+          ctx.fillRect(-7,-7,14,14);ctx.strokeRect(-7,-7,14,14);
+          ctx.beginPath();ctx.arc(0,0,3,0,Math.PI*2);ctx.fillStyle=COLORS.shock;ctx.fill();
+          ctx.beginPath();ctx.moveTo(-10,10);ctx.lineTo(10,10);ctx.moveTo(-7,10);ctx.lineTo(-11,15);ctx.moveTo(0,10);ctx.lineTo(-4,15);ctx.moveTo(7,10);ctx.lineTo(3,15);ctx.stroke();
+          ctx.restore();
+        }
+      }
+      function drawLabels(){
+        if(state.projected.length>120) return;
+        ctx.font="600 11px Bahnschrift, sans-serif";ctx.textBaseline="middle";
+        for(const seg of state.projected){
+          if(seg.kind!=="member"&&seg.kind!=="shock"&&seg.kind!=="load"&&seg.kind!=="chassisLoad")continue;if(seg.mirrored)continue;
+          const x=(seg.pa.x+seg.pb.x)/2+7,y=(seg.pa.y+seg.pb.y)/2-6;
+          const text=labelName(seg.name),w=ctx.measureText(text).width;
+          ctx.fillStyle="rgba(244,246,246,.86)";ctx.fillRect(x-3,y-8,w+6,16);ctx.fillStyle="#253138";ctx.fillText(text,x,y);
+        }
+      }
+
+      function updateLegend(){
+        const items=controls.colorMode.value==="force"?[["Tension",COLORS.tension],["Compression",COLORS.compression],["Applied tire force",COLORS.load],["Chassis resultant",COLORS.chassisLoad]]:[["Upper wishbone",COLORS.upper],["Lower wishbone",COLORS.lower],["Tie / toe rod",COLORS.tie],["Push / pull rod",COLORS.pushrod],["Shock",COLORS.shock],["Rocker + upright",COLORS.rocker],["Chassis resultant",COLORS.chassisLoad]];
+        document.getElementById("legend").innerHTML=items.map(([label,color])=>`<div class="legend-item"><span class="swatch" style="--swatch:${color}"></span><span>${label}</span></div>`).join("");
+      }
+      function updateForceTable(){
+        const caseName=controls.loadCase.value, rows=[];
+        for(const assembly of selectedAssemblies()){
+          const active=resultCase(assembly,caseName);if(!active)continue;
+          for(const m of active.members)rows.push({assembly:assembly.name,forceUnits:assembly.force_units||"",...m});
+          rows.push({assembly:assembly.name,name:"shock",force:active.rocker.shock_force,state:active.rocker.shock_state,forceUnits:assembly.force_units||""});
+        }
+        rows.sort((a,b)=>Math.abs(b.force)-Math.abs(a.force));
+        document.getElementById("forceTable").innerHTML=rows.map(r=>`<div class="force-row"><span>${selectedAssemblies().length>1?escapeHtml(labelName(r.assembly))+" · ":""}${escapeHtml(labelName(r.name))}</span><span class="force-value ${r.state}">${r.force.toFixed(1)} ${escapeHtml(r.forceUnits)}</span></div>`).join("");
+      }
+
+      function lineDistance(px,py,a,b){const dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy;if(!l2)return Math.hypot(px-a.x,py-a.y);const t=Math.max(0,Math.min(1,((px-a.x)*dx+(py-a.y)*dy)/l2));return Math.hypot(px-(a.x+t*dx),py-(a.y+t*dy));}
+      function pick(x,y){let best=null,dist=12;for(let i=state.projected.length-1;i>=0;i--){const s=state.projected[i];if(s.decorative||s.mirrored)continue;const d=lineDistance(x,y,s.pa,s.pb);if(d<dist){dist=d;best=s;}}return best;}
+      function showTooltip(seg,x,y){if(!seg){tooltip.style.display="none";return;}tooltip.innerHTML=`<strong>${escapeHtml(labelName(seg.name))}</strong><span class="mono">${Number.isFinite(seg.force)?`${seg.force.toFixed(2)} ${escapeHtml(seg.forceUnits||"")} · ${escapeHtml(seg.forceState||"")}`:"geometry"}</span>`;tooltip.style.display="block";const maxX=canvas.clientWidth-tooltip.offsetWidth-10,maxY=canvas.clientHeight-tooltip.offsetHeight-10;tooltip.style.left=`${Math.max(10,Math.min(maxX,x+14))}px`;tooltip.style.top=`${Math.max(10,Math.min(maxY,y+14))}px`;}
+      function selectSegment(seg){state.selected=seg;if(!seg){document.getElementById("readoutName").textContent="No component selected";document.getElementById("readoutForce").textContent="—";document.getElementById("readoutState").textContent="Select a linkage";document.getElementById("dataList").innerHTML="";render();return;}const assembly=configAssemblies.find(a=>a.name===seg.assembly),units=assembly?.force_units||"",lengthUnits=assembly?.coordinate_units||"";document.getElementById("readoutName").textContent=`${labelName(seg.assembly)} · ${labelName(seg.name)}`;document.getElementById("readoutForce").textContent=Number.isFinite(seg.force)?`${seg.force.toFixed(2)} ${units}`:"Geometry";document.getElementById("readoutState").textContent=seg.forceState||seg.kind;const pointALabel=seg.kind==="shock"?"Rocker pickup":seg.kind==="chassisLoad"?"Hardpoint":"Point A",pointBLabel=seg.fixedB?"Chassis pickup":seg.kind==="chassisLoad"?"Arrow tip":"Point B";const rows=[["Length",Number.isFinite(seg.length)?`${seg.length.toFixed(3)} ${lengthUnits}`:`${vMag(vSub(seg.b,seg.a)).toFixed(3)} ${lengthUnits}`],[pointALabel,seg.a.map(n=>n.toFixed(3)).join(", ")],[pointBLabel,seg.b.map(n=>n.toFixed(3)).join(", ")]];document.getElementById("dataList").innerHTML=rows.map(([k,v])=>`<div class="data-row"><dt>${k}</dt><dd>${v}</dd></div>`).join("");render();}
+
+      function resetView(){state.yaw=-.68;state.pitch=.54;state.zoom=1;state.panX=0;state.panY=0;render();}
+      function resize(){const rect=canvas.getBoundingClientRect();state.dpr=Math.min(2,window.devicePixelRatio||1);canvas.width=Math.round(rect.width*state.dpr);canvas.height=Math.round(rect.height*state.dpr);ctx.setTransform(state.dpr,0,0,state.dpr,0,0);state.width=rect.width;state.height=rect.height;render();}
+
+      canvas.addEventListener("pointerdown",e=>{state.dragging=true;state.shifted=e.shiftKey;state.lastX=e.clientX;state.lastY=e.clientY;state.downX=e.clientX;state.downY=e.clientY;canvas.setPointerCapture(e.pointerId);canvas.classList.add("dragging");});
+      canvas.addEventListener("pointermove",e=>{const rect=canvas.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;if(state.dragging){const dx=e.clientX-state.lastX,dy=e.clientY-state.lastY;state.lastX=e.clientX;state.lastY=e.clientY;if(state.shifted||e.shiftKey){state.panX+=dx;state.panY+=dy;}else{state.yaw+=dx*.008;state.pitch=Math.max(-1.35,Math.min(1.35,state.pitch+dy*.008));}render();return;}state.hover=pick(x,y);showTooltip(state.hover,x,y);render();});
+      canvas.addEventListener("pointerup",e=>{state.dragging=false;canvas.classList.remove("dragging");canvas.releasePointerCapture(e.pointerId);});
+      canvas.addEventListener("pointerleave",()=>{if(!state.dragging){state.hover=null;showTooltip(null);render();}});
+      canvas.addEventListener("click",e=>{if(Math.hypot(e.clientX-state.downX,e.clientY-state.downY)<4){const rect=canvas.getBoundingClientRect();selectSegment(pick(e.clientX-rect.left,e.clientY-rect.top));}});
+      canvas.addEventListener("wheel",e=>{e.preventDefault();state.zoom=Math.max(.25,Math.min(5,state.zoom*Math.exp(-e.deltaY*.001)));render();},{passive:false});
+      canvas.addEventListener("keydown",e=>{let used=true;if(e.key==="ArrowLeft")state.yaw-=.08;else if(e.key==="ArrowRight")state.yaw+=.08;else if(e.key==="ArrowUp")state.pitch-=.08;else if(e.key==="ArrowDown")state.pitch+=.08;else if(e.key==="+"||e.key==="=")state.zoom*=1.1;else if(e.key==="-")state.zoom/=1.1;else if(e.key.toLowerCase()==="r")resetView();else used=false;if(used){e.preventDefault();render();}});
+      document.getElementById("reset").addEventListener("click",resetView);
+      controls.projection.addEventListener("click",()=>{state.perspective=!state.perspective;controls.projection.textContent=state.perspective?"Perspective":"Orthographic";controls.projection.setAttribute("aria-pressed",String(!state.perspective));render();});
+      controls.assembly.addEventListener("change",()=>{syncLoadCases();state.selected=null;resetView();});
+      controls.loadCase.addEventListener("change",()=>{state.selected=null;if(state.showChassisVectors)state.chassisOverlayCase=controls.loadCase.value;render();});
+      for(const control of [controls.colorMode,controls.labels,controls.nodes,controls.axes])control.addEventListener("change",render);
+      geometryTab.addEventListener("click",()=>setAnalysisView("geometry"));
+      sizingTab.addEventListener("click",()=>setAnalysisView("sizing"));
+      chassisTab.addEventListener("click",()=>setAnalysisView("chassis"));
+      for (const button of document.querySelectorAll("[data-sizing-sort]")) button.addEventListener("click",()=>{
+        const key=button.dataset.sizingSort;
+        if(sizingSort.key===key)sizingSort.direction=sizingSort.direction==="asc"?"desc":"asc";
+        else{sizingSort.key=key;sizingSort.direction=key==="peak"?"desc":"asc";}
+        for(const item of document.querySelectorAll("[data-sizing-sort]")){
+          const active=item.dataset.sizingSort===sizingSort.key;
+          item.dataset.active=String(active);
+          item.dataset.arrow=active?(sizingSort.direction==="asc"?"↑":"↓"):"";
+          item.closest("th").setAttribute("aria-sort",active?(sizingSort.direction==="asc"?"ascending":"descending"):"none");
+        }
+        renderSizing();
+      });
+      for (const control of [sizingControls.corner,sizingControls.state,sizingControls.status]) control.addEventListener("change",renderSizing);
+      for (const control of [chassisControls.corner,chassisControls.loadCase]) control.addEventListener("change",renderChassisLoads);
+      sizingControls.body.addEventListener("click",event=>{
+        const button=event.target.closest("[data-inspect-corner]");
+        if(!button)return;
+        const index=configAssemblies.findIndex(item=>item.name===button.dataset.inspectCorner);
+        if(index<0)return;
+        controls.assembly.value=String(index);
+        syncLoadCases();
+        if(configAssemblies[index].load_cases.some(item=>item.name===button.dataset.inspectCase)) controls.loadCase.value=button.dataset.inspectCase;
+        state.selected=null;
+        setAnalysisView("geometry");
+        resetView();
+      });
+      window.addEventListener("resize",resize);
+
+      populateControls();
+      renderSizing();
+      renderChassisLoads();
+      if (payload.config.notes) {
+        const note = document.getElementById("modelNote");
+        note.textContent = payload.config.notes;
+        note.hidden = false;
+      }
+      requestAnimationFrame(()=>{resize();status.hidden=true;});
+    })();
+  </script>
+</body>
+</html>
