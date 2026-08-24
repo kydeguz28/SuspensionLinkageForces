@@ -198,6 +198,7 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
     .chassis-table .resultant-row { background: #dde4e6; border-top: 2px solid #66767d; }
     .chassis-table .resultant-row td { font-weight: 800; }
     .chassis-table .interface-type { display: block; color: var(--muted); font-size: 11px; }
+    .chassis-visual-title { margin-top: 28px; }
     .chassis-canvas-host {
       height: max(560px, calc(100vh - 315px));
       margin-top: 22px;
@@ -649,12 +650,34 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       </div>
       <p class="sizing-proxy-note chassis-note"><strong>Hardpoint resultant:</strong> |F| = √(Fx² + Fy² + Fz²). The envelope chooses the case with the largest |F| independently at each hardpoint; arrow lengths use one shared scale across the displayed corners.</p>
 
-      <div class="chassis-canvas-host" id="chassisCanvasHost" aria-label="Interactive chassis hardpoint resultant visualizer"></div>
+      <div class="sizing-table-wrap">
+        <table class="sizing-table chassis-table">
+          <thead>
+            <tr>
+              <th>Corner / hardpoint</th>
+              <th>Governing case</th>
+              <th>Pickup X, Y, Z</th>
+              <th class="numeric">Fx (lbf)</th>
+              <th class="numeric">Fy (lbf)</th>
+              <th class="numeric">Fz (lbf)</th>
+              <th class="numeric">|F| (lbf)</th>
+              <th class="numeric">Mx (lbf·in)</th>
+              <th class="numeric">My (lbf·in)</th>
+              <th class="numeric">Mz (lbf·in)</th>
+            </tr>
+          </thead>
+          <tbody id="chassisTableBody"></tbody>
+        </table>
+      </div>
 
       <footer class="sizing-foot">
-        <p><strong>Arrow convention:</strong> each red arrow starts at its chassis hardpoint, points in the direction the suspension loads the chassis, and is globally scaled by resultant magnitude. Hover or click an arrow to inspect it.</p>
+        <p><strong>Load convention:</strong> each vector is applied by the suspension to the chassis. Direct links and the shock are two-force members; the rocker row is an equivalent wrench at the physical pivot-axis midpoint.</p>
         <p><strong>Axes:</strong> tire-load inputs use +X toward the front, +Y toward the left, and +Z skyward. Hardpoint coordinates remain in the original CAD coordinate basis; they are not relabeled or sign-flipped.</p>
       </footer>
+
+      <h2 class="section-title chassis-visual-title">Hardpoint resultant visualization</h2>
+      <p class="sizing-copy">Each red arrow starts at its hardpoint, follows the suspension-on-chassis load direction, and uses one magnitude scale across the displayed corners. Hover or click an arrow to inspect it.</p>
+      <div class="chassis-canvas-host" id="chassisCanvasHost" aria-label="Interactive chassis hardpoint resultant visualizer"></div>
     </div>
   </section>
 
@@ -705,7 +728,8 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       };
       const chassisControls = {
         corner: document.getElementById("chassisCorner"),
-        loadCase: document.getElementById("chassisCase")
+        loadCase: document.getElementById("chassisCase"),
+        body: document.getElementById("chassisTableBody")
       };
       const sizingRows = payload.result.assemblies.flatMap(assembly =>
         (assembly.sizing_summary || []).map(row => ({...row, assembly: assembly.name, forceUnits: assembly.force_units || "lbf"}))
@@ -853,7 +877,40 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
         const selected = payload.result.assemblies.filter(assembly=>
           chassisControls.corner.value === "all" || assembly.name === chassisControls.corner.value
         );
-        const interfaceCount=selected.reduce((count,assembly)=>count+(chassisSelection(assembly,chassisControls.loadCase.value)?.interfaces.length||0),0);
+        let interfaceCount=0;
+        const rows=[];
+        for(const assembly of selected){
+          const active=chassisSelection(assembly,chassisControls.loadCase.value);
+          if(!active)continue;
+          interfaceCount+=active.interfaces.length;
+          for(const item of active.interfaces){
+            rows.push(`<tr>
+              <td class="member-cell" data-label="Corner / hardpoint"><strong>${escapeHtml(labelName(assembly.name))}</strong><span>${escapeHtml(labelName(item.name))}</span><span class="interface-type">${escapeHtml(labelName(item.type))}</span></td>
+              <td data-label="Governing case">${escapeHtml(labelName(item.sourceCase))}</td>
+              <td class="vector-value" data-label="Pickup X, Y, Z">${escapeHtml(formatVector(item.point))} ${escapeHtml(assembly.coordinate_units||"in")}</td>
+              <td class="vector-value" data-label="Fx">${item.force[0].toFixed(1)}</td>
+              <td class="vector-value" data-label="Fy">${item.force[1].toFixed(1)}</td>
+              <td class="vector-value" data-label="Fz">${item.force[2].toFixed(1)}</td>
+              <td class="vector-value" data-label="|F|">${item.force_magnitude.toFixed(1)}</td>
+              <td class="vector-value" data-label="Mx">${item.local_moment[0].toFixed(1)}</td>
+              <td class="vector-value" data-label="My">${item.local_moment[1].toFixed(1)}</td>
+              <td class="vector-value" data-label="Mz">${item.local_moment[2].toFixed(1)}</td>
+            </tr>`);
+          }
+          rows.push(`<tr class="resultant-row">
+            <td class="member-cell" data-label="Corner / hardpoint"><strong>${escapeHtml(labelName(assembly.name))}</strong><span>Corner resultant into chassis</span></td>
+            <td data-label="Governing case">${escapeHtml(labelName(active.sourceCase))}</td>
+            <td class="vector-value" data-label="Reference X, Y, Z">about ${escapeHtml(formatVector(active.reference_point))} ${escapeHtml(assembly.coordinate_units||"in")}</td>
+            <td class="vector-value" data-label="Fx">${active.resultant_force[0].toFixed(1)}</td>
+            <td class="vector-value" data-label="Fy">${active.resultant_force[1].toFixed(1)}</td>
+            <td class="vector-value" data-label="Fz">${active.resultant_force[2].toFixed(1)}</td>
+            <td class="vector-value" data-label="|F|">${active.resultant_force_magnitude.toFixed(1)}</td>
+            <td class="vector-value" data-label="Mx">${active.resultant_moment[0].toFixed(1)}</td>
+            <td class="vector-value" data-label="My">${active.resultant_moment[1].toFixed(1)}</td>
+            <td class="vector-value" data-label="Mz">${active.resultant_moment[2].toFixed(1)}</td>
+          </tr>`);
+        }
+        chassisControls.body.innerHTML=rows.join("")||`<tr><td colspan="10" class="empty-table">No chassis loads are available for this selection.</td></tr>`;
         state.chassisOverlayCase=chassisControls.loadCase.value;
         state.chassisOverlayCorner=chassisControls.corner.value;
         if(chassisControls.corner.value==="all")controls.assembly.value="all";

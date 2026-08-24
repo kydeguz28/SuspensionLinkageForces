@@ -79,6 +79,12 @@ class SuspensionForceTests(unittest.TestCase):
                 self.assertIn("shock_chassis_pickup", names)
                 self.assertNotIn("pullrod", names)
                 self.assertNotIn("pushrod", names)
+                pivot = next(
+                    item for item in chassis["interfaces"] if item["name"] == "rocker_pivot_axis"
+                )
+                axis = case["kinematics"]["geometry"]["rocker"]["pivot_axis"]
+                midpoint = [(axis[0][i] + axis[1][i]) / 2.0 for i in range(3)]
+                self.assertEqual(pivot["point"], midpoint)
 
     def test_rocker_axis_moment_is_balanced(self):
         for assembly in self.result["assemblies"]:
@@ -141,6 +147,7 @@ class SuspensionForceTests(unittest.TestCase):
         self.assertIn("Maximum resultant envelope", html)
         self.assertIn("Interactive chassis hardpoint resultant visualizer", html)
         self.assertNotIn("Mirror opposite side", html)
+        self.assertLess(html.index("chassisTableBody"), html.index("chassisCanvasHost"))
         self.assertNotIn("__SUSPENSION_DATA__", html)
         self.assertNotIn("https://", html)
 

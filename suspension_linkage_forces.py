@@ -583,12 +583,17 @@ def build_chassis_load_summary(
         pivot_points = [
             _vec(point, "rocker.pivot_axis") for point in rocker_geometry["pivot_axis"]
         ]
-        # The solver's equivalent reaction moment is reported at pivot-axis
-        # point A, so retain that same wrench reference here.
-        pivot_point = pivot_points[0]
+        # Display the resultant on the physical middle of the rocker pivot axis.
+        # Translate the equivalent reaction moment from solver point A to that
+        # midpoint so the wrench remains mechanically identical.
+        pivot_point = scale(0.5, add(pivot_points[0], pivot_points[1]))
         rocker = case["rocker"]
         pivot_force = scale(-1.0, rocker["pivot_reaction"])
-        pivot_moment = scale(-1.0, rocker["pivot_reaction_moment"])
+        pivot_moment_at_a = scale(-1.0, rocker["pivot_reaction_moment"])
+        pivot_moment = add(
+            pivot_moment_at_a,
+            cross(subtract(pivot_points[0], pivot_point), pivot_force),
+        )
         interfaces.append(
             {
                 "name": "rocker_pivot_axis",
