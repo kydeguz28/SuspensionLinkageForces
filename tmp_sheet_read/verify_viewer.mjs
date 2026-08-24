@@ -45,16 +45,21 @@ const mobile = {
 await page.setViewportSize({ width: 1600, height: 1000 });
 await page.getByRole("tab", { name: "Chassis Loads" }).click();
 await page.waitForSelector("#chassisCanvasHost #sharedViewport");
+await page.waitForSelector("#chassisTableBody tr");
 const chassis = {
   title: await page.getByRole("heading", { name: "Loads into the chassis" }).isVisible(),
   interfaces: await page.locator("#chassisInterfaceCount").textContent(),
   corners: await page.locator("#chassisCornerCount").textContent(),
   selection: await page.locator("#chassisCase option:checked").textContent(),
+  rows: await page.locator("#chassisTableBody tr").count(),
+  resultantRows: await page.locator("#chassisTableBody .resultant-row").count(),
   viewportOnPage: await page.locator("#chassisCanvasHost #sharedViewport").isVisible(),
   oppositeSideControls: await page.getByText("Mirror opposite side").count(),
   envelopeTag: await page.locator("#chassisVectorTag").textContent(),
   envelopeTagVisible: await page.locator("#chassisVectorTag").isVisible(),
   canvasSize: await page.locator("#scene").evaluate(el => [el.clientWidth,el.clientHeight]),
+  visualizationBelowTable: await page.evaluate(() => document.querySelector("#chassisCanvasHost").getBoundingClientRect().top > document.querySelector("#chassisTableBody").getBoundingClientRect().top),
+  firstRockerRow: await page.locator("#chassisTableBody tr").filter({ hasText: "Rocker Pivot Axis" }).first().textContent(),
 };
 await page.screenshot({ path: "chassis_resultants_3d.png", fullPage: true });
 await page.getByRole("tab", { name: "3D Geometry" }).click();
