@@ -41,7 +41,9 @@ wishbone/tie-rod pickup, the shock chassis pickup, and the equivalent rocker-axi
 wrench for the selected load case. Push/pull rods are internal to this free body
 and are therefore represented through the rocker and shock reactions rather than
 double-counted as chassis interfaces. Select a load case to inspect the force,
-local moment, and magnitude at each physical mounting interface.
+local moment, and magnitude at each physical mounting interface. The **Maximum
+across all load cases** option independently selects the largest force magnitude
+at each hardpoint and reports the governing case and matching vector components.
 
 Sizing uses the workbook tube IDs/ODs and 4130 properties: 29 Msi elastic
 modulus, 70 ksi yield, 95 ksi ultimate, FSy 1.3, and FSu 1.5. Tube checks cover

@@ -180,6 +180,7 @@ class SuspensionForceTests(unittest.TestCase):
         self.assertIn("Chassis Loads", html)
         self.assertIn("ride_height_static", html)
         self.assertNotIn("Maximum resultant envelope", html)
+        self.assertIn("Maximum across all load cases", html)
         self.assertNotIn("Interactive chassis hardpoint resultant visualizer", html)
         self.assertNotIn("Corner resultant into chassis", html)
         self.assertNotIn("All listed coordinates are the ride-height reference geometry", html)

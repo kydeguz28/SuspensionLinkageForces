@@ -625,14 +625,14 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
         <div class="sizing-metric"><strong id="chassisInterfaceCount">0</strong><span>mounting interfaces</span></div>
         <div class="sizing-metric"><strong id="chassisCornerCount">0</strong><span>corners shown</span></div>
       </div>
-      <p class="sizing-proxy-note chassis-note"><strong>Interface loads:</strong> force components and magnitude at each physical chassis hardpoint for the selected load case.</p>
+      <p class="sizing-proxy-note chassis-note"><strong>Interface loads:</strong> select one load case or the maximum envelope. The maximum view independently chooses the case with the largest |F| at each physical chassis hardpoint.</p>
 
       <div class="sizing-table-wrap">
         <table class="sizing-table chassis-table">
           <thead>
             <tr>
               <th>Corner / hardpoint</th>
-              <th>Load case</th>
+              <th>Governing case</th>
               <th>Pickup X, Y, Z</th>
               <th class="numeric">Fx (lbf)</th>
               <th class="numeric">Fy (lbf)</th>
@@ -805,6 +805,18 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
       }
       function chassisSelection(assembly, selection) {
         const cases = assembly?.chassis_loads || [];
+        if(selection==="maximum") {
+          if(!cases.length)return null;
+          const names=[...new Set(cases.flatMap(item=>item.interfaces.map(link=>link.name)))];
+          const interfaces=names.map(name=>{
+            const candidates=cases.flatMap(chassis=>{
+              const item=chassis.interfaces.find(link=>link.name===name);
+              return item?[{...item,sourceCase:chassis.name}]:[];
+            });
+            return candidates.reduce((largest,item)=>item.force_magnitude>largest.force_magnitude?item:largest);
+          });
+          return {interfaces,sourceCase:"maximum"};
+        }
         const selectedCase = cases.find(item=>item.name===selection);
         return selectedCase ? {...selectedCase,interfaces:selectedCase.interfaces.map(item=>({...item,sourceCase:selectedCase.name})),sourceCase:selectedCase.name} : null;
       }
@@ -860,7 +872,7 @@ FORM: Operate-mode optical inspection bench, shaped directly for the narrow engi
         controls.assembly.innerHTML = `<option value="all">All assemblies</option>` + configAssemblies.map((a,i) => `<option value="${i}">${escapeHtml(labelName(a.name))}</option>`).join("");
         sizingControls.corner.innerHTML = `<option value="all">All four corners</option>` + configAssemblies.map(a => `<option value="${escapeHtml(a.name)}">${escapeHtml(labelName(a.name))}</option>`).join("");
         chassisControls.corner.innerHTML = `<option value="all">All four corners</option>` + configAssemblies.map(a => `<option value="${escapeHtml(a.name)}">${escapeHtml(labelName(a.name))}</option>`).join("");
-        chassisControls.loadCase.innerHTML = configAssemblies[0].load_cases.map(item=>`<option value="${escapeHtml(item.name)}">${escapeHtml(labelName(item.name))}</option>`).join("");
+        chassisControls.loadCase.innerHTML = `<option value="maximum">Maximum across all load cases</option>` + configAssemblies[0].load_cases.map(item=>`<option value="${escapeHtml(item.name)}">${escapeHtml(labelName(item.name))}</option>`).join("");
         const names = configAssemblies.map(item => item.name.toLowerCase());
         const hasBothSides = names.some(name => name.includes("left")) && names.some(name => name.includes("right"));
         if (hasBothSides) {
