@@ -177,6 +177,42 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
     .margin-mark.fail { background: #f0d6d2; color: #812b21; }
     .margin-mark.unrated { background: #dfe4e6; color: #52616a; }
     .inspect-link { min-height: 30px; padding: 0 9px; white-space: nowrap; }
+    .member-calc-trigger {
+      min-height: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 0;
+      color: inherit;
+      text-align: left;
+    }
+    .member-calc-trigger:hover { border: 0; background: transparent; color: #8b431f; }
+    .member-calc-trigger strong, .member-calc-trigger span { display: block; }
+    .member-calc-trigger span { color: var(--muted); font-size: 11px; }
+    .table-actions { display: flex; gap: 6px; }
+    .calc-row td { padding: 0 !important; border-top: 2px solid var(--orange); background: var(--paper); }
+    .calc-sheet {
+      display: grid;
+      grid-template-columns: 235px minmax(0, 1fr);
+      gap: 26px;
+      padding: 24px;
+      color: var(--ink);
+    }
+    .calc-section-figure { border-right: 1px solid #aab5ba; padding-right: 24px; }
+    .calc-section-figure svg { display: block; width: 100%; height: auto; }
+    .calc-section-figure h3, .calc-ledger h3 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; }
+    .calc-dimension { margin: 12px 0 0; font: 800 15px/1.35 Consolas, monospace; }
+    .calc-subcopy { margin: 7px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .calc-properties { display: grid; grid-template-columns: repeat(4, minmax(110px, 1fr)); border-top: 1px solid #9ca8ad; }
+    .calc-property { padding: 10px 12px 10px 0; }
+    .calc-property span { display: block; color: var(--muted); font-size: 10px; text-transform: uppercase; }
+    .calc-property strong { display: block; margin-top: 4px; font: 700 13px/1.25 Consolas, monospace; }
+    .calc-checks { width: 100%; margin-top: 16px; border-collapse: collapse; }
+    .calc-checks th { background: #d7dddf; color: #38464d; font-size: 10px; text-align: left; text-transform: uppercase; }
+    .calc-checks th, .calc-checks td { border-top: 1px solid #b4bec2; padding: 9px 8px; }
+    .calc-checks .numeric { font-family: Consolas, monospace; text-align: right; }
+    .calc-formulas { margin-top: 16px; border-top: 1px solid #929fa4; padding-top: 13px; color: #344249; font: 12px/1.65 Consolas, monospace; }
+    .calc-note { margin: 14px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
     .sizing-foot {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -317,6 +353,35 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
     .result-pass { color: #285b30; font-weight: 800; }
     .model-boundary { margin-top: 22px; background: #dfe4e6; padding: 16px 18px; color: #344249; line-height: 1.5; }
     .model-boundary strong { color: var(--ink); }
+    .method-visual {
+      margin-top: 20px;
+      border-top: 1px solid #89969c;
+      border-bottom: 1px solid #89969c;
+      background: #f7f8f8;
+      padding: 16px;
+    }
+    .method-visual svg { display: block; width: 100%; height: auto; }
+    .method-visual figcaption { margin-top: 10px; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .matrix-scroll { margin-top: 20px; overflow-x: auto; }
+    .matrix-map {
+      display: grid;
+      grid-template-columns: 54px repeat(6, minmax(52px, 1fr));
+      gap: 2px;
+      background: #9da9ae;
+      padding: 2px;
+    }
+    .matrix-map span {
+      min-height: 34px;
+      display: grid;
+      place-items: center;
+      background: #f7f8f8;
+      color: #344249;
+      font: 700 10px/1.15 Consolas, monospace;
+      text-align: center;
+    }
+    .matrix-map .matrix-head { background: #d7dddf; color: var(--ink); }
+    .matrix-map .matrix-force { background: #e7eef2; }
+    .matrix-map .matrix-moment { background: #f2e9e3; }
 
     .rail {
       position: relative;
@@ -514,6 +579,8 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
       .path-stop:nth-child(3) { border-right: 0; }
       .path-stop:nth-child(-n+3) { border-bottom: 1px solid #aab5ba; }
       .path-stop:nth-child(3)::after { display: none; }
+      .calc-sheet { grid-template-columns: 190px minmax(0, 1fr); }
+      .calc-properties { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 580px) {
       .compact-grid, .rail--inspect .rail-inner { grid-template-columns: 1fr; }
@@ -547,7 +614,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         text-transform: uppercase;
       }
       .sizing-table .member-cell,
-      .sizing-table:not(.chassis-table) td:nth-child(9) { grid-column: 1 / -1; }
+      .sizing-table:not(.chassis-table) td:nth-child(10) { grid-column: 1 / -1; }
       .chassis-table td:first-child,
       .sizing-table td:last-child { align-self: end; }
       .inspect-link { width: 100%; }
@@ -569,6 +636,20 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
       .stage-marker { font-size: 26px; }
       .method-detail, .methods-aside { grid-template-columns: 1fr; }
       .methods-aside { margin-top: 12px; }
+      .calc-row { display: table-row !important; }
+      .calc-row td { display: table-cell; }
+      .calc-row td::before { display: none; }
+      .calc-sheet { grid-template-columns: 1fr; padding: 18px; }
+      .calc-section-figure { border-right: 0; border-bottom: 1px solid #aab5ba; padding: 0 0 18px; }
+      .calc-section-figure svg { max-width: 220px; }
+      .calc-properties { grid-template-columns: 1fr 1fr; }
+      .calc-checks { display: block; overflow-x: auto; }
+      .table-actions { flex-wrap: wrap; }
+      .matrix-map { min-width: 610px; }
+      .matrix-map span { min-height: 34px; font-size: 11px; }
+      .method-visual { overflow-x: auto; padding: 10px; }
+      .method-visual svg { min-width: 650px; }
+      .method-visual figcaption { min-width: 610px; }
     }
     @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
   </style>
@@ -716,11 +797,11 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
 
       <div class="sizing-metrics" aria-live="polite">
         <div class="sizing-metric"><strong id="sizingRowCount">0</strong><span>members shown</span></div>
-        <div class="sizing-metric"><strong id="sizingFailCount">0</strong><span>failed margins</span></div>
-        <div class="sizing-metric"><strong id="sizingCautionCount">0</strong><span>caution margins</span></div>
-        <div class="sizing-metric"><strong id="sizingUnratedCount">0</strong><span>unrated components</span></div>
+        <div class="sizing-metric"><strong id="sizingTubePassCount">0</strong><span>positive tube margins</span></div>
+        <div class="sizing-metric"><strong id="sizingAutoCount">0</strong><span>auto-sized tubes</span></div>
+        <div class="sizing-metric"><strong id="sizingJmxFailCount">0</strong><span>JMX proxy failures</span></div>
       </div>
-      <p class="sizing-proxy-note"><strong>JMX screening only:</strong> each displayed JMX margin is an axial-tension proxy from the workbook—not a final radial or misalignment rating.</p>
+      <p class="sizing-proxy-note"><strong>Automatic tube selection:</strong> the lightest listed 4130 tube is selected with tube MS ≥ 0.10 for axial yield, axial ultimate, and Euler buckling. JMX margins remain separate axial screening proxies and can still fail. Select a member or “Calculations” to audit every equation.</p>
 
       <div class="sizing-table-wrap">
         <table class="sizing-table">
@@ -730,7 +811,8 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
               <th class="numeric" aria-sort="none"><button class="sort-button" type="button" data-sizing-sort="peak">Peak axial</button></th>
               <th>State</th>
               <th>Peak case</th>
-              <th>Tube ID × OD</th>
+              <th>Auto tube OD × wall</th>
+              <th class="numeric">Tube MS</th>
               <th>JMX inboard</th>
               <th>JMX outboard</th>
               <th class="numeric" aria-sort="ascending"><button class="sort-button" type="button" data-sizing-sort="margin" data-active="true" data-arrow="↑">Governing MS</button></th>
@@ -874,7 +956,45 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
           <div>
             <h2>Solve force and moment equilibrium together</h2>
             <p>Each member contributes one force column and one moment column. The six unknown axial forces satisfy three force equations and three moment equations on the rigid upright.</p>
+            <figure class="method-visual">
+              <svg viewBox="0 0 720 300" role="img" aria-labelledby="uprightVisualTitle uprightVisualDesc">
+                <title id="uprightVisualTitle">Rigid upright free-body diagram</title>
+                <desc id="uprightVisualDesc">Six axial member directions react the tire force and tire moment applied to a rigid upright.</desc>
+                <defs><marker id="fbdArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="context-stroke"/></marker></defs>
+                <path d="M315 70L405 86L432 214L326 236L285 162Z" fill="#d7dddf" stroke="#172026" stroke-width="3"/>
+                <circle cx="360" cy="155" r="8" fill="#f7f8f8" stroke="#172026" stroke-width="2"/>
+                <text x="360" y="151" text-anchor="middle" fill="#172026" font-family="Bahnschrift, sans-serif" font-size="15" font-weight="700">RIGID</text>
+                <text x="360" y="171" text-anchor="middle" fill="#172026" font-family="Bahnschrift, sans-serif" font-size="15" font-weight="700">UPRIGHT</text>
+                <g fill="none" stroke-width="4" marker-end="url(#fbdArrow)">
+                  <path d="M320 96L96 44" stroke="#6b4c9a"/>
+                  <path d="M336 80L170 25" stroke="#6b4c9a"/>
+                  <path d="M303 193L83 225" stroke="#1f758d"/>
+                  <path d="M329 228L173 274" stroke="#1f758d"/>
+                  <path d="M412 118L610 68" stroke="#d47a24"/>
+                  <path d="M417 202L632 246" stroke="#b43f72"/>
+                </g>
+                <g fill="#344249" font-family="Bahnschrift, sans-serif" font-size="12" font-weight="700">
+                  <text x="42" y="43">UPPER FORE</text><text x="129" y="21">UPPER AFT</text>
+                  <text x="26" y="228">LOWER FORE</text><text x="118" y="289">LOWER AFT</text>
+                  <text x="616" y="66">TIE / TOE</text><text x="637" y="262">PUSH / PULL</text>
+                </g>
+                <path d="M360 278V216" stroke="#e56a2f" stroke-width="6" marker-end="url(#fbdArrow)"/>
+                <text x="375" y="276" fill="#8b431f" font-family="Consolas, monospace" font-size="13" font-weight="700">F<tspan baseline-shift="sub">tire</tspan></text>
+                <path d="M272 135A98 98 0 0 1 289 91" fill="none" stroke="#e56a2f" stroke-width="3" marker-end="url(#fbdArrow)"/>
+                <text x="232" y="124" fill="#8b431f" font-family="Consolas, monospace" font-size="13">M<tspan baseline-shift="sub">tire</tspan></text>
+              </svg>
+              <figcaption>Every colored line contributes one column to the equilibrium matrix. Arrow direction establishes the positive axial-force convention; the scalar solution determines tension or compression.</figcaption>
+            </figure>
             <div class="equation">A<sub>i</sub> = [ û<sub>i</sub> ; (r<sub>application,i</sub> − r<sub>ref</sub>) × û<sub>i</sub> ]<br><br>A N = −W</div>
+            <div class="matrix-scroll"><div class="matrix-map" role="img" aria-label="Six by six equilibrium matrix with force rows above moment rows and one column per suspension member">
+              <span class="matrix-head">A</span><span class="matrix-head">TIE</span><span class="matrix-head">LOW F</span><span class="matrix-head">LOW A</span><span class="matrix-head">UP F</span><span class="matrix-head">UP A</span><span class="matrix-head">ROD</span>
+              <span class="matrix-head">Fx</span><span class="matrix-force">u₁x</span><span class="matrix-force">u₂x</span><span class="matrix-force">u₃x</span><span class="matrix-force">u₄x</span><span class="matrix-force">u₅x</span><span class="matrix-force">u₆x</span>
+              <span class="matrix-head">Fy</span><span class="matrix-force">u₁y</span><span class="matrix-force">u₂y</span><span class="matrix-force">u₃y</span><span class="matrix-force">u₄y</span><span class="matrix-force">u₅y</span><span class="matrix-force">u₆y</span>
+              <span class="matrix-head">Fz</span><span class="matrix-force">u₁z</span><span class="matrix-force">u₂z</span><span class="matrix-force">u₃z</span><span class="matrix-force">u₄z</span><span class="matrix-force">u₅z</span><span class="matrix-force">u₆z</span>
+              <span class="matrix-head">Mx</span><span class="matrix-moment">(r₁×u₁)x</span><span class="matrix-moment">(r₂×u₂)x</span><span class="matrix-moment">(r₃×u₃)x</span><span class="matrix-moment">(r₄×u₄)x</span><span class="matrix-moment">(r₅×u₅)x</span><span class="matrix-moment">(r₆×u₆)x</span>
+              <span class="matrix-head">My</span><span class="matrix-moment">(r₁×u₁)y</span><span class="matrix-moment">(r₂×u₂)y</span><span class="matrix-moment">(r₃×u₃)y</span><span class="matrix-moment">(r₄×u₄)y</span><span class="matrix-moment">(r₅×u₅)y</span><span class="matrix-moment">(r₆×u₆)y</span>
+              <span class="matrix-head">Mz</span><span class="matrix-moment">(r₁×u₁)z</span><span class="matrix-moment">(r₂×u₂)z</span><span class="matrix-moment">(r₃×u₃)z</span><span class="matrix-moment">(r₄×u₄)z</span><span class="matrix-moment">(r₅×u₅)z</span><span class="matrix-moment">(r₆×u₆)z</span>
+            </div></div>
             <div class="method-detail">
               <div><strong>Exactly determined</strong><p>Six independent member directions produce six unknown axial forces for six equilibrium equations.</p></div>
               <div><strong>Condition check</strong><p>A large matrix condition number warns that small coordinate changes can cause large force changes.</p></div>
@@ -887,6 +1007,30 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
           <div>
             <h2>Balance the rocker about its measured axis</h2>
             <p>The solved push/pull-rod force is applied to the rocker. The shock force is found by balancing only the moment component about the rocker’s rotation axis. The shock chassis pickup remains fixed; only its rocker pickup rotates.</p>
+            <figure class="method-visual">
+              <svg viewBox="0 0 720 300" role="img" aria-labelledby="rockerVisualTitle rockerVisualDesc">
+                <title id="rockerVisualTitle">Rocker axial force and moment balance</title>
+                <desc id="rockerVisualDesc">Pushrod and shock forces act on two rocker arms around a fixed pivot axis.</desc>
+                <defs><marker id="rockerArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="context-stroke"/></marker></defs>
+                <path d="M290 142L155 78L480 102L290 142L512 245Z" fill="#cfd6d9" stroke="#172026" stroke-width="4" stroke-linejoin="round"/>
+                <circle cx="290" cy="142" r="22" fill="#f7f8f8" stroke="#172026" stroke-width="4"/>
+                <circle cx="290" cy="142" r="6" fill="#e56a2f"/>
+                <circle cx="155" cy="78" r="9" fill="#f7f8f8" stroke="#568421" stroke-width="4"/>
+                <circle cx="512" cy="245" r="9" fill="#f7f8f8" stroke="#b43f72" stroke-width="4"/>
+                <line x1="155" y1="78" x2="52" y2="40" stroke="#568421" stroke-width="12"/>
+                <circle cx="52" cy="40" r="10" fill="#172026"/>
+                <text x="29" y="25" fill="#344249" font-family="Bahnschrift, sans-serif" font-size="12" font-weight="700">CHASSIS SHOCK MOUNT</text>
+                <line x1="512" y1="245" x2="633" y2="283" stroke="#b43f72" stroke-width="8"/>
+                <line x1="95" y1="56" x2="147" y2="75" stroke="#266d93" stroke-width="5" marker-end="url(#rockerArrow)"/>
+                <line x1="621" y1="279" x2="521" y2="248" stroke="#c84d35" stroke-width="5" marker-end="url(#rockerArrow)"/>
+                <text x="94" y="95" fill="#1e5c7d" font-family="Consolas, monospace" font-size="13" font-weight="700">N<tspan baseline-shift="sub">shock</tspan></text>
+                <text x="578" y="235" fill="#963825" font-family="Consolas, monospace" font-size="13" font-weight="700">N<tspan baseline-shift="sub">rod</tspan></text>
+                <path d="M247 132A48 48 0 0 1 283 96" fill="none" stroke="#e56a2f" stroke-width="3" marker-end="url(#rockerArrow)"/>
+                <text x="307" y="151" fill="#172026" font-family="Bahnschrift, sans-serif" font-size="12" font-weight="700">PIVOT AXIS</text>
+                <text x="212" y="92" fill="#8b431f" font-family="Consolas, monospace" font-size="12">ΣM<tspan baseline-shift="sub">axis</tspan> = 0</text>
+              </svg>
+              <figcaption>The shock base is fixed at the chassis. Rocker rotation moves only the shock’s rocker-side pickup, changing shock length and spring compression.</figcaption>
+            </figure>
             <div class="equation">â · [(r<sub>rod</sub> − r<sub>pivot</sub>) × F<sub>rod</sub> + (r<sub>shock</sub> − r<sub>pivot</sub>) × N<sub>shock</sub>û<sub>shock</sub>] = 0<br><br>N<sub>shock</sub> = − moment<sub>rod,axis</sub> / moment<sub>shock,axis per lbf</sub></div>
             <p>The pivot reaction closes force equilibrium on the rocker. Reaction moment components not carried by the ideal rotation-axis torque balance are also reported for chassis review.</p>
           </div>
@@ -1021,6 +1165,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         (assembly.sizing_summary || []).map(row => ({...row, assembly: assembly.name, forceUnits: assembly.force_units || "lbf"}))
       );
       const sizingSort = {key: "margin", direction: "asc"};
+      let sizingDetailKey = null;
       const state = {
         yaw: -0.68, pitch: 0.54, zoom: 1, panX: 0, panY: 0, perspective: true,
         dragging: false, shifted: false, lastX: 0, lastY: 0, downX: 0, downY: 0, hover: null, selected: null,
@@ -1088,6 +1233,13 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         if (value <= .5) return "caution";
         return "pass";
       }
+      function centerMethodVisuals() {
+        for (const figure of document.querySelectorAll(".method-visual")) {
+          if (figure.scrollWidth > figure.clientWidth && figure.scrollLeft === 0) {
+            figure.scrollLeft = (figure.scrollWidth - figure.clientWidth) / 2;
+          }
+        }
+      }
       function setAnalysisView(view) {
         const geometryActive = view === "geometry";
         const sizingActive = view === "sizing";
@@ -1104,11 +1256,68 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         if (sizingActive) renderSizing();
         else if (chassisActive) renderChassisLoads();
         else if (geometryActive) requestAnimationFrame(resize);
+        else if (methodsActive) requestAnimationFrame(centerMethodVisuals);
       }
       function formatJmx(selection, margin) {
         if (!selection || selection === "NA") return `<span class="jmx-na">—</span>`;
         const detail = Number.isFinite(margin) ? `MS ${margin.toFixed(2)}` : "unrated";
         return `<strong>${escapeHtml(selection)}</strong><span>${escapeHtml(detail)}</span>`;
+      }
+      function calcNumber(value, digits=3) {
+        return Number.isFinite(value) ? Number(value).toFixed(digits) : "—";
+      }
+      function renderSizingDetails(row) {
+        if (!Number.isFinite(row.tube_od_in)) {
+          return `<div class="calc-sheet"><div class="calc-ledger"><h3>${escapeHtml(labelName(row.member))}</h3><p class="calc-note">Tube or damper construction data was not supplied, so only the calculated axial force is available. Peak: ${row.peak_force.toFixed(1)} ${escapeHtml(row.forceUnits)} in ${escapeHtml(labelName(row.peak_case))}.</p></div></div>`;
+        }
+        const configuredWall = (row.configured_tube_od_in - row.configured_tube_id_in) / 2;
+        const checks = (row.tube_checks || []).map(check => {
+          const statusName = marginStatus(check.margin);
+          return `<tr>
+            <td>${escapeHtml(labelName(check.mode))}</td>
+            <td>${escapeHtml(labelName(check.case))}</td>
+            <td class="numeric">${calcNumber(check.applied_load_lbf,1)}</td>
+            <td class="numeric">${calcNumber(check.allowable_load_lbf,1)}</td>
+            <td class="numeric"><span class="margin-mark ${statusName}"><span>${calcNumber(check.margin,2)}</span><span>${statusName.toUpperCase()}</span></span></td>
+          </tr>`;
+        }).join("");
+        const jmxRows = [["Inboard",row.chassis_jmx,row.chassis_jmx_allowable_lbf,row.chassis_jmx_margin],["Outboard",row.wheel_jmx,row.wheel_jmx_allowable_lbf,row.wheel_jmx_margin]].filter(item=>item[1] && item[1]!=="NA").map(item=>{
+          const statusName=marginStatus(item[3]);
+          return `<tr><td>${item[0]} ${escapeHtml(item[1])} axial proxy</td><td>${escapeHtml(labelName(row.peak_case))}</td><td class="numeric">${Math.abs(row.peak_force).toFixed(1)}</td><td class="numeric">${calcNumber(item[2],1)}</td><td class="numeric"><span class="margin-mark ${statusName}"><span>${calcNumber(item[3],2)}</span><span>${statusName.toUpperCase()}</span></span></td></tr>`;
+        }).join("");
+        const ratio = Math.max(0, Math.min(.82, row.tube_id_in / row.tube_od_in));
+        const innerRadius = 62 * ratio;
+        return `<div class="calc-sheet">
+          <div class="calc-section-figure">
+            <h3>Selected tube section</h3>
+            <svg viewBox="0 0 190 190" role="img" aria-label="Tube cross-section with outside diameter and wall thickness">
+              <circle cx="95" cy="92" r="62" fill="#d7dddf" stroke="#172026" stroke-width="2"/>
+              <circle cx="95" cy="92" r="${innerRadius.toFixed(2)}" fill="#f7f8f8" stroke="#52616a" stroke-width="1.5"/>
+              <line x1="33" y1="164" x2="157" y2="164" stroke="#e56a2f" stroke-width="2"/>
+              <path d="M33 159v10M157 159v10" stroke="#e56a2f" stroke-width="2"/>
+              <text x="95" y="183" text-anchor="middle" fill="#172026" font-family="Consolas, monospace" font-size="12">OD ${row.tube_od_in.toFixed(3)} in</text>
+              <line x1="95" y1="30" x2="95" y2="${(92-innerRadius).toFixed(2)}" stroke="#266d93" stroke-width="3"/>
+              <text x="104" y="45" fill="#172026" font-family="Consolas, monospace" font-size="11">t ${row.tube_wall_in.toFixed(3)}</text>
+            </svg>
+            <p class="calc-dimension">${row.tube_od_in.toFixed(3)} OD × ${row.tube_wall_in.toFixed(3)} wall</p>
+            <p class="calc-subcopy">Auto-selected from the configured catalog for tube MS ≥ ${row.tube_minimum_margin_target.toFixed(2)}. Original configured section: ${row.configured_tube_od_in.toFixed(3)} OD × ${configuredWall.toFixed(3)} wall, tube MS ${row.configured_tube_governing_margin.toFixed(2)}.</p>
+          </div>
+          <div class="calc-ledger">
+            <h3>${escapeHtml(labelName(row.assembly))} · ${escapeHtml(labelName(row.member))}</h3>
+            <div class="calc-properties">
+              <div class="calc-property"><span>Length L</span><strong>${calcNumber(row.member_length_in,3)} in</strong></div>
+              <div class="calc-property"><span>Area A</span><strong>${calcNumber(row.tube_area_in2,5)} in²</strong></div>
+              <div class="calc-property"><span>Inertia I</span><strong>${calcNumber(row.tube_inertia_in4,6)} in⁴</strong></div>
+              <div class="calc-property"><span>Euler Pcr</span><strong>${calcNumber(row.critical_buckling_load_lbf,1)} lbf</strong></div>
+            </div>
+            <table class="calc-checks">
+              <thead><tr><th>Check</th><th>Case</th><th class="numeric">Applied lbf</th><th class="numeric">Allowable lbf</th><th class="numeric">MS</th></tr></thead>
+              <tbody>${checks}${jmxRows}</tbody>
+            </table>
+            <div class="calc-formulas">A = π(OD² − ID²)/4<br>I = π(OD⁴ − ID⁴)/64<br>P<sub>cr</sub> = π²EI/(KL)²<br>allowable<sub>buckling</sub> = P<sub>cr</sub>/FS<sub>u</sub><br>allowable<sub>yield</sub> = A·S<sub>y</sub>/FS<sub>y</sub><br>allowable<sub>ultimate</sub> = A·S<sub>u</sub>/FS<sub>u</sub><br>MS = allowable/applied − 1</div>
+            <p class="calc-note">Material: E ${calcNumber(row.elastic_modulus_psi/1e6,1)} Msi · Sy ${calcNumber(row.yield_strength_psi/1000,1)} ksi · Su ${calcNumber(row.ultimate_strength_psi/1000,1)} ksi · FSy ${calcNumber(row.yield_safety_factor,2)} · FSu ${calcNumber(row.ultimate_safety_factor,2)} · K ${calcNumber(row.effective_length_factor,2)}. JMX values are axial proxies only.</p>
+          </div>
+        </div>`;
       }
       function renderSizing() {
         const visible = sizingRows.filter(row => {
@@ -1130,27 +1339,36 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
           return (sizingSort.direction === "asc" ? comparison : -comparison)
             || Math.abs(b.peak_force) - Math.abs(a.peak_force);
         });
-        sizingControls.body.innerHTML = visible.length ? visible.map(row => {
+        sizingControls.body.innerHTML = visible.length ? visible.flatMap(row => {
+          const detailKey = `${row.assembly}:${row.member}`;
+          const detailId = `sizing-calc-${detailKey.replace(/[^a-z0-9]+/gi,"-").toLowerCase()}`;
+          const expanded = sizingDetailKey === detailKey;
           const statusName = marginStatus(row.governing_margin);
           const marginLabel = Number.isFinite(row.governing_margin) ? row.governing_margin.toFixed(2) : "N/A";
-          const tube = Number.isFinite(row.tube_id_in) && Number.isFinite(row.tube_od_in) ? `${row.tube_id_in.toFixed(3)} × ${row.tube_od_in.toFixed(3)} in` : "—";
-          return `<tr>
-            <td class="member-cell" data-label="Corner / member"><strong>${escapeHtml(labelName(row.assembly))}</strong><span>${escapeHtml(labelName(row.member))}</span></td>
+          const tubeStatus = marginStatus(row.tube_governing_margin);
+          const tubeMargin = Number.isFinite(row.tube_governing_margin) ? row.tube_governing_margin.toFixed(2) : "N/A";
+          const tube = Number.isFinite(row.tube_wall_in) && Number.isFinite(row.tube_od_in) ? `${row.tube_od_in.toFixed(3)} × ${row.tube_wall_in.toFixed(3)} in` : "—";
+          const mainRow = `<tr>
+            <td class="member-cell" data-label="Corner / member"><button class="member-calc-trigger" type="button" data-sizing-details="${escapeHtml(detailKey)}" aria-expanded="${expanded}" aria-controls="${detailId}"><strong>${escapeHtml(labelName(row.assembly))}</strong><span>${escapeHtml(labelName(row.member))}</span></button></td>
             <td class="numeric" data-label="Peak axial">${row.peak_force.toFixed(1)} ${escapeHtml(row.forceUnits)}</td>
             <td data-label="State"><span class="state-word ${escapeHtml(row.peak_state)}">${escapeHtml(row.peak_state)}</span></td>
             <td data-label="Peak case">${escapeHtml(labelName(row.peak_case))}</td>
-            <td class="numeric" data-label="Tube ID × OD">${escapeHtml(tube)}</td>
+            <td class="numeric" data-label="Auto tube OD × wall">${escapeHtml(tube)}</td>
+            <td class="numeric" data-label="Tube MS"><span class="margin-mark ${tubeStatus}"><span>${tubeMargin}</span><span>${tubeStatus.toUpperCase()}</span></span></td>
             <td class="jmx-cell" data-label="JMX inboard">${formatJmx(row.chassis_jmx,row.chassis_jmx_margin)}</td>
             <td class="jmx-cell" data-label="JMX outboard">${formatJmx(row.wheel_jmx,row.wheel_jmx_margin)}</td>
             <td class="numeric" data-label="Governing MS"><span class="margin-mark ${statusName}"><span>${marginLabel}</span><span>${statusName.toUpperCase()}</span></span></td>
             <td data-label="Governing mode / case"><strong>${escapeHtml(labelName(row.governing_margin_mode))}</strong><br><span class="table-muted">${escapeHtml(labelName(row.governing_margin_case))}</span></td>
-            <td data-label="Action"><button class="inspect-link" type="button" data-inspect-corner="${escapeHtml(row.assembly)}" data-inspect-case="${escapeHtml(row.peak_case)}">Inspect</button></td>
+            <td data-label="Action"><div class="table-actions"><button class="inspect-link" type="button" data-sizing-details="${escapeHtml(detailKey)}" aria-expanded="${expanded}" aria-controls="${detailId}">${expanded?"Hide calcs":"Calculations"}</button><button class="inspect-link" type="button" data-inspect-corner="${escapeHtml(row.assembly)}" data-inspect-case="${escapeHtml(row.peak_case)}">Inspect</button></div></td>
           </tr>`;
-        }).join("") : `<tr><td colspan="10" class="empty-table">No members match these filters.</td></tr>`;
+          const detailRow = expanded ? `<tr class="calc-row" id="${detailId}"><td colspan="11">${renderSizingDetails(row)}</td></tr>` : "";
+          return [mainRow,detailRow];
+        }).join("") : `<tr><td colspan="11" class="empty-table">No members match these filters.</td></tr>`;
         document.getElementById("sizingRowCount").textContent = String(visible.length);
-        document.getElementById("sizingFailCount").textContent = String(visible.filter(row=>marginStatus(row.governing_margin)==="fail").length);
-        document.getElementById("sizingCautionCount").textContent = String(visible.filter(row=>marginStatus(row.governing_margin)==="caution").length);
-        document.getElementById("sizingUnratedCount").textContent = String(visible.filter(row=>marginStatus(row.governing_margin)==="unrated").length);
+        const tubeRows = visible.filter(row=>Number.isFinite(row.tube_governing_margin));
+        document.getElementById("sizingTubePassCount").textContent = String(tubeRows.filter(row=>row.tube_governing_margin>0).length);
+        document.getElementById("sizingAutoCount").textContent = String(tubeRows.filter(row=>row.tube_auto_sized).length);
+        document.getElementById("sizingJmxFailCount").textContent = String(visible.filter(row=>(Number.isFinite(row.chassis_jmx_margin)&&row.chassis_jmx_margin<0)||(Number.isFinite(row.wheel_jmx_margin)&&row.wheel_jmx_margin<0)).length);
       }
       function formatVector(values) {
         return values.map(value=>Number(value).toFixed(2)).join(", ");
@@ -1508,6 +1726,16 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
       for (const control of [sizingControls.corner,sizingControls.state,sizingControls.status]) control.addEventListener("change",renderSizing);
       for (const control of [chassisControls.corner,chassisControls.loadCase]) control.addEventListener("change",renderChassisLoads);
       sizingControls.body.addEventListener("click",event=>{
+        const detailButton=event.target.closest("[data-sizing-details]");
+        if(detailButton){
+          const detailKey=detailButton.dataset.sizingDetails;
+          const triggerClass=detailButton.classList.contains("member-calc-trigger")?"member-calc-trigger":"inspect-link";
+          sizingDetailKey=sizingDetailKey===detailKey?null:detailKey;
+          renderSizing();
+          const replacement=[...sizingControls.body.querySelectorAll(`[data-sizing-details]`)].find(button=>button.dataset.sizingDetails===detailKey&&button.classList.contains(triggerClass));
+          replacement?.focus();
+          return;
+        }
         const button=event.target.closest("[data-inspect-corner]");
         if(!button)return;
         const index=configAssemblies.findIndex(item=>item.name===button.dataset.inspectCorner);

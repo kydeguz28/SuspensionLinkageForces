@@ -33,8 +33,16 @@ load-case selection, component or force coloring, joint/member labels, hover and
 click inspection, collision-aware labels, and an optional chassis-force-vector
 overlay for the selected load case. Its
 **Member Sizing** tab reports the peak axial force and load case for every corner
-and member, the configured inboard/outboard JMX selections, and the governing
-recalculated margin.
+and member, automatically selects the lightest configured tube that clears the
+tube-margin target, reports the inboard/outboard JMX selections, and separates
+tube margin from the overall governing margin. Select a member to expand its
+area, inertia, Euler load, applied/allowable loads, equations, safety factors,
+and individual margins.
+
+The **Methods** tab traces the derivation from tire wrench through the six-member
+upright equilibrium matrix, rocker/shock moment balance, spring-loaded kinematic
+iteration, and chassis reactions. It includes free-body and rocker diagrams plus
+the numerical workbook-parity checks.
 
 The **Chassis Loads** tab reports the suspension-on-chassis force vector at each
 wishbone/tie-rod pickup, the shock chassis pickup, and the equivalent rocker-axis
@@ -45,9 +53,11 @@ local moment, and magnitude at each physical mounting interface. The **Maximum
 across all load cases** option independently selects the largest force magnitude
 at each hardpoint and reports the governing case and matching vector components.
 
-Sizing uses the workbook tube IDs/ODs and 4130 properties: 29 Msi elastic
-modulus, 70 ksi yield, 95 ksi ultimate, FSy 1.3, and FSu 1.5. Tube checks cover
-yield, ultimate, and Euler buckling. JMX selections follow `Manufacturing
+Sizing uses the configured tube catalog and 4130 properties: 29 Msi elastic
+modulus, 70 ksi yield, 95 ksi ultimate, FSy 1.3, and FSu 1.5. The example selects
+the minimum-area catalog tube with tube MS ≥ 0.10 across axial yield, axial
+ultimate, and Euler buckling. The original per-member dimensions remain in the
+result as a comparison. JMX selections follow `Manufacturing
 Summary`; their displayed margin is a workbook-derived axial tensile proxy, not
 a substitute for the rod-end manufacturer's radial/misalignment rating. A margin
 is calculated as `allowable / applied - 1`, so a negative value fails.

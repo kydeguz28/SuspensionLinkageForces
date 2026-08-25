@@ -102,6 +102,26 @@ class SuspensionForceTests(unittest.TestCase):
         self.assertEqual(lower_aft["chassis_jmx"], "JMX3")
         self.assertLess(lower_aft["governing_margin"], 0.0)
 
+    def test_auto_sized_tubes_clear_configured_margin_target(self):
+        for assembly in self.result["assemblies"]:
+            for row in assembly["sizing_summary"]:
+                if row["member"] == "shock":
+                    continue
+                self.assertTrue(row["tube_auto_sized"])
+                self.assertGreaterEqual(
+                    row["tube_governing_margin"],
+                    row["tube_minimum_margin_target"],
+                )
+                self.assertGreater(row["tube_wall_in"], 0.0)
+                self.assertGreater(row["tube_area_in2"], 0.0)
+                self.assertGreater(row["tube_inertia_in4"], 0.0)
+                self.assertGreaterEqual(len(row["tube_checks"]), 2)
+                for check in row["tube_checks"]:
+                    self.assertAlmostEqual(
+                        check["margin"],
+                        check["allowable_load_lbf"] / check["applied_load_lbf"] - 1.0,
+                    )
+
     def test_chassis_interface_loads_reconstruct_external_wrench(self):
         for assembly in self.result["assemblies"]:
             for chassis, case in zip(assembly["chassis_loads"], assembly["load_cases"]):
@@ -177,6 +197,9 @@ class SuspensionForceTests(unittest.TestCase):
         self.assertNotIn("FIXED CHASSIS", html)
         self.assertIn("Member Sizing", html)
         self.assertIn("Governing member loads", html)
+        self.assertIn("Automatic tube selection", html)
+        self.assertIn("Calculations", html)
+        self.assertIn("From tire patch to chassis hardpoint", html)
         self.assertIn("Chassis Loads", html)
         self.assertIn("ride_height_static", html)
         self.assertNotIn("Maximum resultant envelope", html)

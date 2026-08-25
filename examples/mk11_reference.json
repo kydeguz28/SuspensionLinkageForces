@@ -7,6 +7,26 @@
     "total_unsprung_weight_lbf": 86.5
   },
   "sizing": {
+    "auto_size_tubes": true,
+    "minimum_tube_margin": 0.1,
+    "tube_catalog": [
+      {"tube_od_in": 0.4375, "wall_thickness_in": 0.049},
+      {"tube_od_in": 0.5, "wall_thickness_in": 0.049},
+      {"tube_od_in": 0.5, "wall_thickness_in": 0.065},
+      {"tube_od_in": 0.5625, "wall_thickness_in": 0.049},
+      {"tube_od_in": 0.5625, "wall_thickness_in": 0.065},
+      {"tube_od_in": 0.625, "wall_thickness_in": 0.049},
+      {"tube_od_in": 0.625, "wall_thickness_in": 0.065},
+      {"tube_od_in": 0.625, "wall_thickness_in": 0.083},
+      {"tube_od_in": 0.75, "wall_thickness_in": 0.049},
+      {"tube_od_in": 0.75, "wall_thickness_in": 0.065},
+      {"tube_od_in": 0.75, "wall_thickness_in": 0.083},
+      {"tube_od_in": 0.875, "wall_thickness_in": 0.049},
+      {"tube_od_in": 0.875, "wall_thickness_in": 0.065},
+      {"tube_od_in": 0.875, "wall_thickness_in": 0.083},
+      {"tube_od_in": 1.0, "wall_thickness_in": 0.065},
+      {"tube_od_in": 1.0, "wall_thickness_in": 0.083}
+    ],
     "material": {
       "elastic_modulus_psi": 29000000.0,
       "yield_strength_psi": 70000.0,

@@ -656,7 +656,7 @@ def build_sizing_summary(
     solved: dict[str, Any],
     sizing: dict[str, Any],
 ) -> list[dict[str, Any]]:
-    """Calculate governing force, tube margin, and selected JMX margin per member."""
+    """Calculate governing force, auto-sized tube checks, and JMX margins."""
     axle = str(assembly.get("axle", ""))
     member_sizing = sizing.get(axle, {})
     material = sizing.get("material", {})
@@ -667,6 +667,9 @@ def build_sizing_summary(
     yield_factor = float(material.get("yield_safety_factor", 1.3))
     ultimate_factor = float(material.get("ultimate_safety_factor", 1.5))
     effective_length = float(material.get("effective_length_factor", 1.0))
+    auto_size_tubes = bool(sizing.get("auto_size_tubes", False))
+    minimum_tube_margin = float(sizing.get("minimum_tube_margin", 0.0))
+    tube_catalog = sizing.get("tube_catalog", [])
     geometry_by_name = {item["name"]: item for item in solved["member_geometry"]}
     rows: list[dict[str, Any]] = []
 
@@ -678,46 +681,101 @@ def build_sizing_summary(
         peak_case, peak_force = max(loads, key=lambda item: abs(item[1]))
         tension = max((item for item in loads if item[1] > 0.0), key=lambda item: item[1], default=None)
         compression = min((item for item in loads if item[1] < 0.0), key=lambda item: item[1], default=None)
-        outside = float(specification["tube_od_in"])
-        inside = float(specification["tube_id_in"])
-        area = math.pi * (outside * outside - inside * inside) / 4.0
-        inertia = math.pi * (outside**4 - inside**4) / 64.0
         length = float(geometry_by_name[member_name]["length"])
-        critical_buckling = (
-            math.pi**2 * elastic_modulus * inertia / (effective_length * length) ** 2
-        )
-        candidates: list[dict[str, Any]] = []
-        if tension is not None:
-            tensile_case, tensile_force = tension
-            candidates.extend(
-                [
-                    {
-                        "mode": "tube yield",
-                        "case": tensile_case,
-                        "margin": area * yield_strength / (tensile_force * yield_factor) - 1.0,
-                    },
-                    {
-                        "mode": "tube ultimate",
-                        "case": tensile_case,
-                        "margin": area * ultimate_strength / (tensile_force * ultimate_factor) - 1.0,
-                    },
-                ]
+        configured_outside = float(specification["tube_od_in"])
+        configured_inside = float(specification["tube_id_in"])
+
+        def evaluate_tube(outside: float, inside: float) -> dict[str, Any]:
+            if outside <= 0.0 or inside < 0.0 or inside >= outside:
+                raise ValueError(f"Invalid tube dimensions for {axle}.{member_name}")
+            area = math.pi * (outside * outside - inside * inside) / 4.0
+            inertia = math.pi * (outside**4 - inside**4) / 64.0
+            critical_buckling = (
+                math.pi**2 * elastic_modulus * inertia / (effective_length * length) ** 2
             )
-        if compression is not None:
-            compression_case, compression_force = compression
-            candidates.append(
-                {
-                    "mode": "tube Euler buckling",
-                    "case": compression_case,
-                    "margin": critical_buckling
-                    / (abs(compression_force) * ultimate_factor)
-                    - 1.0,
-                }
+            checks: list[dict[str, Any]] = []
+            peak_applied = abs(peak_force)
+            if peak_applied > 1e-12:
+                yield_allowable = area * yield_strength / yield_factor
+                ultimate_allowable = area * ultimate_strength / ultimate_factor
+                checks.extend(
+                    [
+                        {
+                            "mode": "tube axial yield",
+                            "case": peak_case,
+                            "applied_load_lbf": peak_applied,
+                            "allowable_load_lbf": yield_allowable,
+                            "margin": yield_allowable / peak_applied - 1.0,
+                        },
+                        {
+                            "mode": "tube axial ultimate",
+                            "case": peak_case,
+                            "applied_load_lbf": peak_applied,
+                            "allowable_load_lbf": ultimate_allowable,
+                            "margin": ultimate_allowable / peak_applied - 1.0,
+                        },
+                    ]
+                )
+            if compression is not None:
+                compression_case, compression_force = compression
+                buckling_allowable = critical_buckling / ultimate_factor
+                checks.append(
+                    {
+                        "mode": "tube Euler buckling",
+                        "case": compression_case,
+                        "applied_load_lbf": abs(compression_force),
+                        "allowable_load_lbf": buckling_allowable,
+                        "margin": buckling_allowable / abs(compression_force) - 1.0,
+                    }
+                )
+            governing = min(checks, key=lambda item: item["margin"])
+            return {
+                "tube_od_in": outside,
+                "tube_id_in": inside,
+                "tube_wall_in": (outside - inside) / 2.0,
+                "tube_area_in2": area,
+                "tube_inertia_in4": inertia,
+                "critical_buckling_load_lbf": critical_buckling,
+                "tube_checks": checks,
+                "tube_governing_margin": governing["margin"],
+                "tube_governing_mode": governing["mode"],
+                "tube_governing_case": governing["case"],
+            }
+
+        configured_tube = evaluate_tube(configured_outside, configured_inside)
+        selected_tube = configured_tube
+        catalog_candidates: list[dict[str, Any]] = []
+        if auto_size_tubes:
+            for item in tube_catalog:
+                outside = float(item["tube_od_in"])
+                if "tube_id_in" in item:
+                    inside = float(item["tube_id_in"])
+                else:
+                    inside = outside - 2.0 * float(item["wall_thickness_in"])
+                candidate = evaluate_tube(outside, inside)
+                if candidate["tube_governing_margin"] >= minimum_tube_margin:
+                    catalog_candidates.append(candidate)
+            if not catalog_candidates:
+                raise ValueError(
+                    f"No tube in sizing.tube_catalog gives {axle}.{member_name} "
+                    f"a tube margin of at least {minimum_tube_margin:.3f}"
+                )
+            selected_tube = min(
+                catalog_candidates,
+                key=lambda item: (
+                    item["tube_area_in2"],
+                    item["tube_od_in"],
+                    item["tube_wall_in"],
+                ),
             )
+
+        candidates: list[dict[str, Any]] = [dict(item) for item in selected_tube["tube_checks"]]
         jmx_margins: dict[str, float | None] = {}
+        jmx_selected_allowables: dict[str, float | None] = {}
         for end_key in ("chassis_jmx", "wheel_jmx"):
             selection = str(specification.get(end_key, "NA"))
             allowable = jmx_allowables.get(selection)
+            jmx_selected_allowables[end_key] = float(allowable) if allowable is not None else None
             margin = (
                 float(allowable) / abs(peak_force) - 1.0
                 if allowable is not None and abs(peak_force) > 1e-12
@@ -729,6 +787,8 @@ def build_sizing_summary(
                     {
                         "mode": f"{end_key.replace('_jmx', '')} {selection} axial proxy",
                         "case": peak_case,
+                        "applied_load_lbf": abs(peak_force),
+                        "allowable_load_lbf": float(allowable),
                         "margin": margin,
                     }
                 )
@@ -743,16 +803,39 @@ def build_sizing_summary(
                 "max_tension_case": tension[0] if tension else None,
                 "max_compression_force": compression[1] if compression else None,
                 "max_compression_case": compression[0] if compression else None,
-                "tube_id_in": inside,
-                "tube_od_in": outside,
-                "critical_buckling_load_lbf": critical_buckling,
+                "tube_id_in": selected_tube["tube_id_in"],
+                "tube_od_in": selected_tube["tube_od_in"],
+                "tube_wall_in": selected_tube["tube_wall_in"],
+                "tube_area_in2": selected_tube["tube_area_in2"],
+                "tube_inertia_in4": selected_tube["tube_inertia_in4"],
+                "critical_buckling_load_lbf": selected_tube["critical_buckling_load_lbf"],
+                "tube_checks": selected_tube["tube_checks"],
+                "tube_governing_margin": selected_tube["tube_governing_margin"],
+                "tube_governing_mode": selected_tube["tube_governing_mode"],
+                "tube_governing_case": selected_tube["tube_governing_case"],
+                "tube_auto_sized": auto_size_tubes,
+                "tube_minimum_margin_target": minimum_tube_margin,
+                "configured_tube_id_in": configured_inside,
+                "configured_tube_od_in": configured_outside,
+                "configured_tube_governing_margin": configured_tube["tube_governing_margin"],
+                "member_length_in": length,
+                "elastic_modulus_psi": elastic_modulus,
+                "yield_strength_psi": yield_strength,
+                "ultimate_strength_psi": ultimate_strength,
+                "yield_safety_factor": yield_factor,
+                "ultimate_safety_factor": ultimate_factor,
+                "effective_length_factor": effective_length,
                 "chassis_jmx": specification.get("chassis_jmx", "NA"),
                 "wheel_jmx": specification.get("wheel_jmx", "NA"),
                 "chassis_jmx_margin": jmx_margins["chassis_jmx"],
                 "wheel_jmx_margin": jmx_margins["wheel_jmx"],
+                "chassis_jmx_allowable_lbf": jmx_selected_allowables["chassis_jmx"],
+                "wheel_jmx_allowable_lbf": jmx_selected_allowables["wheel_jmx"],
                 "governing_margin": governing["margin"],
                 "governing_margin_mode": governing["mode"],
                 "governing_margin_case": governing["case"],
+                "governing_applied_load_lbf": governing.get("applied_load_lbf"),
+                "governing_allowable_load_lbf": governing.get("allowable_load_lbf"),
             }
         )
 
