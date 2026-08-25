@@ -10,7 +10,8 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Suspension Linkage 3D Inspector</title>
+  <title>Bruin Formula Racing Suspension Linkage Calculator</title>
+  <link rel="icon" href="assets/BFR.ico" sizes="any">
   <style>
     :root {
       color-scheme: light;
@@ -69,6 +70,18 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
       font-weight: 800;
       letter-spacing: .02em;
       text-transform: uppercase;
+    }
+    .modebar-mark {
+      display: grid;
+      place-items: center;
+      flex: 0 0 52px;
+      border-left: 1px solid #455158;
+    }
+    .modebar-mark img {
+      display: block;
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
     }
     .mode-tabs { display: flex; align-items: stretch; }
     .mode-tab {
@@ -259,6 +272,16 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
       text-transform: uppercase;
     }
     .methods-deck { max-width: 74ch; margin: 18px 0 0; color: var(--muted); font-size: 17px; line-height: 1.55; }
+    .methods-geometry-controls {
+      display: flex;
+      align-items: end;
+      gap: 12px;
+      margin-top: 22px;
+      border-top: 1px solid #aab5ba;
+      padding-top: 16px;
+    }
+    .methods-geometry-controls .field { min-width: 190px; margin: 0; }
+    .methods-sync-note { max-width: 44ch; margin: 0 0 4px auto; color: var(--muted); font-size: 12px; line-height: 1.4; }
     .load-path-map {
       display: grid;
       grid-template-columns: repeat(6, minmax(110px, 1fr));
@@ -362,6 +385,17 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
     }
     .method-visual svg { display: block; width: 100%; height: auto; }
     .method-visual figcaption { margin-top: 10px; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .method-visual .cad-wheel { fill: none; stroke: #aab5ba; stroke-width: 1.2; }
+    .method-visual .cad-structure { fill: none; stroke: #343e43; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+    .method-visual .cad-rocker-web { fill: color-mix(in srgb, #68757b 16%, transparent); stroke: #343e43; stroke-width: 3; stroke-linejoin: round; }
+    .method-visual .cad-member { fill: none; stroke-width: 5; stroke-linecap: round; }
+    .method-visual .cad-force { fill: none; stroke-width: 4; stroke-linecap: round; }
+    .method-visual .cad-node { fill: #f7f8f8; stroke-width: 2.5; }
+    .method-visual .cad-anchor { fill: #172026; stroke: #f7f8f8; stroke-width: 1.5; }
+    .method-visual .cad-label { fill: #344249; font: 700 17px Bahnschrift, sans-serif; }
+    .method-visual .cad-mono { fill: #344249; font: 16px Consolas, monospace; }
+    .method-visual .cad-legend-line { stroke-width: 5; stroke-linecap: round; }
+    .method-visual .cad-divider { stroke: #aab5ba; stroke-width: 1; }
     .matrix-scroll { margin-top: 20px; overflow-x: auto; }
     .matrix-map {
       display: grid;
@@ -553,6 +587,8 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
       .modebar { position: sticky; top: 0; z-index: 10; }
       .modebar-title { display: none; }
       .mode-tabs, .mode-tab { flex: 1; }
+      .modebar-mark { flex-basis: 46px; }
+      .modebar-mark img { width: 30px; height: 30px; }
       .mode-tab { min-width: 0; }
       .app { grid-template-columns: 1fr; grid-template-rows: auto minmax(58vh, 1fr) auto; height: auto; min-height: calc(100% - 52px); }
       .rail { overflow: visible; }
@@ -621,6 +657,9 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
       .empty-table { grid-column: 1 / -1 !important; }
       .mode-tab { padding: 0 7px; font-size: 11px; }
       .methods-hero-inner { padding: 28px 18px 24px; }
+      .methods-geometry-controls { display: grid; grid-template-columns: 1fr; }
+      .methods-geometry-controls .field { min-width: 0; }
+      .methods-sync-note { margin: 2px 0 0; }
       .load-path-map { grid-template-columns: 1fr 1fr; }
       .path-stop { min-height: 76px; border-bottom: 1px solid #aab5ba; }
       .path-stop:nth-child(2n) { border-right: 0; }
@@ -656,19 +695,20 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
 </head>
 <body>
   <header class="modebar">
-    <div class="modebar-title">Mk11 suspension analysis</div>
+    <div class="modebar-title">Bruin Formula Racing Suspension Linkage Calculator</div>
     <div class="mode-tabs" role="tablist" aria-label="Analysis view">
       <button class="mode-tab" id="geometryTab" type="button" role="tab" aria-controls="geometryView" aria-selected="true">3D Geometry</button>
       <button class="mode-tab" id="sizingTab" type="button" role="tab" aria-controls="sizingView" aria-selected="false">Member Sizing</button>
       <button class="mode-tab" id="chassisTab" type="button" role="tab" aria-controls="chassisView" aria-selected="false">Chassis Loads</button>
       <button class="mode-tab" id="methodsTab" type="button" role="tab" aria-controls="methodsView" aria-selected="false">Methods</button>
     </div>
+    <div class="modebar-mark"><img src="assets/BFR.ico" alt="Bruin Formula Racing"></div>
   </header>
 
   <main class="app" id="geometryView" role="tabpanel" aria-labelledby="geometryTab">
     <aside class="rail rail--controls" aria-label="Viewer controls">
       <div class="rail-inner">
-        <h1 class="brand">Linkage Inspector</h1>
+        <h1 class="brand">Bruin Formula Racing Suspension Linkage Calculator</h1>
         <p class="subtitle">Static geometry and force paths from the active suspension model.</p>
 
         <div class="compact-grid">
@@ -890,6 +930,11 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         <p class="methods-kicker">Calculation method · embedded configuration</p>
         <h1 class="methods-title">From tire patch to chassis hardpoint</h1>
         <p class="methods-deck">The model follows the load path in the same order the hardware carries it. A six-member rigid-upright solve produces axial linkage forces; the push/pull rod then drives a rigid rocker, the rocker drives the shock/spring assembly, and equal-and-opposite reactions are collected at the chassis.</p>
+        <div class="methods-geometry-controls" aria-label="Methods diagram geometry">
+          <div class="field"><label for="methodsAssembly">Diagram corner</label><select id="methodsAssembly"></select></div>
+          <div class="field"><label for="methodsLoadCase">Diagram load case</label><select id="methodsLoadCase"></select></div>
+          <p class="methods-sync-note">These controls also set the 3D viewer. Diagrams use the active geometry and the default 3D orientation in an orthographic projection.</p>
+        </div>
         <div class="load-path-map" aria-label="Suspension load derivation sequence">
           <div class="path-stop"><span>INPUT</span><strong>Tire force</strong></div>
           <div class="path-stop"><span>WRENCH</span><strong>Force + moment</strong></div>
@@ -957,33 +1002,11 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
             <h2>Solve force and moment equilibrium together</h2>
             <p>Each member contributes one force column and one moment column. The six unknown axial forces satisfy three force equations and three moment equations on the rigid upright.</p>
             <figure class="method-visual">
-              <svg viewBox="0 0 720 300" role="img" aria-labelledby="uprightVisualTitle uprightVisualDesc">
+              <svg id="uprightGeometryVisual" viewBox="0 0 720 360" role="img" aria-labelledby="uprightVisualTitle uprightVisualDesc">
                 <title id="uprightVisualTitle">Rigid upright free-body diagram</title>
-                <desc id="uprightVisualDesc">Six axial member directions react the tire force and tire moment applied to a rigid upright.</desc>
-                <defs><marker id="fbdArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="context-stroke"/></marker></defs>
-                <path d="M315 70L405 86L432 214L326 236L285 162Z" fill="#d7dddf" stroke="#172026" stroke-width="3"/>
-                <circle cx="360" cy="155" r="8" fill="#f7f8f8" stroke="#172026" stroke-width="2"/>
-                <text x="360" y="151" text-anchor="middle" fill="#172026" font-family="Bahnschrift, sans-serif" font-size="15" font-weight="700">RIGID</text>
-                <text x="360" y="171" text-anchor="middle" fill="#172026" font-family="Bahnschrift, sans-serif" font-size="15" font-weight="700">UPRIGHT</text>
-                <g fill="none" stroke-width="4" marker-end="url(#fbdArrow)">
-                  <path d="M320 96L96 44" stroke="#6b4c9a"/>
-                  <path d="M336 80L170 25" stroke="#6b4c9a"/>
-                  <path d="M303 193L83 225" stroke="#1f758d"/>
-                  <path d="M329 228L173 274" stroke="#1f758d"/>
-                  <path d="M412 118L610 68" stroke="#d47a24"/>
-                  <path d="M417 202L632 246" stroke="#b43f72"/>
-                </g>
-                <g fill="#344249" font-family="Bahnschrift, sans-serif" font-size="12" font-weight="700">
-                  <text x="42" y="43">UPPER FORE</text><text x="129" y="21">UPPER AFT</text>
-                  <text x="26" y="228">LOWER FORE</text><text x="118" y="289">LOWER AFT</text>
-                  <text x="616" y="66">TIE / TOE</text><text x="637" y="262">PUSH / PULL</text>
-                </g>
-                <path d="M360 278V216" stroke="#e56a2f" stroke-width="6" marker-end="url(#fbdArrow)"/>
-                <text x="375" y="276" fill="#8b431f" font-family="Consolas, monospace" font-size="13" font-weight="700">F<tspan baseline-shift="sub">tire</tspan></text>
-                <path d="M272 135A98 98 0 0 1 289 91" fill="none" stroke="#e56a2f" stroke-width="3" marker-end="url(#fbdArrow)"/>
-                <text x="232" y="124" fill="#8b431f" font-family="Consolas, monospace" font-size="13">M<tspan baseline-shift="sub">tire</tspan></text>
+                <desc id="uprightVisualDesc">An isometric projection generated from the selected assembly's exact pickup coordinates, member endpoints, wheel envelope, contact patch, and active tire load.</desc>
               </svg>
-              <figcaption>Every colored line contributes one column to the equilibrium matrix. Arrow direction establishes the positive axial-force convention; the scalar solution determines tension or compression.</figcaption>
+              <figcaption><span id="uprightGeometryCaption">CAD-derived projection.</span> Every colored member contributes one column to the equilibrium matrix; arrows run from the upright application point toward the member anchor.</figcaption>
             </figure>
             <div class="equation">A<sub>i</sub> = [ û<sub>i</sub> ; (r<sub>application,i</sub> − r<sub>ref</sub>) × û<sub>i</sub> ]<br><br>A N = −W</div>
             <div class="matrix-scroll"><div class="matrix-map" role="img" aria-label="Six by six equilibrium matrix with force rows above moment rows and one column per suspension member">
@@ -1008,28 +1031,11 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
             <h2>Balance the rocker about its measured axis</h2>
             <p>The solved push/pull-rod force is applied to the rocker. The shock force is found by balancing only the moment component about the rocker’s rotation axis. The shock chassis pickup remains fixed; only its rocker pickup rotates.</p>
             <figure class="method-visual">
-              <svg viewBox="0 0 720 300" role="img" aria-labelledby="rockerVisualTitle rockerVisualDesc">
+              <svg id="rockerGeometryVisual" viewBox="0 0 720 360" role="img" aria-labelledby="rockerVisualTitle rockerVisualDesc">
                 <title id="rockerVisualTitle">Rocker axial force and moment balance</title>
-                <desc id="rockerVisualDesc">Pushrod and shock forces act on two rocker arms around a fixed pivot axis.</desc>
-                <defs><marker id="rockerArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="context-stroke"/></marker></defs>
-                <path d="M290 142L155 78L480 102L290 142L512 245Z" fill="#cfd6d9" stroke="#172026" stroke-width="4" stroke-linejoin="round"/>
-                <circle cx="290" cy="142" r="22" fill="#f7f8f8" stroke="#172026" stroke-width="4"/>
-                <circle cx="290" cy="142" r="6" fill="#e56a2f"/>
-                <circle cx="155" cy="78" r="9" fill="#f7f8f8" stroke="#568421" stroke-width="4"/>
-                <circle cx="512" cy="245" r="9" fill="#f7f8f8" stroke="#b43f72" stroke-width="4"/>
-                <line x1="155" y1="78" x2="52" y2="40" stroke="#568421" stroke-width="12"/>
-                <circle cx="52" cy="40" r="10" fill="#172026"/>
-                <text x="29" y="25" fill="#344249" font-family="Bahnschrift, sans-serif" font-size="12" font-weight="700">CHASSIS SHOCK MOUNT</text>
-                <line x1="512" y1="245" x2="633" y2="283" stroke="#b43f72" stroke-width="8"/>
-                <line x1="95" y1="56" x2="147" y2="75" stroke="#266d93" stroke-width="5" marker-end="url(#rockerArrow)"/>
-                <line x1="621" y1="279" x2="521" y2="248" stroke="#c84d35" stroke-width="5" marker-end="url(#rockerArrow)"/>
-                <text x="94" y="95" fill="#1e5c7d" font-family="Consolas, monospace" font-size="13" font-weight="700">N<tspan baseline-shift="sub">shock</tspan></text>
-                <text x="578" y="235" fill="#963825" font-family="Consolas, monospace" font-size="13" font-weight="700">N<tspan baseline-shift="sub">rod</tspan></text>
-                <path d="M247 132A48 48 0 0 1 283 96" fill="none" stroke="#e56a2f" stroke-width="3" marker-end="url(#rockerArrow)"/>
-                <text x="307" y="151" fill="#172026" font-family="Bahnschrift, sans-serif" font-size="12" font-weight="700">PIVOT AXIS</text>
-                <text x="212" y="92" fill="#8b431f" font-family="Consolas, monospace" font-size="12">ΣM<tspan baseline-shift="sub">axis</tspan> = 0</text>
+                <desc id="rockerVisualDesc">An isometric projection generated from the selected assembly's measured rocker pivot axis, pushrod pickup, shock pickup, fixed chassis shock mount, and rod endpoints.</desc>
               </svg>
-              <figcaption>The shock base is fixed at the chassis. Rocker rotation moves only the shock’s rocker-side pickup, changing shock length and spring compression.</figcaption>
+              <figcaption><span id="rockerGeometryCaption">CAD-derived projection.</span> The filled chassis node is fixed; rocker rotation moves only the shock’s rocker-side pickup.</figcaption>
             </figure>
             <div class="equation">â · [(r<sub>rod</sub> − r<sub>pivot</sub>) × F<sub>rod</sub> + (r<sub>shock</sub> − r<sub>pivot</sub>) × N<sub>shock</sub>û<sub>shock</sub>] = 0<br><br>N<sub>shock</sub> = − moment<sub>rod,axis</sub> / moment<sub>shock,axis per lbf</sub></div>
             <p>The pivot reaction closes force equilibrium on the rocker. Reaction moment components not carried by the ideal rotation-axis torque balance are also reported for chassis review.</p>
@@ -1161,6 +1167,10 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         loadCase: document.getElementById("chassisCase"),
         body: document.getElementById("chassisTableBody")
       };
+      const methodsControls = {
+        assembly: document.getElementById("methodsAssembly"),
+        loadCase: document.getElementById("methodsLoadCase")
+      };
       const sizingRows = payload.result.assemblies.flatMap(assembly =>
         (assembly.sizing_summary || []).map(row => ({...row, assembly: assembly.name, forceUnits: assembly.force_units || "lbf"}))
       );
@@ -1209,6 +1219,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
           setText("methodsDistributionAside", "—");
           setText("methodsUnsprungWeightAside", "—");
         }
+        renderMethodGeometry();
       }
       function vAdd(a,b) { return a.map((n,i) => n+b[i]); }
       function vSub(a,b) { return a.map((n,i) => n-b[i]); }
@@ -1226,6 +1237,129 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         if (n.includes("rocker")) return "rocker";
         if (n.includes("upright")) return "upright";
         return "wheel";
+      }
+      function methodAssembly() {
+        const index = Number.parseInt(methodsControls.assembly.value, 10);
+        return Number.isInteger(index) && configAssemblies[index] ? configAssemblies[index] : configAssemblies[0];
+      }
+      function methodCaseName(assembly) {
+        const selected = methodsControls.loadCase.value;
+        return assembly.load_cases.some(item => item.name === selected) ? selected : assembly.load_cases[0]?.name;
+      }
+      function methodGeometry(assembly, caseName) {
+        const active = resultCase(assembly, caseName);
+        const moved = active?.kinematics?.geometry;
+        return {
+          active,
+          members: moved?.members || assembly.members,
+          rocker: moved?.rocker || assembly.rocker,
+          contactPatch: moved?.contact_patch || assembly.contact_patch
+        };
+      }
+      function methodRawProjection(point) {
+        const yaw = -0.68, pitch = 0.54;
+        const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+        const x1 = point[0] * cy - point[1] * sy;
+        const y1 = point[0] * sy + point[1] * cy;
+        const dz = -point[2];
+        return [x1, -(y1 * sp + dz * cp), y1 * cp - dz * sp];
+      }
+      function makeMethodProjector(points, frame) {
+        const raw = points.map(methodRawProjection);
+        const minX = Math.min(...raw.map(point => point[0])), maxX = Math.max(...raw.map(point => point[0]));
+        const minY = Math.min(...raw.map(point => point[1])), maxY = Math.max(...raw.map(point => point[1]));
+        const scale = Math.min((frame.x1-frame.x0)/Math.max(1,maxX-minX), (frame.y1-frame.y0)/Math.max(1,maxY-minY));
+        const usedWidth = (maxX-minX)*scale, usedHeight = (maxY-minY)*scale;
+        const offsetX = frame.x0 + (frame.x1-frame.x0-usedWidth)/2 - minX*scale;
+        const offsetY = frame.y0 + (frame.y1-frame.y0-usedHeight)/2 - minY*scale;
+        return point => {
+          const projected = methodRawProjection(point);
+          return {x:offsetX+projected[0]*scale, y:offsetY+projected[1]*scale, depth:projected[2]};
+        };
+      }
+      function methodLine(a, b, className, color, extra="") {
+        return `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" class="${className}" stroke="${color}" ${extra}/>`;
+      }
+      function methodNode(point, color, anchor=false, radius=5) {
+        return `<circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${radius}" class="${anchor?"cad-anchor":"cad-node"}" stroke="${color}"/>`;
+      }
+      function methodVectorArrow(startPoint, vector, length, project, color, markerId) {
+        const rawStart = methodRawProjection(startPoint);
+        const rawEnd = methodRawProjection(vAdd(startPoint, vector));
+        const dx = rawEnd[0]-rawStart[0], dy = rawEnd[1]-rawStart[1], magnitude = Math.hypot(dx,dy) || 1;
+        const start = project(startPoint);
+        const end = {x:start.x+dx/magnitude*length, y:start.y+dy/magnitude*length};
+        return methodLine(start,end,"cad-force",color,`marker-end="url(#${markerId})"`);
+      }
+      function renderMethodGeometry() {
+        const assembly = methodAssembly();
+        if (!assembly) return;
+        const caseName = methodCaseName(assembly);
+        const geometry = methodGeometry(assembly, caseName);
+        const forceByName = new Map((geometry.active?.members || []).map(item => [item.name,item]));
+        const assemblyLabel = labelName(assembly.name);
+        const caseLabel = labelName(caseName || "ride_height");
+        const units = assembly.coordinate_units || "in";
+        const unitsLabel = units === "in" ? "inches" : units;
+
+        const applications = geometry.members.map(member => member.application);
+        const wheelCenterZ = applications.reduce((sum,point)=>sum+point[2],0)/Math.max(1,applications.length);
+        const wheelRadius = Math.max(2,Math.abs(geometry.contactPatch[2]-wheelCenterZ));
+        const wheelCenter = [geometry.contactPatch[0],geometry.contactPatch[1],wheelCenterZ];
+        const wheelPoints = Array.from({length:37},(_,index)=>{
+          const angle=index*Math.PI*2/36;
+          return [wheelCenter[0]+Math.cos(angle)*wheelRadius,wheelCenter[1],wheelCenter[2]+Math.sin(angle)*wheelRadius];
+        });
+        const uprightPoints = [...geometry.members.flatMap(member=>[member.application,member.anchor]),...wheelPoints,geometry.contactPatch];
+        const projectUpright = makeMethodProjector(uprightPoints,{x0:34,x1:686,y0:34,y1:278});
+        const wheelSvg = wheelPoints.slice(0,-1).map((point,index)=>methodLine(projectUpright(point),projectUpright(wheelPoints[index+1]),"cad-wheel","#aab5ba")).join("");
+        const upper = geometry.members.filter(member=>family(member.name)==="upper").map(member=>member.application);
+        const lower = geometry.members.filter(member=>family(member.name)==="lower").map(member=>member.application);
+        const tie = geometry.members.find(member=>family(member.name)==="tie");
+        const upperPoint = upper.length?vAvg(upper):null, lowerPoint = lower.length?vAvg(lower):null;
+        const uprightSvg = upperPoint&&lowerPoint ? methodLine(projectUpright(upperPoint),projectUpright(lowerPoint),"cad-structure","#343e43") + (tie?methodLine(projectUpright(tie.application),projectUpright(lowerPoint),"cad-structure","#343e43"):"") : "";
+        const membersSvg = [...geometry.members].sort((a,b)=>{
+          const pa=projectUpright(a.application),pb=projectUpright(a.anchor),qa=projectUpright(b.application),qb=projectUpright(b.anchor);
+          return (pa.depth+pb.depth)-(qa.depth+qb.depth);
+        }).map(member=>{
+          const color=COLORS[family(member.name)]||COLORS.wheel;
+          const application=projectUpright(member.application),anchor=projectUpright(member.anchor);
+          const title=`${labelName(member.name)}: ${member.application.map(value=>value.toFixed(3)).join(", ")} to ${member.anchor.map(value=>value.toFixed(3)).join(", ")} ${units}`;
+          return `<g><title>${escapeHtml(title)}</title>${methodLine(application,anchor,"cad-member",color,'marker-end="url(#uprightMemberArrow)"')}${methodNode(application,color)}${methodNode(anchor,color,true)}</g>`;
+        }).join("");
+        const externalForce = geometry.active?.external_wrench?.slice(0,3) || [0,0,0];
+        const tireArrow = vMag(externalForce)>1e-9 ? methodVectorArrow(geometry.contactPatch,externalForce,62,projectUpright,COLORS.load,"uprightLoadArrow") : "";
+        const contact=projectUpright(geometry.contactPatch);
+        const legendItems=geometry.members.map(member=>({name:labelName(member.name),color:COLORS[family(member.name)]||COLORS.wheel}));
+        const legend=legendItems.map((item,index)=>{
+          const column=index%3,row=Math.floor(index/3),x=26+column*232,y=316+row*25;
+          return `<line x1="${x}" y1="${y-4}" x2="${x+24}" y2="${y-4}" class="cad-legend-line" stroke="${item.color}"/><text x="${x+34}" y="${y}" class="cad-label">${escapeHtml(item.name.toUpperCase())}</text>`;
+        }).join("");
+        const uprightSvgElement=document.getElementById("uprightGeometryVisual");
+        uprightSvgElement.innerHTML=`<title id="uprightVisualTitle">${escapeHtml(assemblyLabel)} CAD-derived upright equilibrium projection</title><desc id="uprightVisualDesc">Exact member endpoints, wheel envelope, upright structure, contact patch, and active tire load shown at the default 3D orientation in an orthographic projection.</desc><defs><marker id="uprightMemberArrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="context-stroke"/></marker><marker id="uprightLoadArrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="${COLORS.load}"/></marker></defs><text x="22" y="22" class="cad-label">${escapeHtml(assemblyLabel.toUpperCase())} · ${escapeHtml(caseLabel.toUpperCase())}</text><text x="698" y="22" text-anchor="end" class="cad-mono">DEFAULT ORIENTATION · ORTHOGRAPHIC</text>${wheelSvg}${uprightSvg}${membersSvg}${tireArrow}${methodNode(contact,COLORS.load,false,6)}<text x="${Math.min(650,contact.x+12).toFixed(1)}" y="${Math.max(22,contact.y-10).toFixed(1)}" class="cad-label">TIRE PATCH</text><line x1="20" y1="294" x2="700" y2="294" class="cad-divider"/>${legend}`;
+        document.getElementById("uprightGeometryCaption").textContent=`${assemblyLabel} · ${caseLabel}; exact coordinates in ${unitsLabel}, shown at the default 3D orientation in an orthographic projection.`;
+
+        const rocker = geometry.rocker;
+        const pivotMid = vAvg(rocker.pivot_axis);
+        const rodMember = geometry.members.find(member=>family(member.name)==="pushrod");
+        const rodApplication = rodMember?.application || rocker.pushrod_pickup;
+        const rockerPoints=[...rocker.pivot_axis,rocker.pushrod_pickup,rocker.shock_pickup,rocker.shock_chassis_pickup,rodApplication];
+        const projectRocker=makeMethodProjector(rockerPoints,{x0:34,x1:474,y0:40,y1:286});
+        const pa=projectRocker(rocker.pivot_axis[0]),pb=projectRocker(rocker.pivot_axis[1]),pm=projectRocker(pivotMid),rp=projectRocker(rocker.pushrod_pickup),sp=projectRocker(rocker.shock_pickup),sc=projectRocker(rocker.shock_chassis_pickup),ra=projectRocker(rodApplication);
+        const rodResult=rodMember?forceByName.get(rodMember.name):null;
+        const rodForce=Number(rodResult?.force),shockForce=Number(geometry.active?.rocker?.shock_force);
+        const forceDirection=(start,end,force)=>vScale(vSub(end,start),Number.isFinite(force)&&force<0?-1:1);
+        const rodForceArrow=Number.isFinite(rodForce)?methodVectorArrow(rocker.pushrod_pickup,forceDirection(rocker.pushrod_pickup,rodApplication,rodForce),48,projectRocker,rodForce>=0?COLORS.tension:COLORS.compression,"rockerForceArrow"):"";
+        const shockForceArrow=Number.isFinite(shockForce)?methodVectorArrow(rocker.shock_pickup,forceDirection(rocker.shock_pickup,rocker.shock_chassis_pickup,shockForce),48,projectRocker,shockForce>=0?COLORS.tension:COLORS.compression,"rockerForceArrow"):"";
+        const coordinateRows=[
+          ["PIVOT MID",pivotMid,COLORS.selected],
+          ["ROD PICKUP",rocker.pushrod_pickup,COLORS.pushrod],
+          ["SHOCK PICKUP",rocker.shock_pickup,COLORS.shock],
+          ["CHASSIS MOUNT",rocker.shock_chassis_pickup,"#172026"]
+        ].map((item,index)=>`<g><circle cx="510" cy="${72+index*48}" r="4" fill="${item[2]}"/><text x="523" y="${68+index*48}" class="cad-label">${item[0]}</text><text x="523" y="${84+index*48}" class="cad-mono">${item[1].map(value=>value.toFixed(2)).join("  ")}</text></g>`).join("");
+        const rockerSvgElement=document.getElementById("rockerGeometryVisual");
+        rockerSvgElement.innerHTML=`<title id="rockerVisualTitle">${escapeHtml(assemblyLabel)} CAD-derived rocker and shock projection</title><desc id="rockerVisualDesc">Exact rocker axis, rocker pickups, push or pull rod, and fixed shock chassis pickup shown at the default 3D orientation in an orthographic projection.</desc><defs><marker id="rockerForceArrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="context-stroke"/></marker></defs><text x="22" y="22" class="cad-label">${escapeHtml(assemblyLabel.toUpperCase())} · ${escapeHtml(caseLabel.toUpperCase())}</text><path d="M${pm.x.toFixed(1)} ${pm.y.toFixed(1)}L${rp.x.toFixed(1)} ${rp.y.toFixed(1)}L${sp.x.toFixed(1)} ${sp.y.toFixed(1)}Z" class="cad-rocker-web"/>${methodLine(pa,pb,"cad-structure",COLORS.rocker)}${methodLine(ra,rp,"cad-member",COLORS.pushrod)}${methodLine(sp,sc,"cad-member",COLORS.shock)}${rodForceArrow}${shockForceArrow}${methodNode(pa,COLORS.rocker)}${methodNode(pb,COLORS.rocker)}${methodNode(pm,COLORS.selected,false,7)}${methodNode(rp,COLORS.pushrod)}${methodNode(sp,COLORS.shock)}${methodNode(sc,"#172026",true,7)}<line x1="492" y1="40" x2="492" y2="286" class="cad-divider"/><text x="510" y="39" class="cad-label">PICKUPS · X  Y  Z (${escapeHtml(units)})</text>${coordinateRows}<text x="510" y="282" class="cad-mono">ROD ${Number.isFinite(rodForce)?rodForce.toFixed(1):"—"} · SHOCK ${Number.isFinite(shockForce)?shockForce.toFixed(1):"—"} ${escapeHtml(assembly.force_units||"lbf")}</text>`;
+        document.getElementById("rockerGeometryCaption").textContent=`${assemblyLabel} · ${caseLabel}; exact rocker and shock pickups from the active 3D geometry.`;
       }
       function marginStatus(value) {
         if (!Number.isFinite(value)) return "unrated";
@@ -1256,7 +1390,10 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         if (sizingActive) renderSizing();
         else if (chassisActive) renderChassisLoads();
         else if (geometryActive) requestAnimationFrame(resize);
-        else if (methodsActive) requestAnimationFrame(centerMethodVisuals);
+        else if (methodsActive) {
+          renderMethodGeometry();
+          requestAnimationFrame(centerMethodVisuals);
+        }
       }
       function formatJmx(selection, margin) {
         if (!selection || selection === "NA") return `<span class="jmx-na">—</span>`;
@@ -1438,8 +1575,26 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         return map;
       }
 
+      function syncMethodsLoadCases(preferredCase=methodsControls.loadCase.value) {
+        const index=Number.parseInt(methodsControls.assembly.value,10);
+        const assembly=configAssemblies[index]||configAssemblies[0];
+        methodsControls.loadCase.innerHTML=assembly.load_cases.map(item=>`<option value="${escapeHtml(item.name)}">${escapeHtml(labelName(item.name))}</option>`).join("");
+        methodsControls.loadCase.value=assembly.load_cases.some(item=>item.name===preferredCase)?preferredCase:assembly.load_cases[0]?.name||"";
+      }
+      function syncMethodsFromGeometry() {
+        const index=Number.parseInt(controls.assembly.value,10);
+        if(Number.isInteger(index)&&configAssemblies[index]) methodsControls.assembly.value=String(index);
+        syncMethodsLoadCases(controls.loadCase.value);
+      }
+      function syncGeometryFromMethods() {
+        controls.assembly.value=methodsControls.assembly.value;
+        syncLoadCases();
+        if([...controls.loadCase.options].some(option=>option.value===methodsControls.loadCase.value)) controls.loadCase.value=methodsControls.loadCase.value;
+      }
+
       function populateControls() {
         controls.assembly.innerHTML = `<option value="all">All assemblies</option>` + configAssemblies.map((a,i) => `<option value="${i}">${escapeHtml(labelName(a.name))}</option>`).join("");
+        methodsControls.assembly.innerHTML = configAssemblies.map((a,i) => `<option value="${i}">${escapeHtml(labelName(a.name))}</option>`).join("");
         sizingControls.corner.innerHTML = `<option value="all">All four corners</option>` + configAssemblies.map(a => `<option value="${escapeHtml(a.name)}">${escapeHtml(labelName(a.name))}</option>`).join("");
         chassisControls.corner.innerHTML = `<option value="all">All four corners</option>` + configAssemblies.map(a => `<option value="${escapeHtml(a.name)}">${escapeHtml(labelName(a.name))}</option>`).join("");
         chassisControls.loadCase.innerHTML = `<option value="maximum">Maximum across all load cases</option>` + configAssemblies[0].load_cases.map(item=>`<option value="${escapeHtml(item.name)}">${escapeHtml(labelName(item.name))}</option>`).join("");
@@ -1451,6 +1606,8 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
           controls.mirror.title = "Both physical sides are already included";
         }
         syncLoadCases();
+        methodsControls.assembly.value="0";
+        syncMethodsLoadCases(controls.loadCase.value);
       }
       function selectedAssemblies() {
         return controls.assembly.value === "all" ? configAssemblies : [configAssemblies[Number(controls.assembly.value)]];
@@ -1697,8 +1854,10 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
       canvas.addEventListener("keydown",e=>{let used=true;if(e.key==="ArrowLeft")state.yaw-=.08;else if(e.key==="ArrowRight")state.yaw+=.08;else if(e.key==="ArrowUp")state.pitch-=.08;else if(e.key==="ArrowDown")state.pitch+=.08;else if(e.key==="+"||e.key==="=")state.zoom*=1.1;else if(e.key==="-")state.zoom/=1.1;else if(e.key.toLowerCase()==="r")resetView();else used=false;if(used){e.preventDefault();render();}});
       document.getElementById("reset").addEventListener("click",resetView);
       controls.projection.addEventListener("click",()=>{state.perspective=!state.perspective;controls.projection.textContent=state.perspective?"Perspective":"Orthographic";controls.projection.setAttribute("aria-pressed",String(!state.perspective));render();});
-      controls.assembly.addEventListener("change",()=>{syncLoadCases();state.selected=null;resetView();});
-      controls.loadCase.addEventListener("change",()=>{state.selected=null;render();});
+      controls.assembly.addEventListener("change",()=>{syncLoadCases();syncMethodsFromGeometry();state.selected=null;renderMethodGeometry();resetView();});
+      controls.loadCase.addEventListener("change",()=>{syncMethodsFromGeometry();state.selected=null;renderMethodGeometry();render();});
+      methodsControls.assembly.addEventListener("change",()=>{syncMethodsLoadCases();syncGeometryFromMethods();state.selected=null;renderMethodGeometry();resetView();});
+      methodsControls.loadCase.addEventListener("change",()=>{syncGeometryFromMethods();state.selected=null;renderMethodGeometry();render();});
       for(const control of [controls.colorMode,controls.labels,controls.nodes,controls.axes,controls.chassisForces])control.addEventListener("change",render);
       geometryTab.addEventListener("click",()=>setAnalysisView("geometry"));
       sizingTab.addEventListener("click",()=>setAnalysisView("sizing"));
@@ -1743,11 +1902,15 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         controls.assembly.value=String(index);
         syncLoadCases();
         if(configAssemblies[index].load_cases.some(item=>item.name===button.dataset.inspectCase)) controls.loadCase.value=button.dataset.inspectCase;
+        syncMethodsFromGeometry();
         state.selected=null;
         setAnalysisView("geometry");
         resetView();
       });
-      window.addEventListener("resize",resize);
+      window.addEventListener("resize",()=>{
+        resize();
+        if (!methodsView.hidden) requestAnimationFrame(centerMethodVisuals);
+      });
 
       populateControls();
       renderMethodsMetadata();

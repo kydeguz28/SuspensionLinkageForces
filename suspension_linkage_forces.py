@@ -12,6 +12,7 @@ import copy
 import csv
 import json
 import math
+import shutil
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -1036,6 +1037,11 @@ def main() -> int:
 
     write_viewer_html(config, result, viewer_path)
     write_viewer_html(config, result, current_viewer_path)
+    icon_source = Path(__file__).with_name("assets") / "BFR.ico"
+    if icon_source.exists():
+        icon_output = args.output_dir / "assets"
+        icon_output.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(icon_source, icon_output / icon_source.name)
     print_summary(result)
     print(f"\nWrote {json_path}, {csv_path}, {viewer_path}, and {current_viewer_path}")
     return 0

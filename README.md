@@ -1,4 +1,4 @@
-# Suspension Linkage Forces
+# Bruin Formula Racing Suspension Linkage Calculator
 
 This is a dependency-free Python version of the core calculation in the supplied
 Mk11 suspension-force spreadsheet. It accepts multiple tire load cases and 3D
@@ -41,7 +41,8 @@ and individual margins.
 
 The **Methods** tab traces the derivation from tire wrench through the six-member
 upright equilibrium matrix, rocker/shock moment balance, spring-loaded kinematic
-iteration, and chassis reactions. It includes free-body and rocker diagrams plus
+iteration, and chassis reactions. Its free-body and rocker diagrams are generated
+from the active assembly's exact 3D pickup coordinates and load case, alongside
 the numerical workbook-parity checks.
 
 The **Chassis Loads** tab reports the suspension-on-chassis force vector at each
