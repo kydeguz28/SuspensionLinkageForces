@@ -1,5 +1,5 @@
 {
-  "tire_force_convention": "Tire-load inputs use vehicle axes: +X toward the front, +Y toward the left side, and +Z upward. CAD coordinates retain their original basis (+Y right and -Z upward).",
+  "tire_force_convention": "Tire-load inputs use vehicle axes: +X toward the front, +Y toward the left side, and +Z upward. The complete tire-force vector is applied opposite to the workbook input vector when mapped into the CAD force basis. CAD coordinates retain their original basis (+Y right and -Z upward).",
   "vehicle": {
     "full_car_weight_lbf": 631.0,
     "front_weight_fraction": 0.504,
@@ -65,7 +65,7 @@
       "spring_rate_lbf_per_in": 600.0,
       "coordinate_units": "in",
       "force_units": "lbf",
-      "tire_force_to_coordinate_signs": [1.0, -1.0, -1.0],
+      "tire_force_to_coordinate_signs": [-1.0, -1.0, -1.0],
       "contact_patch": [0.0, 25.5, 0.0],
       "members": [
         {"name": "steering_tie_rod", "role": "tie_rod", "application": [2.15, 21.1, -6.89412519], "anchor": [3.9, 8.7, -6.15]},
@@ -106,7 +106,7 @@
       "spring_rate_lbf_per_in": 450.0,
       "coordinate_units": "in",
       "force_units": "lbf",
-      "tire_force_to_coordinate_signs": [1.0, -1.0, -1.0],
+      "tire_force_to_coordinate_signs": [-1.0, -1.0, -1.0],
       "contact_patch": [-61.0, 25.5, 0.0],
       "members": [
         {"name": "rear_tie_rod", "role": "tie_rod", "application": [-57.85, 20.75, -6.6], "anchor": [-52.73306567, 11.01527574, -6.31855306]},

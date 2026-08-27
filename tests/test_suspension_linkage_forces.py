@@ -40,7 +40,7 @@ class SuspensionForceTests(unittest.TestCase):
             {"front_left", "front_right", "rear_left", "rear_right"},
         )
 
-    def test_full_tire_force_vector_uses_reaction_signs(self):
+    def test_full_tire_force_vector_is_reversed_during_coordinate_mapping(self):
         config = expand_config(
             json.loads((ROOT / "examples" / "mk11_reference.json").read_text())
         )
@@ -53,13 +53,17 @@ class SuspensionForceTests(unittest.TestCase):
         self.assertEqual(
             cases["case_3_accel_corner"], [48.7544, -406.0447, 281.8825]
         )
+        self.assertEqual(
+            assemblies["front_right"]["tire_force_to_coordinate_signs"],
+            [-1.0, -1.0, -1.0],
+        )
         result_by_name = {item["name"]: item for item in self.result["assemblies"]}
         coordinate_force = next(
             item
             for item in result_by_name["front_right"]["load_cases"]
             if item["name"] == "case_3_accel_corner"
         )["external_wrench"][:3]
-        self.assertEqual(coordinate_force, [48.7544, 406.0447, -281.8825])
+        self.assertEqual(coordinate_force, [-48.7544, 406.0447, -281.8825])
 
     def test_static_ride_height_case_uses_weight_distribution_and_zero_travel(self):
         expected = {
@@ -98,7 +102,7 @@ class SuspensionForceTests(unittest.TestCase):
         self.assertEqual(len(sizing), 7)
         lower_aft = sizing["lower_aft"]
         self.assertEqual(lower_aft["peak_case"], "case_2_braking")
-        self.assertAlmostEqual(lower_aft["peak_force"], 1731.76, places=1)
+        self.assertAlmostEqual(lower_aft["peak_force"], -1026.45, places=1)
         self.assertEqual(lower_aft["chassis_jmx"], "JMX3")
         self.assertLess(lower_aft["governing_margin"], 0.0)
 

@@ -102,6 +102,11 @@ the front of the car, +Y toward the left side, and +Z toward the sky. The solver
 maps those load components into the CAD basis internally; it does not relabel or
 sign-flip any geometry coordinates.
 
+The Mk11 example preserves the workbook's source load values. Its
+`tire_force_to_coordinate_signs` value is `[-1, -1, -1]`, so the complete tire
+force vector—including `Fx`—is reversed when it is applied to the suspension
+model. This force conversion does not alter any CAD geometry coordinates.
+
 The example solves all four physical corners. Positive-Y front-right and
 rear-right geometry uses the supplied CAD rocker and shock coordinates; the
 front-left and rear-left geometry is mirrored across the vehicle center plane.

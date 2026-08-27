@@ -1,0 +1,306 @@
+<!doctype html>
+<!--
+THESIS: Wheel motion and shock motion are one coupled trace; refuse the dashboard of detached plots and model cards.
+OWN-WORLD: BFR's cool aluminum bench, dark CAD linework, safety orange pose, engineering-blue shock trace, and vermilion ratio trace.
+STORY: Set vertical wheel travel, watch the exact linkage and rocker pose move, then read shock compression and motion ratio at the same cursor.
+FIRST VIEWPORT: Compact study controls lead into a large 3D packaging window and a two-lane measurement trace, joined by one full-width travel scrubber.
+FORM: Operate-mode motion bench, fourth grounded structure; continuous present-state trace staged from seed 6fdf1846.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bruin Formula Racing Front Shock Motion Ratio Study</title>
+  <link rel="icon" href="../assets/BFR.ico" sizes="any">
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas:#edf0f1;
+      --chrome:#dfe4e6;
+      --paper:#f7f8f8;
+      --ink:#172026;
+      --muted:#52616a;
+      --line:#9eaaaf;
+      --orange:#e56a2f;
+      --blue:#266d93;
+      --red:#c84d35;
+      --purple:#6b4c9a;
+      --teal:#1f758d;
+      --gold:#d47a24;
+      --magenta:#b43f72;
+      --green:#568421;
+      --radius:12px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-width:320px;background:var(--canvas);color:var(--ink);font-family:Bahnschrift,Aptos,"Segoe UI",sans-serif}
+    body{min-height:100vh}
+    button,input{font:inherit}
+    button{min-height:38px;border:1px solid #829096;border-radius:6px;background:var(--paper);color:var(--ink);padding:0 13px;font-weight:750;cursor:pointer}
+    button:hover{border-color:#52616a;background:#fff}
+    button:focus-visible,input:focus-visible{outline:3px solid color-mix(in srgb,var(--blue) 30%,transparent);outline-offset:2px}
+    .topbar{display:flex;align-items:center;min-height:54px;background:var(--ink);color:#fff;border-bottom:3px solid var(--orange)}
+    .topbar-title{padding:0 20px;font-family:"Bahnschrift SemiCondensed",Bahnschrift,sans-serif;font-size:15px;font-weight:800;letter-spacing:.02em;text-transform:uppercase}
+    .topbar-context{margin-left:auto;border-left:1px solid #455158;padding:0 20px;color:#c3ced2;font:12px Consolas,monospace}
+    .topbar img{width:34px;height:34px;object-fit:contain;margin:0 12px}
+    .shell{width:min(1600px,100%);margin:0 auto;padding:28px 30px 38px}
+    .study-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:30px;align-items:end;border-bottom:1px solid #8f9ca1;padding-bottom:22px}
+    h1{max-width:920px;margin:0;font-family:"Bahnschrift SemiCondensed",Bahnschrift,sans-serif;font-size:clamp(38px,5vw,70px);line-height:.91;letter-spacing:-.035em;text-transform:uppercase}
+    .deck{max-width:72ch;margin:14px 0 0;color:var(--muted);font-size:16px;line-height:1.5}
+    .study-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+    .bench-readout{display:flex;flex-wrap:wrap;align-items:baseline;border-bottom:1px solid #aab5ba;padding:14px 0}
+    .reading{display:flex;align-items:baseline;gap:8px;border-right:1px solid #b2bcc0;padding:4px 25px}
+    .reading:first-child{padding-left:0}
+    .reading:last-child{border-right:0}
+    .reading strong{font:800 23px/1 Consolas,monospace}
+    .reading span{color:var(--muted);font-size:12px}
+    .stroke-monitor{display:grid;grid-template-columns:auto minmax(180px,1fr) auto;align-items:center;gap:16px;border-bottom:1px solid #aab5ba;padding:10px 0;color:var(--muted);font-size:12px}
+    .stroke-monitor strong{display:block;color:var(--ink);font:800 15px Consolas,monospace}
+    .stroke-monitor .stroke-end:last-child{text-align:right}
+    .stroke-track{position:relative;height:10px;background:#cbd2d5;border:1px solid #8d999e}
+    .stroke-track::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#568421 0 72%,#d47a24 72% 88%,#c84d35 88%)}
+    .stroke-marker{position:absolute;top:50%;width:4px;height:22px;background:var(--ink);transform:translate(-50%,-50%)}
+    .stroke-current{position:absolute;left:50%;top:-25px;transform:translateX(-50%);color:var(--ink);font:800 12px Consolas,monospace;white-space:nowrap}
+    .stroke-status{grid-column:1/-1;display:flex;justify-content:space-between;gap:12px;margin-top:-3px;color:var(--muted)}
+    .stroke-status strong{font-size:12px}
+    .stroke-monitor.limit-warning .stroke-status strong{color:var(--red)}
+    .bench{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(460px,.82fr);min-height:590px;border-bottom:1px solid #8f9ca1}
+    .packaging{position:relative;min-width:0;background:var(--paper);border-right:1px solid #8f9ca1}
+    .panel-label{position:absolute;z-index:2;top:15px;left:17px;margin:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+    .view-actions{position:absolute;z-index:2;top:10px;right:11px;display:flex;gap:7px}
+    .view-actions button{min-height:34px;background:color-mix(in srgb,var(--paper) 92%,transparent);font-size:11px}
+    #scene{display:block;width:100%;height:100%;min-height:590px;touch-action:none;cursor:grab}
+    #scene.dragging{cursor:grabbing}
+    .view-key{position:absolute;z-index:2;left:16px;bottom:56px;display:flex;flex-wrap:wrap;gap:12px;color:var(--muted);font-size:11px}
+    .key-item{display:flex;align-items:center;gap:6px}
+    .key-line{width:20px;height:4px;border-radius:2px;background:var(--key-color)}
+    .trace-panel{position:relative;min-width:0;background:var(--canvas);padding:14px 12px 4px}
+    .trace-title{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:0 5px 6px}
+    .trace-title h2{margin:0;font-size:18px}
+    .trace-title span{color:var(--muted);font:11px Consolas,monospace}
+    #trace{display:block;width:100%;height:530px;cursor:crosshair}
+    .trace-frame{fill:var(--paper);stroke:#8f9ca1;stroke-width:1}
+    .trace-grid{stroke:#c4cccf;stroke-width:1}
+    .trace-zero{stroke:#6b787e;stroke-width:1.3}
+    .trace-compression{fill:none;stroke:var(--blue);stroke-width:3}
+    .trace-ratio{fill:none;stroke:var(--red);stroke-width:3}
+    .trace-guide{stroke:var(--orange);stroke-width:2}
+    .trace-limit{stroke:#8b431f;stroke-width:1.5;stroke-dasharray:6 4}
+    .trace-invalid-zone{fill:#c84d35;opacity:.09}
+    .trace-point{fill:var(--paper);stroke-width:3}
+    .trace-text{fill:var(--muted);font:12px Bahnschrift,sans-serif}
+    .trace-value{fill:var(--ink);font:700 12px Consolas,monospace}
+    .axis-title{fill:var(--ink);font:700 12px Bahnschrift,sans-serif}
+    .scrubber{padding:20px 0 8px}
+    .scrubber-head{display:flex;justify-content:space-between;gap:18px;align-items:end}
+    .scrubber-title{margin:0;font-size:15px}
+    .scrubber-current{color:var(--orange);font:800 21px Consolas,monospace}
+    .range-wrap{position:relative;margin-top:14px;padding:0 2px}
+    #travel{width:100%;accent-color:var(--orange);cursor:ew-resize}
+    .range-labels{display:flex;justify-content:space-between;margin-top:5px;color:var(--muted);font:11px Consolas,monospace}
+    .definition-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:18px;border-top:1px solid #aab5ba;padding-top:16px;color:var(--muted);font-size:12px;line-height:1.5}
+    .definition-strip strong{display:block;margin-bottom:4px;color:var(--ink)}
+    .mono{font-family:Consolas,monospace}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @media(max-width:1050px){
+      .study-head{grid-template-columns:1fr}.study-actions{justify-content:flex-start}
+      .bench{grid-template-columns:1fr}.packaging{border-right:0;border-bottom:1px solid #8f9ca1}
+      #scene{height:520px;min-height:520px}.trace-panel{min-height:500px}#trace{height:470px}
+    }
+    @media(max-width:620px){
+      .topbar-context{display:none}.topbar-title{padding:0 12px;font-size:12px}.topbar img{width:30px;height:30px;margin-left:auto}
+      .shell{padding:20px 14px 30px}.study-actions{display:grid;grid-template-columns:1fr 1fr;width:100%}
+      .reading{width:50%;padding:7px 12px;border-bottom:1px solid #b2bcc0}.reading:nth-child(odd){padding-left:0}.reading:nth-child(even){border-right:0}.reading:last-child{border-bottom:0}
+      .stroke-monitor{grid-template-columns:auto 1fr auto;gap:9px}.stroke-current{display:none}.stroke-status{font-size:11px}
+      #scene{height:410px;min-height:410px}.trace-panel{padding-inline:0}#trace{height:430px}
+      .definition-strip{grid-template-columns:1fr;gap:12px}.scrubber-head{align-items:baseline}.view-key{gap:8px}
+    }
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-title">Bruin Formula Racing · Suspension Development</div>
+    <div class="topbar-context">FRONT RIGHT · PRESCRIBED TRAVEL</div>
+    <img src="../assets/BFR.ico" alt="Bruin Formula Racing">
+  </header>
+  <main class="shell">
+    <header class="study-head">
+      <div>
+        <h1>Front shock motion ratio study</h1>
+        <p class="deck">Prescribe vertical wheel travel and inspect the compatible double-wishbone, pullrod, rocker, and shock pose. The fixed chassis pickup never moves; every trace and readout comes from the same solved geometry.</p>
+      </div>
+      <div class="study-actions" aria-label="Travel presets">
+        <button type="button" data-preset="extension">Shock extension limit</button>
+        <button type="button" data-preset="zero">Ride height</button>
+        <button type="button" data-preset="maximum" id="bumpPreset">Sweep bump</button>
+      </div>
+    </header>
+
+    <section class="bench-readout" aria-live="polite" aria-atomic="true">
+      <div class="reading"><strong id="shockCompression">0.000</strong><span>in shock compression</span></div>
+      <div class="reading"><strong id="instantRatio">0.000</strong><span>instantaneous wheel / shock MR</span></div>
+      <div class="reading"><strong id="shockAngle">0.0°</strong><span>shock angle from vertical</span></div>
+      <div class="reading"><strong id="rockerAngle">0.0°</strong><span>rocker rotation</span></div>
+    </section>
+
+    <section class="stroke-monitor" id="strokeMonitor" aria-label="Shock stroke usage">
+      <div class="stroke-end"><strong id="extendedLength">200.0 mm</strong>full extension</div>
+      <div class="stroke-track" role="meter" id="strokeMeter" aria-label="Shock stroke used" aria-valuemin="0" aria-valuemax="47.5" aria-valuenow="0">
+        <span class="stroke-current" id="shockLengthReadout">188.3 mm node-to-node</span>
+        <span class="stroke-marker" id="strokeMarker"></span>
+      </div>
+      <div class="stroke-end"><strong id="collapsedLength">152.5 mm</strong>bottom-out</div>
+      <div class="stroke-status"><span id="strokeUsed">11.7 / 47.5 mm stroke used</span><strong id="strokeStatus">35.8 mm stroke remaining</strong></div>
+    </section>
+
+    <div class="bench">
+      <section class="packaging" aria-labelledby="packagingTitle">
+        <h2 class="panel-label" id="packagingTitle">Solved 3D packaging</h2>
+        <div class="view-actions">
+          <button type="button" id="referenceToggle" aria-pressed="true">Ride-height ghost</button>
+          <button type="button" id="resetView">Reset view</button>
+        </div>
+        <canvas id="scene" tabindex="0" aria-label="Interactive 3D front suspension, rocker, and shock packaging view. Drag to orbit, Shift-drag to pan, and use the wheel to zoom.">Interactive front suspension packaging view.</canvas>
+        <div class="view-key" aria-label="Component colors">
+          <span class="key-item"><i class="key-line" style="--key-color:var(--purple)"></i>Upper</span>
+          <span class="key-item"><i class="key-line" style="--key-color:var(--teal)"></i>Lower</span>
+          <span class="key-item"><i class="key-line" style="--key-color:var(--magenta)"></i>Pullrod</span>
+          <span class="key-item"><i class="key-line" style="--key-color:var(--green)"></i>Shock</span>
+          <span class="key-item"><i class="key-line" style="--key-color:var(--orange)"></i>Active pose</span>
+        </div>
+      </section>
+
+      <section class="trace-panel" aria-labelledby="traceTitle">
+        <div class="trace-title"><h2 id="traceTitle">Shock response trace</h2><span>CLICK TRACE TO SET TRAVEL</span></div>
+        <svg id="trace" role="img" aria-labelledby="traceSvgTitle traceSvgDesc">
+          <title id="traceSvgTitle">Shock compression and wheel-to-shock motion ratio versus vertical wheel travel</title>
+          <desc id="traceSvgDesc">Two aligned plots show shock compression and instantaneous wheel-travel-to-shock-travel motion ratio over the prescribed travel sweep.</desc>
+        </svg>
+      </section>
+    </div>
+
+    <section class="scrubber" aria-labelledby="travelTitle">
+      <div class="scrubber-head">
+        <h2 class="scrubber-title" id="travelTitle">Vertical wheel travel</h2>
+        <output class="scrubber-current" id="travelOutput" for="travel">0.000 in · ride height</output>
+      </div>
+      <div class="range-wrap">
+        <input id="travel" type="range" aria-label="Vertical wheel travel" step="0.05">
+        <div class="range-labels"><span id="minimumLabel">−1.500 in rebound</span><span>0.000 in ride height</span><span id="maximumLabel">+1.500 in bump</span></div>
+      </div>
+    </section>
+
+    <footer class="definition-strip">
+      <div><strong>Travel convention</strong>Positive means wheel bump/upward. Imported CAD geometry retains −Z upward.</div>
+      <div><strong>Motion-ratio convention</strong><span class="mono">d(vertical wheel travel) / d(shock compression)</span></div>
+      <div><strong>Kinematic boundary</strong>Rigid upright, fixed link lengths, single-axis rocker, fixed shock chassis mount. No tire or structural compliance.</div>
+    </footer>
+  </main>
+
+  <script id="study-data" type="application/json">__MOTION_STUDY_DATA__</script>
+  <script>
+    (()=>{
+      "use strict";
+      const study=JSON.parse(document.getElementById("study-data").textContent);
+      const samples=study.samples;
+      const shockSpec=study.shock_spec;
+      const slider=document.getElementById("travel");
+      const scene=document.getElementById("scene"),ctx=scene.getContext("2d");
+      const trace=document.getElementById("trace");
+      const colors={upper:"#6b4c9a",lower:"#1f758d",tie:"#d47a24",pushrod:"#b43f72",shock:"#568421",rocker:"#343e43",upright:"#68757b",wheel:"#8c969a",active:"#e56a2f",limit:"#c84d35"};
+      const state={index:Math.max(0,samples.findIndex(item=>Math.abs(item.wheel_travel_in)<1e-9)),yaw:-.68,pitch:.54,zoom:1,panX:0,panY:0,dragging:false,shifted:false,lastX:0,lastY:0,dpr:1,width:1,height:1,showReference:true};
+      const minTravel=samples[0].wheel_travel_in,maxTravel=samples.at(-1).wheel_travel_in;
+      slider.min=String(minTravel);slider.max=String(maxTravel);slider.step=String(study.sweep.step_in);slider.value=String(samples[state.index].wheel_travel_in);
+      document.getElementById("minimumLabel").textContent=`${minTravel.toFixed(3)} in rebound`;
+      document.getElementById("maximumLabel").textContent=`+${maxTravel.toFixed(3)} in bump`;
+      document.getElementById("extendedLength").textContent=`${shockSpec.extended_length_mm.toFixed(1)} mm`;
+      document.getElementById("collapsedLength").textContent=`${shockSpec.collapsed_length_mm.toFixed(1)} mm`;
+      document.getElementById("strokeMeter").setAttribute("aria-valuemax",String(shockSpec.travel_mm));
+      if(shockSpec.compression_limit_wheel_travel_in!==null)document.getElementById("bumpPreset").textContent="Shock bottom-out";
+
+      const add=(a,b)=>a.map((n,i)=>n+b[i]);
+      const sub=(a,b)=>a.map((n,i)=>n-b[i]);
+      const avg=points=>points.reduce((sum,p)=>add(sum,p),[0,0,0]).map(value=>value/points.length);
+      const mag=value=>Math.hypot(...value);
+      const family=name=>{const value=name.toLowerCase();if(value.includes("upper"))return"upper";if(value.includes("lower"))return"lower";if(value.includes("tie")||value.includes("steering"))return"tie";if(value.includes("push")||value.includes("pull"))return"pushrod";return"wheel"};
+      const segment=(name,a,b,kind,extra={})=>({name,a:[...a],b:[...b],kind,family:kind==="member"?family(name):kind,...extra});
+
+      function buildSegments(sample,reference=false){
+        const geometry=sample.geometry,segments=geometry.members.map(member=>segment(member.name,member.application,member.anchor,"member",{reference}));
+        const rocker=geometry.rocker,pa=rocker.pivot_axis[0],pb=rocker.pivot_axis[1],pm=avg([pa,pb]),rp=rocker.pushrod_pickup,sp=rocker.shock_pickup,sc=rocker.shock_chassis_pickup;
+        segments.push(segment("rocker pivot axis",pa,pb,"rocker",{reference}));
+        segments.push(segment("rocker to pullrod",pm,rp,"rocker",{reference}));
+        segments.push(segment("rocker to shock",pm,sp,"rocker",{reference}));
+        segments.push(segment("rocker web",rp,sp,"rocker",{reference}));
+        segments.push(segment("shock",sp,sc,"shock",{reference,fixedB:true,limitState:sample.shock_travel_status}));
+        const upper=geometry.members.filter(member=>family(member.name)==="upper").map(member=>member.application);
+        const lower=geometry.members.filter(member=>family(member.name)==="lower").map(member=>member.application);
+        const tie=geometry.members.find(member=>family(member.name)==="tie");
+        if(upper.length&&lower.length){const ua=avg(upper),la=avg(lower);segments.push(segment("upright",ua,la,"upright",{reference}));if(tie)segments.push(segment("steering arm",tie.application,la,"upright",{reference}))}
+        const cp=geometry.contact_patch,center=geometry.wheel_center,radius=Math.max(2,mag(sub(cp,center)));
+        for(let index=0;index<42;index++){const a=index*Math.PI*2/42,b=(index+1)*Math.PI*2/42;segments.push(segment("wheel",[center[0]+Math.cos(a)*radius,center[1],center[2]+Math.sin(a)*radius],[center[0]+Math.cos(b)*radius,center[1],center[2]+Math.sin(b)*radius],"wheel",{reference,decorative:true}))}
+        segments.push(segment("wheel radius",center,cp,"wheel",{reference,decorative:true}));
+        return segments;
+      }
+      const allPoints=samples.flatMap(sample=>{const geometry=sample.geometry;return[geometry.contact_patch,geometry.wheel_center,...geometry.members.flatMap(member=>[member.application,member.anchor]),...geometry.rocker.pivot_axis,geometry.rocker.pushrod_pickup,geometry.rocker.shock_pickup,geometry.rocker.shock_chassis_pickup]});
+      const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];for(const point of allPoints)for(let i=0;i<3;i++){min[i]=Math.min(min[i],point[i]);max[i]=Math.max(max[i],point[i])}
+      const bounds={center:min.map((value,index)=>(value+max[index])/2),span:max.map((value,index)=>Math.max(1,value-min[index]))};
+
+      function project(point){
+        const dx=point[0]-bounds.center[0],dy=point[1]-bounds.center[1],dz=-(point[2]-bounds.center[2]),cy=Math.cos(state.yaw),sy=Math.sin(state.yaw),cp=Math.cos(state.pitch),sp=Math.sin(state.pitch),x1=dx*cy-dy*sy,y1=dx*sy+dy*cy,y2=y1*cp-dz*sp,z2=y1*sp+dz*cp,margin=58,fit=Math.min((state.width-margin*2)/Math.max(bounds.span[0],bounds.span[1]),(state.height-margin*2)/Math.max(bounds.span[1],bounds.span[2]))*.82,scale=fit*state.zoom,perspective=Math.max(.46,1/(1-y2/(Math.max(...bounds.span)*3.4)));
+        return{x:state.width/2+state.panX+x1*scale*perspective,y:state.height/2+state.panY-z2*scale*perspective,depth:y2,scale:perspective};
+      }
+      function lineStyle(item){if(item.reference)return{color:"#8e999e",width:item.kind==="wheel"?1:2,alpha:.26,dash:[5,5]};return{color:item.kind==="shock"&&item.limitState!=="within_travel"?colors.limit:colors[item.family]||colors[item.kind]||colors.wheel,width:item.kind==="shock"?8:item.kind==="rocker"?5:item.kind==="upright"?5:item.kind==="wheel"?1.5:5,alpha:item.kind==="wheel"?.52:1,dash:[]}}
+      function drawNode(point,color,radius,filled=false,alpha=1){ctx.globalAlpha=alpha;ctx.beginPath();ctx.arc(point.x,point.y,radius,0,Math.PI*2);ctx.fillStyle=filled?color:"#f7f8f8";ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=color;ctx.stroke();ctx.globalAlpha=1}
+      function drawScene(){
+        ctx.clearRect(0,0,state.width,state.height);ctx.fillStyle="#f7f8f8";ctx.fillRect(0,0,state.width,state.height);
+        const current=samples[state.index],ride=samples.find(item=>Math.abs(item.wheel_travel_in)<1e-9)||samples[0],segments=[];
+        if(state.showReference&&state.index!==samples.indexOf(ride))segments.push(...buildSegments(ride,true));segments.push(...buildSegments(current,false));
+        const projected=segments.map(item=>({...item,pa:project(item.a),pb:project(item.b)})).sort((a,b)=>(a.pa.depth+a.pb.depth)-(b.pa.depth+b.pb.depth));
+        for(const item of projected){const style=lineStyle(item);ctx.globalAlpha=style.alpha;ctx.beginPath();ctx.moveTo(item.pa.x,item.pa.y);ctx.lineTo(item.pb.x,item.pb.y);ctx.strokeStyle=style.color;ctx.lineWidth=style.width*Math.min(item.pa.scale,item.pb.scale);ctx.lineCap="round";ctx.setLineDash(style.dash);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1}
+        for(const item of projected.filter(item=>!item.reference&&!item.decorative)){const color=item.kind==="shock"&&item.limitState!=="within_travel"?colors.limit:colors[item.family]||colors[item.kind]||colors.wheel;drawNode(item.pa,color,4.3,false);drawNode(item.pb,color,item.fixedB?6:4.3,item.fixedB)}
+        const wheelCenter=project(current.geometry.wheel_center),contact=project(current.geometry.contact_patch);drawNode(wheelCenter,colors.active,6,false);drawNode(contact,colors.wheel,4,false);ctx.fillStyle="#8b431f";ctx.font="700 12px Bahnschrift";ctx.fillText("WHEEL CENTER",wheelCenter.x+10,wheelCenter.y-10);
+        ctx.fillStyle="#52616a";ctx.font="12px Consolas";ctx.fillText(`CENTER X ${current.geometry.wheel_center[0].toFixed(2)}   Y ${current.geometry.wheel_center[1].toFixed(2)}   Z ${current.geometry.wheel_center[2].toFixed(2)} in`,18,state.height-38);ctx.fillText("CAD: +X FRONT · +Y RIGHT · −Z UP",18,state.height-19);
+      }
+      function resizeScene(){const rect=scene.getBoundingClientRect();state.dpr=Math.min(2,devicePixelRatio||1);scene.width=Math.round(rect.width*state.dpr);scene.height=Math.round(rect.height*state.dpr);ctx.setTransform(state.dpr,0,0,state.dpr,0,0);state.width=rect.width;state.height=rect.height;drawScene()}
+
+      const svgNS="http://www.w3.org/2000/svg";
+      function svgElement(name,attrs={}){const element=document.createElementNS(svgNS,name);for(const[key,value]of Object.entries(attrs))element.setAttribute(key,String(value));return element}
+      function drawTrace(){
+        const rect=trace.getBoundingClientRect(),width=Math.max(320,rect.width),height=Math.max(400,rect.height),left=64,right=22,top=32,bottom=50,gap=52,plotHeight=(height-top-bottom-gap)/2,plotWidth=width-left-right;
+        trace.setAttribute("viewBox",`0 0 ${width} ${height}`);trace.replaceChildren(trace.querySelector("title"),trace.querySelector("desc"));
+        const compression=samples.map(item=>item.shock_compression_in),ratios=samples.map(item=>item.instantaneous_motion_ratio),pad=(values,fraction=.08)=>{const lo=Math.min(...values),hi=Math.max(...values),extra=Math.max((hi-lo)*fraction,.02);return[lo-extra,hi+extra]},compressionDomain=pad(compression),ratioDomain=pad(ratios),x=value=>left+(value-minTravel)/(maxTravel-minTravel)*plotWidth,y1=value=>top+(compressionDomain[1]-value)/(compressionDomain[1]-compressionDomain[0])*plotHeight,y2=value=>top+plotHeight+gap+(ratioDomain[1]-value)/(ratioDomain[1]-ratioDomain[0])*plotHeight;
+        const addText=(value,xPos,yPos,className,anchor="start")=>{const text=svgElement("text",{x:xPos,y:yPos,class:className,"text-anchor":anchor});text.textContent=value;trace.append(text);return text};
+        const tickCount=width<500?4:6;
+        for(const [plotY,domain] of [[top,compressionDomain],[top+plotHeight+gap,ratioDomain]]){trace.append(svgElement("rect",{x:left,y:plotY,width:plotWidth,height:plotHeight,class:"trace-frame"}));for(let i=0;i<=4;i++){const value=domain[0]+i*(domain[1]-domain[0])/4,y=plotY+plotHeight-i*plotHeight/4;trace.append(svgElement("line",{x1:left,y1:y,x2:left+plotWidth,y2:y,class:"trace-grid"}));addText(value.toFixed(2),left-9,y+4,"trace-text","end")}}
+        const extensionLimit=shockSpec.extension_limit_wheel_travel_in,compressionLimit=shockSpec.compression_limit_wheel_travel_in;
+        if(extensionLimit!==null&&extensionLimit>minTravel){trace.append(svgElement("rect",{x:left,y:top,width:x(extensionLimit)-left,height:plotHeight*2+gap,class:"trace-invalid-zone"}));trace.append(svgElement("line",{x1:x(extensionLimit),y1:top,x2:x(extensionLimit),y2:top+plotHeight*2+gap,class:"trace-limit"}))}
+        if(compressionLimit!==null&&compressionLimit<maxTravel){trace.append(svgElement("rect",{x:x(compressionLimit),y:top,width:left+plotWidth-x(compressionLimit),height:plotHeight*2+gap,class:"trace-invalid-zone"}));trace.append(svgElement("line",{x1:x(compressionLimit),y1:top,x2:x(compressionLimit),y2:top+plotHeight*2+gap,class:"trace-limit"}))}
+        const extensionCompression=(shockSpec.ride_height_length_mm-shockSpec.extended_length_mm)/25.4,collapsedCompression=(shockSpec.ride_height_length_mm-shockSpec.collapsed_length_mm)/25.4;
+        if(extensionCompression>=compressionDomain[0]&&extensionCompression<=compressionDomain[1])trace.append(svgElement("line",{x1:left,y1:y1(extensionCompression),x2:left+plotWidth,y2:y1(extensionCompression),class:"trace-limit"}));
+        if(collapsedCompression>=compressionDomain[0]&&collapsedCompression<=compressionDomain[1])trace.append(svgElement("line",{x1:left,y1:y1(collapsedCompression),x2:left+plotWidth,y2:y1(collapsedCompression),class:"trace-limit"}));
+        for(let i=0;i<=tickCount;i++){const value=minTravel+i*(maxTravel-minTravel)/tickCount,xPos=x(value);trace.append(svgElement("line",{x1:xPos,y1:top,x2:xPos,y2:top+plotHeight,class:value===0?"trace-zero":"trace-grid"}));trace.append(svgElement("line",{x1:xPos,y1:top+plotHeight+gap,x2:xPos,y2:top+plotHeight*2+gap,class:value===0?"trace-zero":"trace-grid"}));addText(value.toFixed(1),xPos,height-bottom+19,"trace-text","middle")}
+        const path=(values,yScale)=>values.map((value,index)=>`${index?"L":"M"}${x(samples[index].wheel_travel_in).toFixed(2)} ${yScale(value).toFixed(2)}`).join(" ");
+        trace.append(svgElement("path",{d:path(compression,y1),class:"trace-compression"}));trace.append(svgElement("path",{d:path(ratios,y2),class:"trace-ratio"}));
+        const current=samples[state.index],currentX=x(current.wheel_travel_in);trace.append(svgElement("line",{x1:currentX,y1:top,x2:currentX,y2:top+plotHeight*2+gap,class:"trace-guide"}));trace.append(svgElement("circle",{cx:currentX,cy:y1(current.shock_compression_in),r:6,class:"trace-point",stroke:"#266d93"}));trace.append(svgElement("circle",{cx:currentX,cy:y2(current.instantaneous_motion_ratio),r:6,class:"trace-point",stroke:"#c84d35"}));
+        addText("SHOCK COMPRESSION",left,18,"axis-title");addText(`${current.shock_compression_in.toFixed(3)} in`,left+plotWidth,18,"trace-value","end");addText("INSTANTANEOUS WHEEL / SHOCK MR",left,top+plotHeight+gap-15,"axis-title");addText(current.instantaneous_motion_ratio.toFixed(3),left+plotWidth,top+plotHeight+gap-15,"trace-value","end");addText("VERTICAL WHEEL TRAVEL (in)",left+plotWidth/2,height-8,"axis-title","middle");
+        const hit=svgElement("rect",{x:left,y:top,width:plotWidth,height:plotHeight*2+gap,fill:"transparent","aria-hidden":"true"});hit.addEventListener("pointerdown",event=>{const point=trace.createSVGPoint();point.x=event.clientX;point.y=event.clientY;const local=point.matrixTransform(trace.getScreenCTM().inverse());setTravel(minTravel+(local.x-left)/plotWidth*(maxTravel-minTravel))});trace.append(hit);
+      }
+      function nearestIndex(value){let best=0,distance=Infinity;samples.forEach((sample,index)=>{const next=Math.abs(sample.wheel_travel_in-value);if(next<distance){distance=next;best=index}});return best}
+      function updateReadout(){const sample=samples[state.index],travel=sample.wheel_travel_in,travelState=Math.abs(travel)<1e-9?"ride height":travel>0?"bump":"rebound",used=sample.shock_stroke_used_mm,remaining=sample.shock_stroke_remaining_mm,monitor=document.getElementById("strokeMonitor"),meter=document.getElementById("strokeMeter"),marker=document.getElementById("strokeMarker"),percent=Math.max(0,Math.min(100,used/shockSpec.travel_mm*100));document.getElementById("shockCompression").textContent=sample.shock_compression_in.toFixed(3);document.getElementById("instantRatio").textContent=sample.instantaneous_motion_ratio.toFixed(3);document.getElementById("shockAngle").textContent=`${sample.shock_angle_from_vertical_deg.toFixed(1)}°`;document.getElementById("rockerAngle").textContent=`${sample.rocker_rotation_deg.toFixed(1)}°`;document.getElementById("travelOutput").textContent=`${travel>=0?"+":""}${travel.toFixed(3)} in · ${travelState}`;document.getElementById("shockLengthReadout").textContent=`${sample.shock_length_mm.toFixed(1)} mm node-to-node`;document.getElementById("strokeUsed").textContent=`${used.toFixed(1)} / ${shockSpec.travel_mm.toFixed(1)} mm stroke used`;const status=sample.shock_travel_status==="over_extended"?`OVER-EXTENDED by ${Math.abs(used).toFixed(1)} mm`:sample.shock_travel_status==="bottomed_out"?`BOTTOMED by ${Math.abs(remaining).toFixed(1)} mm`:`${remaining.toFixed(1)} mm stroke remaining`;document.getElementById("strokeStatus").textContent=status;monitor.classList.toggle("limit-warning",sample.shock_travel_status!=="within_travel");meter.setAttribute("aria-valuenow",String(Math.max(0,Math.min(shockSpec.travel_mm,used))));meter.setAttribute("aria-valuetext",status);marker.style.left=`${percent}%`;slider.value=String(travel)}
+      function setTravel(value){state.index=nearestIndex(Math.max(minTravel,Math.min(maxTravel,Number(value))));updateReadout();drawScene();drawTrace()}
+      slider.addEventListener("input",event=>setTravel(event.target.value));
+      for(const button of document.querySelectorAll("[data-preset]"))button.addEventListener("click",()=>setTravel(button.dataset.preset==="extension"?shockSpec.safe_sample_min_wheel_travel_in:button.dataset.preset==="maximum"?(shockSpec.compression_limit_wheel_travel_in??maxTravel):0));
+      document.getElementById("referenceToggle").addEventListener("click",event=>{state.showReference=!state.showReference;event.currentTarget.setAttribute("aria-pressed",String(state.showReference));drawScene()});
+      document.getElementById("resetView").addEventListener("click",()=>{state.yaw=-.68;state.pitch=.54;state.zoom=1;state.panX=0;state.panY=0;drawScene()});
+      scene.addEventListener("pointerdown",event=>{state.dragging=true;state.shifted=event.shiftKey;state.lastX=event.clientX;state.lastY=event.clientY;scene.setPointerCapture(event.pointerId);scene.classList.add("dragging")});
+      scene.addEventListener("pointermove",event=>{if(!state.dragging)return;const dx=event.clientX-state.lastX,dy=event.clientY-state.lastY;state.lastX=event.clientX;state.lastY=event.clientY;if(state.shifted||event.shiftKey){state.panX+=dx;state.panY+=dy}else{state.yaw+=dx*.008;state.pitch=Math.max(-1.35,Math.min(1.35,state.pitch+dy*.008))}drawScene()});
+      scene.addEventListener("pointerup",event=>{state.dragging=false;scene.classList.remove("dragging");scene.releasePointerCapture(event.pointerId)});
+      scene.addEventListener("wheel",event=>{event.preventDefault();state.zoom=Math.max(.3,Math.min(4,state.zoom*Math.exp(-event.deltaY*.001)));drawScene()},{passive:false});
+      scene.addEventListener("keydown",event=>{let handled=true;if(event.key==="ArrowLeft")state.yaw-=.08;else if(event.key==="ArrowRight")state.yaw+=.08;else if(event.key==="ArrowUp")state.pitch-=.08;else if(event.key==="ArrowDown")state.pitch+=.08;else handled=false;if(handled){event.preventDefault();drawScene()}});
+      const observer=new ResizeObserver(()=>{resizeScene();drawTrace()});observer.observe(scene);observer.observe(trace);
+      updateReadout();requestAnimationFrame(()=>{resizeScene();drawTrace()});
+    })();
+  </script>
+</body>
+</html>
