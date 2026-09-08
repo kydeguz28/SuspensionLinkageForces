@@ -695,41 +695,76 @@ def build_sizing_summary(
                 math.pi**2 * elastic_modulus * inertia / (effective_length * length) ** 2
             )
             checks: list[dict[str, Any]] = []
-            peak_applied = abs(peak_force)
-            if peak_applied > 1e-12:
-                yield_allowable = area * yield_strength / yield_factor
-                ultimate_allowable = area * ultimate_strength / ultimate_factor
-                checks.extend(
-                    [
-                        {
-                            "mode": "tube axial yield",
-                            "case": peak_case,
-                            "applied_load_lbf": peak_applied,
-                            "allowable_load_lbf": yield_allowable,
-                            "margin": yield_allowable / peak_applied - 1.0,
-                        },
-                        {
-                            "mode": "tube axial ultimate",
-                            "case": peak_case,
-                            "applied_load_lbf": peak_applied,
-                            "allowable_load_lbf": ultimate_allowable,
-                            "margin": ultimate_allowable / peak_applied - 1.0,
-                        },
-                    ]
-                )
+            yield_allowable = area * yield_strength / yield_factor
+            ultimate_allowable = area * ultimate_strength / ultimate_factor
+
+            if tension is not None:
+                tension_case, tension_force = tension
+                applied_tension = abs(tension_force)
+                if applied_tension > 1e-12:
+                    checks.extend(
+                        [
+                            {
+                                "mode": "tube axial yield",
+                                "case": tension_case,
+                                "applied_load_lbf": applied_tension,
+                                "allowable_load_lbf": yield_allowable,
+                                "margin": yield_allowable / applied_tension - 1.0,
+                            },
+                            {
+                                "mode": "tube axial ultimate",
+                                "case": tension_case,
+                                "applied_load_lbf": applied_tension,
+                                "allowable_load_lbf": ultimate_allowable,
+                                "margin": ultimate_allowable / applied_tension - 1.0,
+                            },
+                        ]
+                    )
+
             if compression is not None:
                 compression_case, compression_force = compression
-                buckling_allowable = critical_buckling / ultimate_factor
-                checks.append(
-                    {
-                        "mode": "tube Euler buckling",
-                        "case": compression_case,
-                        "applied_load_lbf": abs(compression_force),
-                        "allowable_load_lbf": buckling_allowable,
-                        "margin": buckling_allowable / abs(compression_force) - 1.0,
-                    }
-                )
-            governing = min(checks, key=lambda item: item["margin"])
+                applied_compression = abs(compression_force)
+                if applied_compression > 1e-12:
+                    checks.extend(
+                        [
+                            {
+                                "mode": "tube axial yield",
+                                "case": compression_case,
+                                "applied_load_lbf": applied_compression,
+                                "allowable_load_lbf": yield_allowable,
+                                "margin": yield_allowable / applied_compression - 1.0,
+                            },
+                            {
+                                "mode": "tube axial ultimate",
+                                "case": compression_case,
+                                "applied_load_lbf": applied_compression,
+                                "allowable_load_lbf": ultimate_allowable,
+                                "margin": ultimate_allowable / applied_compression - 1.0,
+                            },
+                        ]
+                    )
+                    buckling_allowable = critical_buckling / ultimate_factor
+                    checks.append(
+                        {
+                            "mode": "tube Euler buckling",
+                            "case": compression_case,
+                            "applied_load_lbf": applied_compression,
+                            "allowable_load_lbf": buckling_allowable,
+                            "margin": buckling_allowable / applied_compression - 1.0,
+                        }
+                    )
+
+            if not checks:
+                governing = None
+                governing_margin = float("nan")
+                governing_mode = "tube checks unavailable"
+                governing_case = ""
+            else:
+                governing = min(checks, key=lambda item: item["margin"])
+                governing_margin = governing["margin"]
+                governing_mode = governing["mode"]
+                governing_case = governing["case"]
+
             return {
                 "tube_od_in": outside,
                 "tube_id_in": inside,
@@ -738,9 +773,9 @@ def build_sizing_summary(
                 "tube_inertia_in4": inertia,
                 "critical_buckling_load_lbf": critical_buckling,
                 "tube_checks": checks,
-                "tube_governing_margin": governing["margin"],
-                "tube_governing_mode": governing["mode"],
-                "tube_governing_case": governing["case"],
+                "tube_governing_margin": governing_margin,
+                "tube_governing_mode": governing_mode,
+                "tube_governing_case": governing_case,
             }
 
         configured_tube = evaluate_tube(configured_outside, configured_inside)

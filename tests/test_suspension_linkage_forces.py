@@ -106,6 +106,21 @@ class SuspensionForceTests(unittest.TestCase):
         self.assertEqual(lower_aft["chassis_jmx"], "JMX3")
         self.assertLess(lower_aft["governing_margin"], 0.0)
 
+    def test_sizing_summary_exposes_tension_and_compression_check_cases(self):
+        by_name = {assembly["name"]: assembly for assembly in self.result["assemblies"]}
+        front = by_name["front_right"]
+        sizing = {row["member"]: row for row in front["sizing_summary"]}
+        lower_aft = sizing["lower_aft"]
+
+        self.assertIsNotNone(lower_aft["max_tension_force"])
+        self.assertIsNotNone(lower_aft["max_tension_case"])
+        self.assertIsNotNone(lower_aft["max_compression_force"])
+        self.assertIsNotNone(lower_aft["max_compression_case"])
+
+        cases = {check["case"] for check in lower_aft["tube_checks"]}
+        self.assertIn(lower_aft["max_tension_case"], cases)
+        self.assertIn(lower_aft["max_compression_case"], cases)
+
     def test_auto_sized_tubes_clear_configured_margin_target(self):
         for assembly in self.result["assemblies"]:
             for row in assembly["sizing_summary"]:
