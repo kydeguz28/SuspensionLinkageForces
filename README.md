@@ -64,6 +64,13 @@ Summary`; their displayed margin is a workbook-derived axial tensile proxy, not
 a substitute for the rod-end manufacturer's radial/misalignment rating. A margin
 is calculated as `allowable / applied - 1`, so a negative value fails.
 
+The supplied workbook-parity hardware table additionally checks the selected
+AN-tab bolt in shear, rod-end threaded shank in tension and shear, and tube plug
+in shear. Its JMX3/JMX4/JMX5 dimensions, thread pitches, and shear areas are
+stored in `sizing.hardware`; these checks use the workbook’s mode-specific
+strength and safety-factor inputs. They do not replace manufacturer radial-load,
+misalignment, or fatigue verification.
+
 ## Editing tube specifications in the viewer
 
 The **Member Sizing** tab lets you enter a member's tube OD and ID directly in

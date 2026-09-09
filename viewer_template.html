@@ -1232,7 +1232,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
           tube_governing_mode: calculation.governing?.mode ?? "tube checks unavailable",
           tube_governing_case: calculation.governing?.case ?? ""
         });
-        const governing = [...calculation.checks, ...(row.jmx_checks || [])].reduce((worst, check) => !worst || check.margin < worst.margin ? check : worst, null);
+        const governing = [...calculation.checks, ...(row.jmx_checks || []), ...(row.hardware_checks || [])].reduce((worst, check) => !worst || check.margin < worst.margin ? check : worst, null);
         row.governing_margin = governing?.margin ?? NaN;
         row.governing_margin_mode = governing?.mode ?? "unrated";
         row.governing_margin_case = governing?.case ?? "";
@@ -1484,6 +1484,11 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
           const statusName = marginStatus(check.margin);
           return `<tr><td>${escapeHtml(labelName(check.mode))}</td><td>${escapeHtml(labelName(check.case))}</td><td class="numeric">${calcNumber(check.applied_load_lbf,1)}</td><td class="numeric">${calcNumber(check.allowable_load_lbf,1)}</td><td class="numeric"><span class="margin-mark ${statusName}"><span>${calcNumber(check.margin,2)}</span><span>${statusName.toUpperCase()}</span></span></td></tr>`;
         }).join("");
+        const hardwareRows = (row.hardware_checks || []).map(check => {
+          const statusName = marginStatus(check.margin);
+          const basis = `${calcNumber(check.stress_ksi,2)} ksi / ${calcNumber(check.strength_ksi,1)} ksi ÷ FS ${calcNumber(check.safety_factor,2)}`;
+          return `<tr><td>${escapeHtml(labelName(check.mode))}</td><td>${escapeHtml(labelName(check.case))}</td><td class="numeric">${calcNumber(check.applied_load_lbf,1)}</td><td class="numeric">${basis}</td><td class="numeric"><span class="margin-mark ${statusName}"><span>${calcNumber(check.margin,2)}</span><span>${statusName.toUpperCase()}</span></span></td></tr>`;
+        }).join("");
         const ratio = Math.max(0, Math.min(.82, row.tube_id_in / row.tube_od_in));
         const innerRadius = 62 * ratio;
         return `<div class="calc-sheet">
@@ -1518,10 +1523,10 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
             </div>
             <table class="calc-checks">
               <thead><tr><th>Check</th><th>Case</th><th class="numeric">Applied lbf</th><th class="numeric">Allowable lbf</th><th class="numeric">MS</th></tr></thead>
-              <tbody>${checks}${jmxRows}</tbody>
+              <tbody>${checks}${jmxRows}${hardwareRows}</tbody>
             </table>
             <div class="calc-formulas">A = π(OD² − ID²)/4<br>I = π(OD⁴ − ID⁴)/64<br>P<sub>cr</sub> = π²EI/(KL)²<br>allowable<sub>buckling</sub> = P<sub>cr</sub>/FS<sub>u</sub><br>allowable<sub>yield</sub> = A·S<sub>y</sub>/FS<sub>y</sub><br>allowable<sub>ultimate</sub> = A·S<sub>u</sub>/FS<sub>u</sub><br>MS = allowable/applied − 1</div>
-            <p class="calc-note">Material: E ${calcNumber(row.elastic_modulus_psi/1e6,1)} Msi · Sy ${calcNumber(row.yield_strength_psi/1000,1)} ksi · Su ${calcNumber(row.ultimate_strength_psi/1000,1)} ksi · FSy ${calcNumber(row.yield_safety_factor,2)} · FSu ${calcNumber(row.ultimate_safety_factor,2)} · K ${calcNumber(row.effective_length_factor,2)}. JMX values are axial proxies only.</p>
+            <p class="calc-note">Tube material: E ${calcNumber(row.elastic_modulus_psi/1e6,1)} Msi · Sy ${calcNumber(row.yield_strength_psi/1000,1)} ksi · Su ${calcNumber(row.ultimate_strength_psi/1000,1)} ksi · FSy ${calcNumber(row.yield_safety_factor,2)} · FSu ${calcNumber(row.ultimate_safety_factor,2)} · K ${calcNumber(row.effective_length_factor,2)}. Hardware rows reproduce the workbook’s selected AN/JMX bolt, rod-end, and plug stress checks; final design still requires actual part ratings and joint geometry.</p>
           </div>
         </div>`;
       }

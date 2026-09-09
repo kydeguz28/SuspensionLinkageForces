@@ -40,6 +40,21 @@
       "JMX4": 1881.068572,
       "JMX5": 3016.410035
     },
+    "hardware": {
+      "bolt_diameter_in": {"JMX3": 0.1875, "JMX4": 0.25, "JMX5": 0.3125},
+      "rod_end_thread_tpi": {"JMX3": 32, "JMX4": 28, "JMX5": 24},
+      "rod_end_effective_diameter_in": {"JMX3": 0.1658, "JMX4": 0.2225, "JMX5": 0.2806},
+      "rod_end_shear_area_in2": {"JMX3": 0.0595116065, "JMX4": 0.1011477403, "JMX5": 0.1602673019},
+      "plug_shear_area_in2": {"JMX3": 0.084167718, "JMX4": 0.1411752362, "JMX5": 0.2221298911},
+      "bolt_shear_strength_ksi": 70.0,
+      "bolt_shear_safety_factor": 1.5,
+      "rod_end_tensile_strength_ksi": 70.0,
+      "rod_end_tensile_safety_factor": 1.3,
+      "rod_end_shear_strength_ksi": 54.0,
+      "rod_end_shear_safety_factor": 1.5,
+      "plug_shear_strength_ksi": 62.0,
+      "plug_shear_safety_factor": 1.5
+    },
     "front": {
       "steering_tie_rod": {"tube_id_in": 0.34, "tube_od_in": 0.4375, "chassis_jmx": "JMX4", "wheel_jmx": "JMX3"},
       "lower_fore": {"tube_id_in": 0.444, "tube_od_in": 0.5, "chassis_jmx": "JMX4", "wheel_jmx": "NA"},

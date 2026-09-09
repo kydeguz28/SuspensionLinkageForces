@@ -671,6 +671,7 @@ def build_sizing_summary(
     auto_size_tubes = bool(sizing.get("auto_size_tubes", False))
     minimum_tube_margin = float(sizing.get("minimum_tube_margin", 0.0))
     tube_catalog = sizing.get("tube_catalog", [])
+    hardware = sizing.get("hardware", {})
     geometry_by_name = {item["name"]: item for item in solved["member_geometry"]}
     rows: list[dict[str, Any]] = []
 
@@ -797,6 +798,7 @@ def build_sizing_summary(
         jmx_selected_allowables: dict[str, float | None] = {}
         jmx_governing_cases: dict[str, str | None] = {}
         jmx_checks: list[dict[str, Any]] = []
+        hardware_checks: list[dict[str, Any]] = []
         for end_key in ("chassis_jmx", "wheel_jmx"):
             selection = str(specification.get(end_key, "NA"))
             allowable = jmx_allowables.get(selection)
@@ -822,6 +824,51 @@ def build_sizing_summary(
             jmx_governing = min(end_checks, key=lambda item: item["margin"], default=None)
             jmx_margins[end_key] = jmx_governing["margin"] if jmx_governing else None
             jmx_governing_cases[end_key] = jmx_governing["case"] if jmx_governing else None
+
+            # Workbook-parity joint checks.  The source workbook calculates
+            # stresses from its AN/JMX size table, then applies the mode-specific
+            # material strength and safety factor as MS = strength/(stress*FS)-1.
+            if selection == "NA":
+                continue
+            bolt_diameter = hardware.get("bolt_diameter_in", {}).get(selection)
+            thread_tpi = hardware.get("rod_end_thread_tpi", {}).get(selection)
+            effective_diameter = hardware.get("rod_end_effective_diameter_in", {}).get(selection)
+            rod_end_shear_area = hardware.get("rod_end_shear_area_in2", {}).get(selection)
+            plug_shear_area = hardware.get("plug_shear_area_in2", {}).get(selection)
+            joint_data = (bolt_diameter, thread_tpi, effective_diameter, rod_end_shear_area, plug_shear_area)
+            if any(value is None for value in joint_data):
+                continue
+            bolt_area = math.pi * float(bolt_diameter) ** 2 / 4.0
+            tensile_radius = float(effective_diameter) / 2.0 - 0.16238 / float(thread_tpi)
+            if tensile_radius <= 0.0:
+                raise ValueError(f"Invalid rod-end thread geometry for {selection}")
+            rod_end_tensile_area = math.pi * tensile_radius**2
+            joint_modes = (
+                ("AN bolt shear", bolt_area, float(hardware.get("bolt_shear_strength_ksi", 70.0)), float(hardware.get("bolt_shear_safety_factor", 1.5))),
+                ("rod end tensile", rod_end_tensile_area, float(hardware.get("rod_end_tensile_strength_ksi", 70.0)), float(hardware.get("rod_end_tensile_safety_factor", 1.3))),
+                ("rod end shear", float(rod_end_shear_area), float(hardware.get("rod_end_shear_strength_ksi", 54.0)), float(hardware.get("rod_end_shear_safety_factor", 1.5))),
+                ("tube plug shear", float(plug_shear_area), float(hardware.get("plug_shear_strength_ksi", 62.0)), float(hardware.get("plug_shear_safety_factor", 1.5))),
+            )
+            for case_name, force in loads:
+                applied_load = abs(force)
+                if applied_load <= 1e-12:
+                    continue
+                for mode, area, strength_ksi, safety_factor in joint_modes:
+                    stress_ksi = applied_load / (area * 1000.0)
+                    check = {
+                        "mode": f"{end_key.replace('_jmx', '')} {selection} {mode}",
+                        "case": case_name,
+                        "state": "tension" if force > 0.0 else "compression",
+                        "connection": end_key.replace("_jmx", ""),
+                        "selection": selection,
+                        "applied_load_lbf": applied_load,
+                        "stress_ksi": stress_ksi,
+                        "strength_ksi": strength_ksi,
+                        "safety_factor": safety_factor,
+                        "margin": strength_ksi / (stress_ksi * safety_factor) - 1.0,
+                    }
+                    hardware_checks.append(check)
+                    candidates.append(check)
         governing = min(candidates, key=lambda item: item["margin"])
         rows.append(
             {
@@ -849,6 +896,7 @@ def build_sizing_summary(
                 "critical_buckling_load_lbf": selected_tube["critical_buckling_load_lbf"],
                 "tube_checks": selected_tube["tube_checks"],
                 "jmx_checks": jmx_checks,
+                "hardware_checks": hardware_checks,
                 "tube_governing_margin": selected_tube["tube_governing_margin"],
                 "tube_governing_mode": selected_tube["tube_governing_mode"],
                 "tube_governing_case": selected_tube["tube_governing_case"],

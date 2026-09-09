@@ -124,6 +124,19 @@ class SuspensionForceTests(unittest.TestCase):
         solved_cases = {case["name"] for case in front["load_cases"]}
         self.assertEqual({check["case"] for check in lower_aft["tube_checks"]}, solved_cases)
         self.assertEqual({check["case"] for check in lower_aft["jmx_checks"]}, solved_cases)
+        self.assertEqual({check["case"] for check in lower_aft["hardware_checks"]}, solved_cases)
+        self.assertEqual(len(lower_aft["hardware_checks"]), len(solved_cases) * 4)
+        bolt_check = next(
+            check
+            for check in lower_aft["hardware_checks"]
+            if check["mode"] == "chassis JMX3 AN bolt shear"
+            and check["case"] == lower_aft["max_compression_case"]
+        )
+        self.assertAlmostEqual(bolt_check["stress_ksi"], 37.17, places=2)
+        self.assertAlmostEqual(
+            bolt_check["margin"],
+            bolt_check["strength_ksi"] / (bolt_check["stress_ksi"] * bolt_check["safety_factor"]) - 1.0,
+        )
         self.assertTrue(
             all(
                 check["mode"] != "tube Euler buckling" or check["state"] == "compression"
