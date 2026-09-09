@@ -657,7 +657,7 @@ def build_sizing_summary(
     solved: dict[str, Any],
     sizing: dict[str, Any],
 ) -> list[dict[str, Any]]:
-    """Calculate governing force, auto-sized tube checks, and JMX margins."""
+    """Calculate per-load-case tube and rod-end checks for each sized member."""
     axle = str(assembly.get("axle", ""))
     member_sizing = sizing.get(axle, {})
     material = sizing.get("material", {})
@@ -698,60 +698,47 @@ def build_sizing_summary(
             yield_allowable = area * yield_strength / yield_factor
             ultimate_allowable = area * ultimate_strength / ultimate_factor
 
-            if tension is not None:
-                tension_case, tension_force = tension
-                applied_tension = abs(tension_force)
-                if applied_tension > 1e-12:
-                    checks.extend(
-                        [
-                            {
-                                "mode": "tube axial yield",
-                                "case": tension_case,
-                                "applied_load_lbf": applied_tension,
-                                "allowable_load_lbf": yield_allowable,
-                                "margin": yield_allowable / applied_tension - 1.0,
-                            },
-                            {
-                                "mode": "tube axial ultimate",
-                                "case": tension_case,
-                                "applied_load_lbf": applied_tension,
-                                "allowable_load_lbf": ultimate_allowable,
-                                "margin": ultimate_allowable / applied_tension - 1.0,
-                            },
-                        ]
-                    )
-
-            if compression is not None:
-                compression_case, compression_force = compression
-                applied_compression = abs(compression_force)
-                if applied_compression > 1e-12:
-                    checks.extend(
-                        [
-                            {
-                                "mode": "tube axial yield",
-                                "case": compression_case,
-                                "applied_load_lbf": applied_compression,
-                                "allowable_load_lbf": yield_allowable,
-                                "margin": yield_allowable / applied_compression - 1.0,
-                            },
-                            {
-                                "mode": "tube axial ultimate",
-                                "case": compression_case,
-                                "applied_load_lbf": applied_compression,
-                                "allowable_load_lbf": ultimate_allowable,
-                                "margin": ultimate_allowable / applied_compression - 1.0,
-                            },
-                        ]
-                    )
-                    buckling_allowable = critical_buckling / ultimate_factor
-                    checks.append(
+            # Preserve every load case rather than only checking the two peak
+            # values.  This makes the report auditable and catches a governing
+            # mode that differs between tension and compression.
+            for case_name, force in loads:
+                applied_load = abs(force)
+                if applied_load <= 1e-12:
+                    continue
+                state = "tension" if force > 0.0 else "compression"
+                checks.extend(
+                    [
                         {
-                            "mode": "tube Euler buckling",
-                            "case": compression_case,
-                            "applied_load_lbf": applied_compression,
-                            "allowable_load_lbf": buckling_allowable,
-                            "margin": buckling_allowable / applied_compression - 1.0,
-                        }
+                            "mode": "tube axial yield",
+                            "case": case_name,
+                            "state": state,
+                            "applied_load_lbf": applied_load,
+                            "allowable_load_lbf": yield_allowable,
+                            "margin": yield_allowable / applied_load - 1.0,
+                        },
+                        {
+                            "mode": "tube axial ultimate",
+                            "case": case_name,
+                            "state": state,
+                            "applied_load_lbf": applied_load,
+                            "allowable_load_lbf": ultimate_allowable,
+                            "margin": ultimate_allowable / applied_load - 1.0,
+                        },
+                    ]
+                )
+                if force < 0.0:
+                    buckling_allowable = critical_buckling / ultimate_factor
+                    checks.extend(
+                        [
+                            {
+                                "mode": "tube Euler buckling",
+                                "case": case_name,
+                                "state": state,
+                                "applied_load_lbf": applied_load,
+                                "allowable_load_lbf": buckling_allowable,
+                                "margin": buckling_allowable / applied_load - 1.0,
+                            },
+                        ]
                     )
 
             if not checks:
@@ -808,26 +795,33 @@ def build_sizing_summary(
         candidates: list[dict[str, Any]] = [dict(item) for item in selected_tube["tube_checks"]]
         jmx_margins: dict[str, float | None] = {}
         jmx_selected_allowables: dict[str, float | None] = {}
+        jmx_governing_cases: dict[str, str | None] = {}
+        jmx_checks: list[dict[str, Any]] = []
         for end_key in ("chassis_jmx", "wheel_jmx"):
             selection = str(specification.get(end_key, "NA"))
             allowable = jmx_allowables.get(selection)
             jmx_selected_allowables[end_key] = float(allowable) if allowable is not None else None
-            margin = (
-                float(allowable) / abs(peak_force) - 1.0
-                if allowable is not None and abs(peak_force) > 1e-12
-                else None
-            )
-            jmx_margins[end_key] = margin
-            if margin is not None:
-                candidates.append(
-                    {
-                        "mode": f"{end_key.replace('_jmx', '')} {selection} axial proxy",
-                        "case": peak_case,
-                        "applied_load_lbf": abs(peak_force),
-                        "allowable_load_lbf": float(allowable),
-                        "margin": margin,
-                    }
-                )
+            end_checks: list[dict[str, Any]] = []
+            if allowable is not None:
+                for case_name, force in loads:
+                    applied_load = abs(force)
+                    if applied_load <= 1e-12:
+                        continue
+                    end_checks.append(
+                        {
+                            "mode": f"{end_key.replace('_jmx', '')} {selection} axial proxy",
+                            "case": case_name,
+                            "state": "tension" if force > 0.0 else "compression",
+                            "applied_load_lbf": applied_load,
+                            "allowable_load_lbf": float(allowable),
+                            "margin": float(allowable) / applied_load - 1.0,
+                        }
+                    )
+            jmx_checks.extend(end_checks)
+            candidates.extend(end_checks)
+            jmx_governing = min(end_checks, key=lambda item: item["margin"], default=None)
+            jmx_margins[end_key] = jmx_governing["margin"] if jmx_governing else None
+            jmx_governing_cases[end_key] = jmx_governing["case"] if jmx_governing else None
         governing = min(candidates, key=lambda item: item["margin"])
         rows.append(
             {
@@ -839,6 +833,14 @@ def build_sizing_summary(
                 "max_tension_case": tension[0] if tension else None,
                 "max_compression_force": compression[1] if compression else None,
                 "max_compression_case": compression[0] if compression else None,
+                "load_case_forces": [
+                    {
+                        "case": case_name,
+                        "force_lbf": force,
+                        "state": "tension" if force >= 0.0 else "compression",
+                    }
+                    for case_name, force in loads
+                ],
                 "tube_id_in": selected_tube["tube_id_in"],
                 "tube_od_in": selected_tube["tube_od_in"],
                 "tube_wall_in": selected_tube["tube_wall_in"],
@@ -846,6 +848,7 @@ def build_sizing_summary(
                 "tube_inertia_in4": selected_tube["tube_inertia_in4"],
                 "critical_buckling_load_lbf": selected_tube["critical_buckling_load_lbf"],
                 "tube_checks": selected_tube["tube_checks"],
+                "jmx_checks": jmx_checks,
                 "tube_governing_margin": selected_tube["tube_governing_margin"],
                 "tube_governing_mode": selected_tube["tube_governing_mode"],
                 "tube_governing_case": selected_tube["tube_governing_case"],
@@ -865,6 +868,8 @@ def build_sizing_summary(
                 "wheel_jmx": specification.get("wheel_jmx", "NA"),
                 "chassis_jmx_margin": jmx_margins["chassis_jmx"],
                 "wheel_jmx_margin": jmx_margins["wheel_jmx"],
+                "chassis_jmx_governing_case": jmx_governing_cases["chassis_jmx"],
+                "wheel_jmx_governing_case": jmx_governing_cases["wheel_jmx"],
                 "chassis_jmx_allowable_lbf": jmx_selected_allowables["chassis_jmx"],
                 "wheel_jmx_allowable_lbf": jmx_selected_allowables["wheel_jmx"],
                 "governing_margin": governing["margin"],

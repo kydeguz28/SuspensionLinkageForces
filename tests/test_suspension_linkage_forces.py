@@ -117,12 +117,34 @@ class SuspensionForceTests(unittest.TestCase):
         self.assertIsNotNone(lower_aft["max_compression_force"])
         self.assertIsNotNone(lower_aft["max_compression_case"])
 
-        cases = {check["case"] for check in lower_aft["tube_checks"]}
-        self.assertIn(lower_aft["max_tension_case"], cases)
-        self.assertIn(lower_aft["max_compression_case"], cases)
+        case_states = {(check["case"], check["state"]) for check in lower_aft["tube_checks"]}
+        self.assertIn((lower_aft["max_tension_case"], "tension"), case_states)
+        self.assertIn((lower_aft["max_compression_case"], "compression"), case_states)
 
-    def test_auto_sized_tubes_clear_configured_margin_target(self):
-        for assembly in self.result["assemblies"]:
+        solved_cases = {case["name"] for case in front["load_cases"]}
+        self.assertEqual({check["case"] for check in lower_aft["tube_checks"]}, solved_cases)
+        self.assertEqual({check["case"] for check in lower_aft["jmx_checks"]}, solved_cases)
+        self.assertTrue(
+            all(
+                check["mode"] != "tube Euler buckling" or check["state"] == "compression"
+                for check in lower_aft["tube_checks"]
+            )
+        )
+
+    def test_configured_tube_dimensions_are_used_and_auto_sizing_remains_available(self):
+        configured = json.loads((ROOT / "examples" / "mk11_reference.json").read_text())
+        configured_result = solve_config(configured)
+        for assembly in configured_result["assemblies"]:
+            for row in assembly["sizing_summary"]:
+                if row["member"] == "shock":
+                    continue
+                self.assertFalse(row["tube_auto_sized"])
+                self.assertEqual(row["tube_od_in"], row["configured_tube_od_in"])
+                self.assertEqual(row["tube_id_in"], row["configured_tube_id_in"])
+
+        configured["sizing"]["auto_size_tubes"] = True
+        auto_sized_result = solve_config(configured)
+        for assembly in auto_sized_result["assemblies"]:
             for row in assembly["sizing_summary"]:
                 if row["member"] == "shock":
                     continue
@@ -216,7 +238,7 @@ class SuspensionForceTests(unittest.TestCase):
         self.assertNotIn("FIXED CHASSIS", html)
         self.assertIn("Member Sizing", html)
         self.assertIn("Governing member loads", html)
-        self.assertIn("Automatic tube selection", html)
+        self.assertIn("Tube specification", html)
         self.assertIn("Calculations", html)
         self.assertIn("From tire patch to chassis hardpoint", html)
         self.assertIn('id="uprightGeometryVisual"', html)

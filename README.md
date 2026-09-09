@@ -54,14 +54,26 @@ local moment, and magnitude at each physical mounting interface. The **Maximum
 across all load cases** option independently selects the largest force magnitude
 at each hardpoint and reports the governing case and matching vector components.
 
-Sizing uses the configured tube catalog and 4130 properties: 29 Msi elastic
-modulus, 70 ksi yield, 95 ksi ultimate, FSy 1.3, and FSu 1.5. The example selects
-the minimum-area catalog tube with tube MS ≥ 0.10 across axial yield, axial
-ultimate, and Euler buckling. The original per-member dimensions remain in the
-result as a comparison. JMX selections follow `Manufacturing
+Sizing uses each member's configured `tube_od_in` and `tube_id_in` with 4130
+properties: 29 Msi elastic modulus, 70 ksi yield, 95 ksi ultimate, FSy 1.3, and
+FSu 1.5. Every supplied load case is checked for axial yield and ultimate; every
+compression case is also checked for Euler buckling. Set `auto_size_tubes` to
+`true` to instead select the minimum-area catalog tube that clears
+`minimum_tube_margin`. JMX selections follow `Manufacturing
 Summary`; their displayed margin is a workbook-derived axial tensile proxy, not
 a substitute for the rod-end manufacturer's radial/misalignment rating. A margin
 is calculated as `allowable / applied - 1`, so a negative value fails.
+
+## Editing tube specifications in the viewer
+
+The **Member Sizing** tab lets you enter a member's tube OD and ID directly in
+its **Calculations** panel. The viewer immediately recalculates yield, ultimate,
+Euler-buckling, and JMX-proxy margins for every load case. Changes are saved in
+that browser's local storage, so the generated viewer remains a static site.
+Use **Export tube specs** to download a portable JSON record, then **Import
+specs** to apply it in another browser or on another computer. The export is a
+viewer override; copy its dimensions into the source input JSON before treating
+them as a version-controlled design release.
 
 Run the verification suite with:
 
