@@ -849,7 +849,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         <div class="sizing-metric"><strong id="sizingAutoCount">0</strong><span>auto-sized tubes</span></div>
         <div class="sizing-metric"><strong id="sizingJmxFailCount">0</strong><span>JMX proxy failures</span></div>
       </div>
-      <p class="sizing-proxy-note"><strong>Tube specification:</strong> each member uses its configured OD and ID by default. Set <code>auto_size_tubes</code> to <code>true</code> only to select the lightest catalog tube meeting the target margin. Yield, ultimate, Euler buckling, and JMX axial-proxy margins are evaluated for every supplied load case. Select a member or “Calculations” to audit every check.</p>
+        <p class="sizing-proxy-note"><strong>Tube specification:</strong> each member uses its configured OD and ID by default. One solved axial member force is applied at full magnitude to the tube and to each of its two rod ends—it is not divided between them. Inboard and outboard JMX fields specify those two ends of one tube. Set <code>auto_size_tubes</code> to <code>true</code> only to select the lightest catalog tube meeting the target margin. Yield, ultimate, Euler buckling, and JMX axial-proxy margins are evaluated for every supplied load case. Select a member or “Calculations” to audit every check.</p>
 
       <div class="sizing-table-wrap">
         <table class="sizing-table">

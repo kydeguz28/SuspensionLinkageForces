@@ -125,7 +125,10 @@ class SuspensionForceTests(unittest.TestCase):
         self.assertEqual({check["case"] for check in lower_aft["tube_checks"]}, solved_cases)
         self.assertEqual({check["case"] for check in lower_aft["jmx_checks"]}, solved_cases)
         self.assertEqual({check["case"] for check in lower_aft["hardware_checks"]}, solved_cases)
-        self.assertEqual(len(lower_aft["hardware_checks"]), len(solved_cases) * 4)
+        # One physical tube has an inboard and outboard rod end.  Both see the
+        # full axial member load, so both end-hardware check sets are present.
+        self.assertEqual(lower_aft["wheel_jmx"], "JMX3")
+        self.assertEqual(len(lower_aft["hardware_checks"]), len(solved_cases) * 8)
         bolt_check = next(
             check
             for check in lower_aft["hardware_checks"]

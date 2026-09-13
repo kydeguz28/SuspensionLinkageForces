@@ -59,10 +59,17 @@ properties: 29 Msi elastic modulus, 70 ksi yield, 95 ksi ultimate, FSy 1.3, and
 FSu 1.5. Every supplied load case is checked for axial yield and ultimate; every
 compression case is also checked for Euler buckling. Set `auto_size_tubes` to
 `true` to instead select the minimum-area catalog tube that clears
-`minimum_tube_margin`. JMX selections follow `Manufacturing
-Summary`; their displayed margin is a workbook-derived axial tensile proxy, not
-a substitute for the rod-end manufacturer's radial/misalignment rating. A margin
-is calculated as `allowable / applied - 1`, so a negative value fails.
+`minimum_tube_margin`. A member is a two-force load path: its solved signed
+axial force is the tube force, and its magnitude is also the applied load at
+each of that tube's two rod ends. It is **not** split between tube and ends, or
+halved between ends. `chassis_jmx` and `wheel_jmx` therefore specify the two
+physical rod ends for one tube and each is checked at the full member-force
+magnitude. The reference configuration now provides both selections for every
+tube (outboard sizes are matched to the corresponding inboard size pending
+packaging confirmation). Their displayed margin is a workbook-derived axial
+tensile proxy, not a substitute for the rod-end manufacturer's
+radial/misalignment rating. A margin is calculated as `allowable / applied - 1`,
+so a negative value fails.
 
 The supplied workbook-parity hardware table additionally checks the selected
 AN-tab bolt in shear, rod-end threaded shank in tension and shear, and tube plug
