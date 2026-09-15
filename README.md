@@ -15,12 +15,31 @@ pickup coordinates, then calculates:
 Positive axial force means **tension**. Negative axial force means
 **compression**.
 
+## Current front coordinates
+
+The main viewer now uses `examples/mk12_front.json`, with the 11 front hardpoints
+from `mk12 input coords - Sheet1.pdf`. The original `mk11_reference.json` remains
+available for workbook comparison tests.
+
+The sheet is assumed to be in inches, with its coordinates converted into the
+existing model basis as `(X, Y, Z) = (-sheet z, -sheet x, -sheet y)`.
+BC Inboard maps to the rocker shock pickup, BC Outboard to the rod pickup,
+and BC Chassis to the rocker pivot center. The pivot axis retains its assumed
+model-X direction and two-inch endpoint separation because the sheet supplies
+only a center point. Front-left geometry is mirrored from front-right.
+Steering pickups, contact patches, rear geometry, loads, and sizing retain their
+previous values because the sheet supplies no replacements for them.
+
+The separate `front-shock-motion-ratio` study remains the Mk11 study; its rigid
+lower-arm pickup assumption needs confirmation before adapting it to the new
+BC pickup near the upper wishbone.
+
 ## Run it
 
 Python 3.10 or newer is sufficient; there are no third-party dependencies.
 
 ```powershell
-python suspension_linkage_forces.py examples/mk11_reference.json --output-dir outputs
+python suspension_linkage_forces.py examples/mk12_front.json --output-dir outputs
 ```
 
 The command prints a summary and writes `suspension_forces.json`,

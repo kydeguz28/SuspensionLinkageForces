@@ -30,7 +30,7 @@ jobs:
         run: python -m unittest discover -s tests
 
       - name: Build self-contained viewer
-        run: python suspension_linkage_forces.py examples/mk11_reference.json --output-dir outputs
+        run: python suspension_linkage_forces.py examples/mk12_front.json --output-dir outputs
 
       - name: Assemble Pages site
         run: |
