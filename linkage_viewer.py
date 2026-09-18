@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from html import escape
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,27 @@ def write_viewer_html(
     if template.count(placeholder) != 1:
         raise ValueError("Viewer template must contain exactly one data placeholder")
     rendered = template.replace(placeholder, payload)
+    if result.get("joint_bolt_schedule"):
+        from bolt_schedule import bolt_schedule_html
+        rendered = rendered.replace('<footer class="sizing-foot">',
+                                    bolt_schedule_html(result["joint_bolt_schedule"]) + '<footer class="sizing-foot">', 1)
+    estimates = [
+        f"{assembly['name']} / {case['name']}"
+        for assembly in result["assemblies"]
+        for case in assembly["load_cases"]
+        if case.get("solution_status") == "fixed_geometry_estimate"
+    ]
+    if estimates:
+        warning = (
+            '<aside role="alert" style="padding:12px 20px;background:#fff1cc;color:#573900;'
+            'border-bottom:2px solid #b47700">'
+            '<strong>Motion solution incomplete.</strong> '
+            + escape(", ".join(estimates))
+            + ': spring-loaded motion did not converge. This case shows ride-height geometry '
+            'and fixed-geometry force estimates. Sizing and chassis-load envelopes include '
+            'these estimates; they are provisional.</aside>'
+        )
+        rendered = rendered.replace("<body>", "<body>" + warning, 1)
     if placeholder in rendered:
         raise ValueError("Viewer data placeholder was not replaced")
 

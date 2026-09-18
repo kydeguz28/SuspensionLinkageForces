@@ -471,10 +471,16 @@ def solve_assembly(
         ride_compression = -ride_height_result["rocker"]["shock_force"]
         if ride_compression <= 0.0:
             raise ValueError(f"{name} ride-height load does not compress the shock")
-        case_results = [
-            solve_moving_case(assembly, case, spring_rate, ride_compression)
-            for case in assembly["load_cases"]
-        ]
+        case_results = []
+        for case, fixed_result in zip(assembly["load_cases"], initial_case_results):
+            try:
+                case_results.append(solve_moving_case(assembly, case, spring_rate, ride_compression))
+            except ValueError as error:
+                if not case.get("allow_fixed_geometry_fallback") or "kinematics" not in str(error):
+                    raise
+                fixed_result["solution_status"] = "fixed_geometry_estimate"
+                fixed_result["kinematics_error"] = str(error)
+                case_results.append(fixed_result)
 
     return {
         "name": name,
@@ -996,12 +1002,15 @@ def solve_config(config: dict[str, Any]) -> dict[str, Any]:
                 assembly, solved, config["sizing"]
             )
         solved_assemblies.append(solved)
-    return {
+    from bolt_schedule import build_bolt_schedule
+    result = {
         "model": "3D rigid-body equilibrium with axial two-force members and nonlinear rigid-link kinematics",
         "sign_convention": "positive = tension; negative = compression",
         "ride_height": ride_summary,
         "assemblies": solved_assemblies,
     }
+    result["joint_bolt_schedule"] = build_bolt_schedule(config, result)
+    return result
 
 
 def write_csv(result: dict[str, Any], path: Path) -> None:
@@ -1012,6 +1021,7 @@ def write_csv(result: dict[str, Any], path: Path) -> None:
             [
                 "assembly",
                 "load_case",
+                "solution_status",
                 "component",
                 "force",
                 "state",
@@ -1029,6 +1039,7 @@ def write_csv(result: dict[str, Any], path: Path) -> None:
                         [
                             assembly["name"],
                             case["name"],
+                            case.get("solution_status", "solved"),
                             member["name"],
                             member["force"],
                             member["state"],
@@ -1044,6 +1055,7 @@ def write_csv(result: dict[str, Any], path: Path) -> None:
                     [
                         assembly["name"],
                         case["name"],
+                        case.get("solution_status", "solved"),
                         "shock",
                         rocker["shock_force"],
                         rocker["shock_state"],
@@ -1059,6 +1071,7 @@ def write_csv(result: dict[str, Any], path: Path) -> None:
                     [
                         assembly["name"],
                         case["name"],
+                        case.get("solution_status", "solved"),
                         "rocker_pivot_reaction",
                         "",
                         "reaction",

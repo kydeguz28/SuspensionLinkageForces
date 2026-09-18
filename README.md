@@ -15,20 +15,45 @@ pickup coordinates, then calculates:
 Positive axial force means **tension**. Negative axial force means
 **compression**.
 
-## Current front coordinates
+## Current coordinates
 
-The main viewer now uses `examples/mk12_front.json`, with the 11 front hardpoints
-from `mk12 input coords - Sheet1.pdf`. The original `mk11_reference.json` remains
+The main viewer uses `examples/mk12_front.json`. Front wishbone and steering
+hardpoints come from the user-selected `3D Hardpoints Autocross (Anti)` sketch in
+`VD12-KIN-002-FVSA_FRONT.SLDPRT`. The ground-level tire center in `Wheel Front`
+sets the front contact patch at model `[0, 22.5, 0]` inches. The point where the
+steering axis meets the ground is construction geometry, not the contact patch.
+
+The SolidWorks API export transforms sketch coordinates into part coordinates,
+converts meters to inches, and maps them into model axes as
+`(X, Y, Z) = (part z, part x, -part y)`. The part's rear reference at z = -61
+and its upward-positive y establish the longitudinal and vertical directions.
+Front-left geometry is mirrored from front-right. The complete sketch-point and
+line export is in `examples/sources/mk12_front_native_sketches.tsv`; the selected
+hardpoints and both coordinate bases are in `examples/sources/mk12_front_hardpoints.csv`.
+
+The front part has no identified rocker, shock, or rod-pickup sketch. Those coordinates retain
+the earlier `mk12 input coords - Sheet1.pdf` values and its assumed mapping
+`(X, Y, Z) = (-sheet z, -sheet x, -sheet y)`. BC Inboard maps to the rocker
+shock pickup, BC Outboard to the rod pickup, and BC Chassis to the pivot center.
+The rocker axis retains its assumed model-X direction and two-inch endpoint
+separation because the PDF supplies only a center point. Loads and sizing remain
+unchanged. The original `mk11_reference.json` remains
 available for workbook comparison tests.
 
-The sheet is assumed to be in inches, with its coordinates converted into the
-existing model basis as `(X, Y, Z) = (-sheet z, -sheet x, -sheet y)`.
-BC Inboard maps to the rocker shock pickup, BC Outboard to the rod pickup,
-and BC Chassis to the rocker pivot center. The pivot axis retains its assumed
-model-X direction and two-inch endpoint separation because the sheet supplies
-only a center point. Front-left geometry is mirrored from front-right.
-Steering pickups, contact patches, rear geometry, loads, and sizing retain their
-previous values because the sheet supplies no replacements for them.
+Rear wishbones use `3D HARDPOINTS INBOARD BRAKES`; the rearward tie rod uses
+`ANTI + INBOARD BRAKES`, as selected by the user. The rear pushrod arm pickup and rocker/shock hardpoints come from the later
+user screenshots and supersede the packaging export. The wheel-side pushrod
+point is source `(-19.477494, 11.209784, -2.598527)`; the rocker-side point is
+`(-16.654995, 12.099762, -2.529146)`. Their model mapping is `(-61 - Z, -X, -Y)` in inches,
+following the user-supplied orientation and 61-inch axle offset. Other source
+files retain their separately documented coordinate conversions.
+
+The rear rocker axis is assumed perpendicular to the plane through the new
+pivot and its two joints. Axis endpoints lie one inch either side of the pivot.
+This is a planar-rocker assumption, not a measured axis. Current points are in
+`examples/sources/mk12_rear_hardpoints.csv`; source details are in
+`examples/sources/mk12_rear_import_notes.md`. All 20 spring-loaded cases now
+converge. No current case uses the optional fixed-geometry fallback.
 
 The separate `front-shock-motion-ratio` study remains the Mk11 study; its rigid
 lower-arm pickup assumption needs confirmation before adapting it to the new
@@ -206,3 +231,26 @@ The equal four-way unsprung-weight split is an explicit assumption. Replace it
 with measured front/rear corner unsprung weights when available. Unsprung weight
 is currently removed as a scalar per-corner ride-height load; locating unsprung
 component centers of gravity would be required to include their exact moments.
+
+
+## Joint AN bolt schedule
+
+Member Sizing includes a preliminary joint-by-joint AN shear schedule generated
+from the current configuration and all load cases. Each axle row takes the
+maximum across both physical sides. Shared upper/lower outboard pickups use the
+simultaneous vector sum of the two legs, not the sum of independent peak loads.
+Pushrod endpoints carry the full axial rod load; shock endpoints carry shock
+load. The bellcrank pivot uses its resultant force only and is explicitly a
+lower-bound screen pending moment/bearing-span checks.
+
+The table preserves the linkage-sheet 70 ksi shear strength and FS 1.5 and
+shows one- and two-plane results, bore compatibility, and governing cases.
+Lengths and locking suffixes remain unspecified until measured grip stacks,
+bores and joint arrangements are supplied. Bigger installed bores are retained;
+a smaller load-based diameter does not authorize downsizing a bearing interface.
+The schedule assumes unthreaded shanks at shear planes and does not validate
+joint bending, fatigue, tabs, welds or the model's idealized arm load path.
+
+Current snapshot downloads: `reports/joint_bolt_schedule.csv` and
+`reports/joint_bolt_schedule.md`. The JSON and viewer schedules regenerate with
+the solver; these report snapshots must be refreshed after geometry changes.

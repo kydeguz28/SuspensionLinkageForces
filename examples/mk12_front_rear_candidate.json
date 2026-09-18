@@ -462,97 +462,97 @@
         {
           "name": "lower_fore",
           "application": [
-            -62.423849550967,
-            22.0,
-            -4.530828275192
+            -60.257272877585,
+            20.864285149906,
+            -4.45
           ],
           "anchor": [
-            -54.0,
+            -53.0,
             12.25,
-            -3.852393016868
+            -5.6656513717
           ]
         },
         {
           "name": "lower_aft",
           "application": [
-            -62.423849550967,
-            22.0,
-            -4.530828275192
+            -60.257272877585,
+            20.864285149906,
+            -4.45
           ],
           "anchor": [
-            -59.75,
+            -59.5,
             12.25,
-            -3.852393016868
+            -4.932819829986
           ]
         },
         {
           "name": "upper_fore",
           "application": [
-            -62.069887969922,
-            21.220527579836,
-            -11.594139637217
+            -58.35,
+            20.53762967,
+            -10.549509756796
           ],
           "anchor": [
             -53.0,
             12.25,
-            -7.961149535978
+            -10.257365186481
           ]
         },
         {
           "name": "upper_aft",
           "application": [
-            -62.069887969922,
-            21.220527579836,
-            -11.594139637217
+            -58.35,
+            20.53762967,
+            -10.549509756796
           ],
           "anchor": [
-            -60.0,
+            -59.0,
             12.25,
-            -7.961149535978
+            -9.78961956613
           ]
         },
         {
           "name": "pushrod",
           "role": "pushrod",
           "application": [
-            -58.401473,
-            19.477494,
-            -11.209784
+            -61.32233791,
+            19.32992143,
+            -11.75452775
           ],
           "anchor": [
-            -58.470854,
-            16.654995,
-            -12.099762
+            -60.88,
+            16.02,
+            -12.02
           ]
         }
       ],
       "rocker": {
         "pivot_axis": [
           [
-            -57.400771908139,
-            12.177736960983,
-            -11.239701722885
+            -58.94,
+            11.36,
+            -10.67
           ],
           [
-            -59.394722091861,
-            12.177737039017,
-            -11.084258277115
+            -62.34,
+            10.92,
+            -10.86
           ]
         ],
         "pushrod_pickup": [
-          -58.470854,
-          16.654995,
-          -12.099762
+          -60.88,
+          16.02,
+          -12.02
         ],
         "shock_pickup": [
-          -58.703242,
-          14.368667,
-          -15.080717
+          -60.42,
+          14.09,
+          -15.71
         ],
         "shock_chassis_pickup": [
-          -58.752162,
-          6.898431,
-          -15.708241
+          -59.5,
+          6.58,
+          -14.73
         ]
       },
       "load_cases": [
@@ -655,5 +655,5 @@
       ]
     }
   ],
-  "geometry_source_note": "Front wishbone/steering: VD12-KIN-002-FVSA_FRONT.SLDPRT, Autocross (Anti); front rocker/rod from original PDF. Rear wishbones: VD12-KIN-002-FVSA_REAR.SLDPRT, INBOARD BRAKES; rear tie rod explicitly selected from ANTI + INBOARD BRAKES. Rear pushrod arm pickup retained from SU12-SP-001-Rear_Sketches_c1.SLDPRT RIDE HEIGHT. Rear pivot, shock chassis mount, rocker shock joint and rocker rod joint superseded by user screenshots, mapped as (X,Y,Z)=(-61-source Z,-source X,-source Y) inches per user axis direction and axle offset. Rear pivot axis assumed normal to the plane through the new pivot and two rocker joints; endpoints one inch either side. All 20 spring-loaded load cases converge. Loads/sizing unchanged. See source tables and notes. Joint identification corrected from latest assembly screenshots: source (-19.477494,11.209784,-2.598527) is the pushrod wheel-side pickup, not the rocker joint. Source (-16.654995,12.099762,-2.529146) is the rocker-to-pushrod joint. Both use (-61-Z,-X,-Y). Rocker planar normal recomputed from corrected joints."
+  "geometry_source_note": "Front wishbone and steering coordinates extracted with the SolidWorks API from VD12-KIN-002-FVSA_FRONT.SLDPRT, user-selected 3D Hardpoints Autocross (Anti) sketch; contact patch uses the Wheel Front ground-level tire center. Sketch points transformed to part coordinates, converted from meters to inches, then model (X,Y,Z)=(part z,part x,-part y). Rocker and rod pickups remain from mk12 input coords - Sheet1.pdf with its assumed mapping (-sheet z,-sheet x,-sheet y); model-X rocker axis retained. Rear geometry, loads and sizing unchanged. Full native export and point mapping are stored in examples/sources/. Rear candidate: wishbones and toe link from VD12-KIN-002-FVSA_REAR.SLDPRT, 3D HARDPOINTS (ANTI + INBOARD BRAKES), selected provisionally to match the front anti layout. Model (X,Y,Z)=(part z-61,part x,-part y), inches. Existing 61-inch wheelbase retained. Rear contact patch from Wheel Front tire center; the construction-axis ground intercept is not the contact patch. Rear pushrod and rocker retain Mk11 coordinates because this part contains no replacements. Candidate is not active: rear_right case_4_brake_corner does not converge with this mixed geometry."
 }
