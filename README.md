@@ -239,3 +239,15 @@ Cornering loads include both original and mirrored acceleration/braking cases.
 Mirroring swaps left/right wheel loads and reverses the lateral component,
 preserving vertical load transfer. All seven cases (28 corner solutions) feed
 the member, joint-bolt, and chassis-load envelopes.
+
+## Editable rod ends
+
+Member Sizing has independent inboard/outboard JMX selectors. Each selection
+applies to both sides of the axle, preserving symmetric specifications. Margins,
+AN bolt/rod-end/plug checks, governing status, and bolt-schedule bore checks update
+immediately using solver-generated checks. Choices persist in local browser
+storage and are included with tube dimensions in Export member specs / Import
+specs. Reset saved specs restores both tubes and rod ends to configured defaults.
+These browser overrides do not rewrite the source JSON or report snapshots.
+Run `node tests/check_jmx_editor.cjs` after regenerating `index.html` to check
+independent ends, mirroring, hardware calculations, and storage.

@@ -836,7 +836,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
               <option value="unrated">Unrated</option>
             </select>
           </div>
-          <button type="button" id="exportTubeSpecs">Export tube specs</button>
+          <button type="button" id="exportTubeSpecs">Export member specs</button>
           <button type="button" id="importTubeSpecs">Import specs</button>
           <button type="button" id="resetTubeSpecs">Reset saved specs</button>
           <input id="tubeSpecFile" type="file" accept="application/json" hidden>
@@ -849,7 +849,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         <div class="sizing-metric"><strong id="sizingAutoCount">0</strong><span>auto-sized tubes</span></div>
         <div class="sizing-metric"><strong id="sizingJmxFailCount">0</strong><span>JMX proxy failures</span></div>
       </div>
-        <p class="sizing-proxy-note"><strong>Tube specification:</strong> each member uses its configured OD and ID by default. One solved axial member force is applied at full magnitude to the tube and to each of its two rod ends—it is not divided between them. Inboard and outboard JMX fields specify those two ends of one tube. Set <code>auto_size_tubes</code> to <code>true</code> only to select the lightest catalog tube meeting the target margin. Yield, ultimate, Euler buckling, and JMX axial-proxy margins are evaluated for every supplied load case. Select a member or “Calculations” to audit every check.</p>
+        <p class="sizing-proxy-note"><strong>Tube specification:</strong> each member uses its configured OD and ID by default. One solved axial member force is applied at full magnitude to the tube and to each of its two rod ends—it is not divided between them. Choose inboard and outboard JMX sizes independently below. Changes apply to both sides of the axle and are saved in this browser; export member specs to keep a copy. Set <code>auto_size_tubes</code> to <code>true</code> only to select the lightest catalog tube meeting the target margin. Yield, ultimate, Euler buckling, and JMX axial-proxy margins are evaluated for every supplied load case. Select a member or “Calculations” to audit every check.</p>
 
       <div class="sizing-table-wrap">
         <table class="sizing-table">
@@ -876,7 +876,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
 
       <footer class="sizing-foot">
         <p><strong>Margin convention:</strong> MS = allowable ÷ applied − 1. Negative is a predicted failure; zero is the allowable boundary. Tube checks include yield, ultimate, and Euler buckling with the workbook’s safety factors.</p>
-        <p><strong>JMX scope:</strong> selections follow Manufacturing Summary. JMX margin uses the workbook-derived axial tensile allowable as a screening proxy; verify final rod-end radial ratings, misalignment, threads, bolts, tabs, fatigue, and manufacturer data before release.</p>
+        <p><strong>JMX scope:</strong> initial selections follow Manufacturing Summary; selectors override them in this browser. JMX margin uses the workbook-derived axial tensile allowable as a screening proxy; verify final rod-end radial ratings, misalignment, threads, bolts, tabs, fatigue, and manufacturer data before release.</p>
       </footer>
     </div>
   </section>
@@ -1193,6 +1193,34 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         try { return JSON.parse(localStorage.getItem(tubeSpecStorageKey) || "{}"); }
         catch { return {}; }
       })();
+      const jmxVariants = payload.jmx_variants || {};
+      const jmxDefaults = new Map(sizingRows.map(row => [sizingRowKey(row), {chassis_jmx: row.chassis_jmx, wheel_jmx: row.wheel_jmx}]));
+      const jmxStorageKey = "bfr-jmx-specs-v1";
+      let savedJmxSpecs = (() => {
+        try { return JSON.parse(localStorage.getItem(jmxStorageKey) || "{}"); } catch { return {}; }
+      })();
+      function axleOf(row) { return configAssemblies.find(a => a.name === row.assembly)?.axle || row.assembly.split("_")[0]; }
+      function jmxKey(row) { return `${axleOf(row)}:${row.member}`; }
+      function applyJmxEnd(row, end, selection) {
+        const variant = jmxVariants[sizingRowKey(row)]?.[selection];
+        if (!variant) throw new Error("Unsupported JMX selection.");
+        const prefix = end.replace("_jmx", "");
+        for (const suffix of ["", "_margin", "_governing_case", "_allowable_lbf"]) row[end+suffix] = variant[end+suffix];
+        for (const key of ["jmx_checks", "hardware_checks"]) {
+          row[key] = [...(row[key] || []).filter(c => !c.mode.startsWith(prefix+" ")), ...variant[key].filter(c => c.mode.startsWith(prefix+" "))];
+        }
+        recalculateTubeRow(row, row.tube_od_in, row.tube_id_in);
+      }
+      function applySavedJmxSpecs() {
+        for (const row of sizingRows) {
+          if (!jmxVariants[sizingRowKey(row)]) continue;
+          for (const end of ["chassis_jmx", "wheel_jmx"]) {
+            const selection = savedJmxSpecs[jmxKey(row)]?.[end];
+            if (selection && jmxVariants[sizingRowKey(row)][selection]) applyJmxEnd(row, end, selection);
+          }
+        }
+      }
+      function persistJmxSpecs() { localStorage.setItem(jmxStorageKey, JSON.stringify(savedJmxSpecs)); }
       const sizingSort = {key: "margin", direction: "asc"};
       let sizingDetailKey = null;
       const state = {
@@ -1236,6 +1264,8 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         row.governing_margin = governing?.margin ?? NaN;
         row.governing_margin_mode = governing?.mode ?? "unrated";
         row.governing_margin_case = governing?.case ?? "";
+        row.governing_applied_load_lbf = governing?.applied_load_lbf ?? null;
+        row.governing_allowable_load_lbf = governing?.allowable_load_lbf ?? null;
       }
       function applySavedTubeSpecs() {
         for (const row of sizingRows) {
@@ -1247,6 +1277,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
       }
       function persistTubeSpecs() { localStorage.setItem(tubeSpecStorageKey, JSON.stringify(savedTubeSpecs)); }
       applySavedTubeSpecs();
+      applySavedJmxSpecs();
 
       function renderMethodsMetadata() {
         const setText = (id, value) => { const element = document.getElementById(id); if (element) element.textContent = value; };
@@ -1458,6 +1489,37 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
           requestAnimationFrame(centerMethodVisuals);
         }
       }
+      function jmxEditor(row, end) {
+        const options = Object.keys(jmxVariants[sizingRowKey(row)] || {});
+        if (!options.length) return formatJmx(row[end], row[end+"_margin"]);
+        const label = `${labelName(row.assembly)} ${labelName(row.member)} ${end === "chassis_jmx" ? "inboard" : "outboard"} JMX`;
+        return `<select data-jmx-row="${escapeHtml(sizingRowKey(row))}" data-jmx-end="${end}" aria-label="${escapeHtml(label)}">${options.map(size => `<option value="${escapeHtml(size)}" ${size === row[end] ? "selected" : ""}>${escapeHtml(size)}</option>`).join("")}</select><span>MS ${calcNumber(row[end+"_margin"],2)}</span>`;
+      }
+      function updateBoltBores() {
+        const hardware = payload.config.sizing?.hardware || {};
+        const schedule = payload.result.joint_bolt_schedule;
+        if (!schedule) return;
+        document.querySelectorAll("#joint-bolts tbody tr").forEach((tr, index) => {
+          const entry = schedule.rows[index];
+          const joint = entry.joint;
+          let member, end = "chassis_jmx";
+          if (joint.startsWith("Upper ") || joint.startsWith("Lower ")) {
+            if (!joint.endsWith("to chassis")) return;
+            member = joint.split(" ").slice(0,2).join("_").toLowerCase();
+          } else if (joint.startsWith("Tie rod")) {
+            member = entry.axle === "front" ? "steering_tie_rod" : "rear_tie_rod";
+            if (joint.endsWith("upright")) end = "wheel_jmx";
+          } else if (joint.startsWith("A-arm") || joint.startsWith("Pushrod")) {
+            member = entry.axle === "front" ? "pullrod" : "pushrod";
+            if (joint.startsWith("A-arm")) end = "wheel_jmx";
+          } else return;
+          const row = sizingRows.find(r => axleOf(r) === entry.axle && r.member === member);
+          const diameter = hardware.bolt_diameter_in?.[row?.[end]];
+          if (!diameter) return;
+          const pass = [1,2].map(n => n*Math.PI*diameter**2/4*schedule.strength_psi/schedule.safety_factor >= entry.load_lbf ? "passes" : "fails");
+          tr.children[5].textContent = `AN${Math.round(diameter*16)} bore / ${diameter.toFixed(4)} in; ${pass.join(" / ")} (1 / 2 shear)`;
+        });
+      }
       function formatJmx(selection, margin) {
         if (!selection || selection === "NA") return `<span class="jmx-na">—</span>`;
         const detail = Number.isFinite(margin) ? `MS ${margin.toFixed(2)}` : "unrated";
@@ -1531,6 +1593,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         </div>`;
       }
       function renderSizing() {
+        updateBoltBores();
         const visible = sizingRows.filter(row => {
           if (sizingControls.corner.value !== "all" && row.assembly !== sizingControls.corner.value) return false;
           if (sizingControls.state.value !== "all" && row.peak_state !== sizingControls.state.value) return false;
@@ -1570,8 +1633,8 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
             <td class="numeric" data-label="Max compression">${maxCompression}</td>
             <td class="numeric" data-label="Auto tube OD × wall">${escapeHtml(tube)}</td>
             <td class="numeric" data-label="Tube MS"><span class="margin-mark ${tubeStatus}"><span>${tubeMargin}</span><span>${tubeStatus.toUpperCase()}</span></span></td>
-            <td class="jmx-cell" data-label="JMX inboard">${formatJmx(row.chassis_jmx,row.chassis_jmx_margin)}${row.chassis_jmx_governing_case ? `<span>${escapeHtml(labelName(row.chassis_jmx_governing_case))}</span>` : ""}</td>
-            <td class="jmx-cell" data-label="JMX outboard">${formatJmx(row.wheel_jmx,row.wheel_jmx_margin)}${row.wheel_jmx_governing_case ? `<span>${escapeHtml(labelName(row.wheel_jmx_governing_case))}</span>` : ""}</td>
+            <td class="jmx-cell" data-label="JMX inboard">${jmxEditor(row,"chassis_jmx")}${row.chassis_jmx_governing_case ? `<span>${escapeHtml(labelName(row.chassis_jmx_governing_case))}</span>` : ""}</td>
+            <td class="jmx-cell" data-label="JMX outboard">${jmxEditor(row,"wheel_jmx")}${row.wheel_jmx_governing_case ? `<span>${escapeHtml(labelName(row.wheel_jmx_governing_case))}</span>` : ""}</td>
             <td class="numeric" data-label="Governing MS"><span class="margin-mark ${statusName}"><span>${marginLabel}</span><span>${statusName.toUpperCase()}</span></span></td>
             <td data-label="Governing mode / case"><strong>${escapeHtml(labelName(row.governing_margin_mode))}</strong><br><span class="table-muted">${escapeHtml(labelName(row.governing_margin_case))}</span></td>
             <td data-label="Action"><div class="table-actions"><button class="inspect-link" type="button" data-sizing-details="${escapeHtml(detailKey)}" aria-expanded="${expanded}" aria-controls="${detailId}">${expanded?"Hide calcs":"Calculations"}</button><button class="inspect-link" type="button" data-inspect-corner="${escapeHtml(row.assembly)}" data-inspect-case="${escapeHtml(row.peak_case)}">Inspect</button></div></td>
@@ -1961,6 +2024,18 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         renderSizing();
       });
       for (const control of [sizingControls.corner,sizingControls.state,sizingControls.status]) control.addEventListener("change",renderSizing);
+      sizingControls.body.addEventListener("change", event => {
+        const select = event.target.closest("[data-jmx-row]");
+        if (!select) return;
+        const row = sizingRows.find(r => sizingRowKey(r) === select.dataset.jmxRow);
+        if (!row) return;
+        const end = select.dataset.jmxEnd;
+        savedJmxSpecs[jmxKey(row)] = {...savedJmxSpecs[jmxKey(row)], [end]: select.value};
+        applySavedJmxSpecs();
+        persistJmxSpecs();
+        renderSizing();
+        [...sizingControls.body.querySelectorAll("[data-jmx-row]")].find(e => e.dataset.jmxRow === select.dataset.jmxRow && e.dataset.jmxEnd === end)?.focus();
+      });
       sizingControls.body.addEventListener("submit", event => {
         const form = event.target.closest("[data-tube-editor]");
         if (!form) return;
@@ -2013,10 +2088,10 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         resetView();
       });
       document.getElementById("exportTubeSpecs").addEventListener("click", () => {
-        const blob = new Blob([JSON.stringify({version: 1, tube_specs: savedTubeSpecs}, null, 2)], {type: "application/json"});
+        const blob = new Blob([JSON.stringify({version: 2, tube_specs: savedTubeSpecs, jmx_specs: savedJmxSpecs}, null, 2)], {type: "application/json"});
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "suspension-tube-specs.json";
+        link.download = "suspension-member-specs.json";
         link.click();
         URL.revokeObjectURL(link.href);
       });
@@ -2025,9 +2100,22 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         const file = event.target.files[0];
         if (!file) return;
         try {
-          const imported = JSON.parse(await file.text()).tube_specs;
+          const documentSpecs = JSON.parse(await file.text());
+          const imported = documentSpecs.tube_specs || {};
+          const jmxImport = documentSpecs.jmx_specs || {};
+          if (typeof jmxImport !== "object" || Array.isArray(jmxImport)) throw new Error("Expected a jmx_specs object.");
+          for (const [key, ends] of Object.entries(jmxImport)) {
+            const row = sizingRows.find(r => jmxKey(r) === key);
+            if (!row || !ends || typeof ends !== "object") throw new Error(`Unknown JMX member: ${key}`);
+            for (const [end, selection] of Object.entries(ends)) {
+              if (!["chassis_jmx", "wheel_jmx"].includes(end) || !jmxVariants[sizingRowKey(row)]?.[selection]) throw new Error(`Invalid JMX specification for ${key}`);
+            }
+          }
           if (!imported || typeof imported !== "object") throw new Error("Expected a tube_specs object.");
           savedTubeSpecs = {...savedTubeSpecs, ...imported};
+          for (const [key, ends] of Object.entries(jmxImport)) savedJmxSpecs[key] = {...savedJmxSpecs[key], ...ends};
+          applySavedJmxSpecs();
+          persistJmxSpecs();
           applySavedTubeSpecs();
           persistTubeSpecs();
           renderSizing();
@@ -2039,6 +2127,12 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
           const defaults = tubeSpecDefaults.get(sizingRowKey(row));
           if (defaults) recalculateTubeRow(row, defaults.tube_od_in, defaults.tube_id_in);
         }
+        for (const row of sizingRows) {
+          if (!jmxVariants[sizingRowKey(row)]) continue;
+          for (const end of ["chassis_jmx", "wheel_jmx"]) applyJmxEnd(row, end, jmxDefaults.get(sizingRowKey(row))[end]);
+        }
+        savedJmxSpecs = {};
+        persistJmxSpecs();
         savedTubeSpecs = {};
         persistTubeSpecs();
         renderSizing();

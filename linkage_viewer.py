@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 from html import escape
 from pathlib import Path
@@ -9,6 +10,28 @@ from typing import Any
 
 
 TEMPLATE_PATH = Path(__file__).with_name("viewer_template.html")
+
+
+def jmx_variants(config, result):
+    """Use solver checks for each selectable rod end; avoid separate JS formulas."""
+    from suspension_linkage_forces import build_sizing_summary
+    variants = {}
+    sizing = config.get("sizing", {})
+    options = list(sizing.get("jmx_safe_axial_load_lbf", {}))
+    for assembly, solved in zip(config["assemblies"], result["assemblies"]):
+        axle = assembly.get("axle", "front")
+        for option in options:
+            candidate = copy.deepcopy(sizing)
+            for spec in candidate.get(axle, {}).values():
+                spec["chassis_jmx"] = spec["wheel_jmx"] = option
+            for row in build_sizing_summary(assembly, solved, candidate):
+                if row["member"] == "shock": continue
+                key = assembly["name"] + ":" + row["member"]
+                variants.setdefault(key, {})[option] = {
+                    k: v for k, v in row.items()
+                    if "jmx" in k or k == "hardware_checks"
+                }
+    return variants
 
 
 def write_viewer_html(
@@ -21,7 +44,7 @@ def write_viewer_html(
         config = expand_config(config)
     template = TEMPLATE_PATH.read_text(encoding="utf-8")
     payload = json.dumps(
-        {"config": config, "result": result}, separators=(",", ":"), ensure_ascii=False
+        {"config": config, "result": result, "jmx_variants": jmx_variants(config, result)}, separators=(",", ":"), ensure_ascii=False
     ).replace("</", "<\\/")
     placeholder = "__SUSPENSION_DATA__"
     if template.count(placeholder) != 1:
