@@ -17,7 +17,7 @@ class RearPackagingTests(unittest.TestCase):
         right, left = config["assemblies"][2:]
         axis = right["rocker"]["pivot_axis"]
         center = [(a + b) / 2 for a, b in zip(*axis)]
-        for actual, expected in zip(center, [-58.397747, 12.177737, -11.16198]):
+        for actual, expected in zip(center, [-61 + 66.0972/25.4, 309.3145/25.4, -283.5143/25.4]):
             self.assertAlmostEqual(actual, expected, places=10)
         for a, b in zip(axis, left["rocker"]["pivot_axis"]):
             self.assertEqual(b, [a[0], -a[1], a[2]])
@@ -30,7 +30,7 @@ class RearPackagingTests(unittest.TestCase):
         config = json.loads((ROOT / "examples/mk12_front.json").read_text())
         rear = config["assemblies"][2]
         rod = next(m for m in rear["members"] if m["name"] == "rear_tie_rod")
-        self.assertEqual(rod["application"], [-64.1677559055, 20.7414173228, -9.2622440945])
+        self.assertEqual(rod["application"], [-64.17, 20.74, -9.26])
         result = solve_config(config)
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "viewer.html"
@@ -47,13 +47,13 @@ class RearPackagingTests(unittest.TestCase):
         rear = config["assemblies"][2]
         members = {m["name"]: m for m in rear["members"]}
         self.assertEqual(rear["contact_patch"], [-61.0, 22.5, 0.0])
-        for name, x in [("upper_fore", -53.0), ("upper_aft", -60.0)]:
-            for actual, expected in zip(members[name]["anchor"], [x, 12.25, -7.961149535978046]):
+        for name, x in [("upper_fore", -53.0), ("upper_aft", -59.0)]:
+            for actual, expected in zip(members[name]["anchor"], [x, 12.25, -10.26 if name == "upper_fore" else -9.79]):
                 self.assertAlmostEqual(actual, expected, places=10)
         self.assertEqual(members["pushrod"]["anchor"], rear["rocker"]["pushrod_pickup"])
-        self.assertEqual(members["pushrod"]["anchor"], [-58.470854, 16.654995, -12.099762])
-        self.assertEqual(members["pushrod"]["application"], [-58.401473, 19.477494, -11.209784])
-        self.assertLess(math.dist(members["pushrod"]["anchor"], members["pushrod"]["application"]), 3.0)
+        self.assertEqual(members["pushrod"]["anchor"], [-58.46, 16.39, -12.01])
+        self.assertEqual(members["pushrod"]["application"], [-58.4, 19.48, -11.21])
+        self.assertLess(math.dist(members["pushrod"]["anchor"], members["pushrod"]["application"]), 3.3)
 
 
 if __name__ == "__main__":

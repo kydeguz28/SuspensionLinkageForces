@@ -224,11 +224,11 @@
           "role": "tie_rod",
           "application": [
             2.25,
-            19.0,
+            19,
             -5.97
           ],
           "anchor": [
-            3.151133234317,
+            3.15,
             8.7,
             -4.79
           ]
@@ -236,97 +236,97 @@
         {
           "name": "lower_fore",
           "application": [
-            -0.290483025522,
-            20.997261148543,
+            -0.29,
+            21,
             -4.6
           ],
           "anchor": [
-            5.0,
-            7.57874015748,
-            -3.095078022459
+            5,
+            11.19,
+            -3.37
           ]
         },
         {
           "name": "lower_aft",
           "application": [
-            -0.290483025522,
-            20.997261148543,
+            -0.29,
+            21,
             -4.6
           ],
           "anchor": [
-            -5.0,
-            7.57874015748,
-            -3.918026346145
+            -5,
+            11.19,
+            -4.23
           ]
         },
         {
           "name": "upper_fore",
           "application": [
-            -1.026212672382,
-            20.08744886,
+            -1.03,
+            20.09,
             -11.6
           ],
           "anchor": [
-            7.0,
-            7.57874015748,
-            -9.1249838719
+            7,
+            11.19,
+            -10.08
           ]
         },
         {
           "name": "upper_aft",
           "application": [
-            -1.026212672382,
-            20.08744886,
+            -1.03,
+            20.09,
             -11.6
           ],
           "anchor": [
-            -5.0,
-            7.57874015748,
-            -7.679582980048
+            -5,
+            11.19,
+            -8.64
           ]
         },
         {
           "name": "pullrod",
           "role": "pushrod",
           "application": [
-            -1.04,
-            18.84,
-            -11.27
+            -1.03,
+            18.27,
+            -11.61
           ],
           "anchor": [
-            -2.31,
-            8.92,
-            -22.26
+            -2.29,
+            8.93,
+            -22.11
           ]
         }
       ],
       "rocker": {
         "pivot_axis": [
           [
-            -3.29,
-            7.02,
-            -22.12
+            -3.25603877536634,
+            6.9511643616477565,
+            -21.750242984384897
           ],
           [
-            -1.29,
-            7.02,
-            -22.12
+            -1.2706147679407471,
+            6.948788394257757,
+            -21.991253078607237
           ]
         ],
         "pushrod_pickup": [
-          -2.31,
-          8.92,
-          -22.26
+          -2.29,
+          8.93,
+          -22.11
         ],
         "shock_pickup": [
-          -2.47,
-          8.33,
-          -23.62
+          -2.475405511811024,
+          8.334645669291339,
+          -23.631488188976377
         ],
         "shock_chassis_pickup": [
-          -2.47,
-          0.75,
-          -23.62
+          -2.475405511811024,
+          0.7500000000000001,
+          -23.631488188976377
         ]
       },
       "load_cases": [
@@ -373,6 +373,22 @@
             248.1622,
             339.2734,
             361.5148
+          ]
+        },
+        {
+          "name": "case_3_accel_corner_mirrored",
+          "force": [
+            48.7544,
+            51.7802,
+            56.0222
+          ]
+        },
+        {
+          "name": "case_4_brake_corner_mirrored",
+          "force": [
+            248.1622,
+            -64.1706,
+            162.4825
           ]
         }
       ]
@@ -425,6 +441,22 @@
             64.1706,
             162.4825
           ]
+        },
+        {
+          "name": "case_3_accel_corner_mirrored",
+          "force": [
+            48.7544,
+            406.0447,
+            281.8825
+          ]
+        },
+        {
+          "name": "case_4_brake_corner_mirrored",
+          "force": [
+            248.1622,
+            -339.2734,
+            361.5148
+          ]
         }
       ]
     },
@@ -449,110 +481,110 @@
           "name": "rear_tie_rod",
           "role": "tie_rod",
           "application": [
-            -64.1677559055,
-            20.7414173228,
-            -9.2622440945
+            -64.17,
+            20.74,
+            -9.26
           ],
           "anchor": [
-            -59.8807086614,
-            11.9179527559,
-            -9.1211417323
+            -59.88,
+            11.92,
+            -9.12
           ]
         },
         {
           "name": "lower_fore",
           "application": [
-            -62.423849550967,
-            22.0,
-            -4.530828275192
+            -60.26,
+            20.86,
+            -4.45
           ],
           "anchor": [
-            -54.0,
+            -53,
             12.25,
-            -3.852393016868
+            -5.67
           ]
         },
         {
           "name": "lower_aft",
           "application": [
-            -62.423849550967,
-            22.0,
-            -4.530828275192
+            -60.26,
+            20.86,
+            -4.45
           ],
           "anchor": [
-            -59.75,
+            -59.5,
             12.25,
-            -3.852393016868
+            -4.93
           ]
         },
         {
           "name": "upper_fore",
           "application": [
-            -62.069887969922,
-            21.220527579836,
-            -11.594139637217
+            -58.35,
+            20.54,
+            -10.55
           ],
           "anchor": [
-            -53.0,
+            -53,
             12.25,
-            -7.961149535978
+            -10.26
           ]
         },
         {
           "name": "upper_aft",
           "application": [
-            -62.069887969922,
-            21.220527579836,
-            -11.594139637217
+            -58.35,
+            20.54,
+            -10.55
           ],
           "anchor": [
-            -60.0,
+            -59,
             12.25,
-            -7.961149535978
+            -9.79
           ]
         },
         {
           "name": "pushrod",
           "role": "pushrod",
           "application": [
-            -58.401473,
-            19.477494,
-            -11.209784
+            -58.4,
+            19.48,
+            -11.21
           ],
           "anchor": [
-            -58.470854,
-            16.654995,
-            -12.099762
+            -58.46,
+            16.39,
+            -12.01
           ]
         }
       ],
       "rocker": {
         "pivot_axis": [
           [
-            -57.400771908139,
-            12.177736960983,
-            -11.239701722885
+            -59.394677928177295,
+            12.178764829686108,
+            -11.083687766999594
           ],
           [
-            -59.394722091861,
-            12.177737039017,
-            -11.084258277115
+            -57.400818134814834,
+            12.176707611258776,
+            -11.240272862921666
           ]
         ],
         "pushrod_pickup": [
-          -58.470854,
-          16.654995,
-          -12.099762
+          -58.46,
+          16.39,
+          -12.01
         ],
         "shock_pickup": [
-          -58.703242,
-          14.368667,
-          -15.080717
+          -58.703240157480316,
+          14.368665354330709,
+          -15.080716535433073
         ],
         "shock_chassis_pickup": [
-          -58.752162,
-          6.898431,
-          -15.708241
+          -58.75216141732283,
+          6.898433070866142,
+          -15.708240157480317
         ]
       },
       "load_cases": [
@@ -599,6 +631,22 @@
             181.6929,
             475.8796,
             328.246
+          ]
+        },
+        {
+          "name": "case_3_accel_corner_mirrored",
+          "force": [
+            -130.2348,
+            57.4241,
+            129.9161
+          ]
+        },
+        {
+          "name": "case_4_brake_corner_mirrored",
+          "force": [
+            181.6929,
+            -77.4554,
+            55.2674
           ]
         }
       ]
@@ -651,9 +699,26 @@
             77.4554,
             55.2674
           ]
+        },
+        {
+          "name": "case_3_accel_corner_mirrored",
+          "force": [
+            -130.2348,
+            570.4961,
+            439.69
+          ]
+        },
+        {
+          "name": "case_4_brake_corner_mirrored",
+          "force": [
+            181.6929,
+            -475.8796,
+            328.246
+          ]
         }
       ]
     }
   ],
-  "geometry_source_note": "Front wishbone/steering: VD12-KIN-002-FVSA_FRONT.SLDPRT, Autocross (Anti); front rocker/rod from original PDF. Rear wishbones: VD12-KIN-002-FVSA_REAR.SLDPRT, INBOARD BRAKES; rear tie rod explicitly selected from ANTI + INBOARD BRAKES. Rear pushrod arm pickup retained from SU12-SP-001-Rear_Sketches_c1.SLDPRT RIDE HEIGHT. Rear pivot, shock chassis mount, rocker shock joint and rocker rod joint superseded by user screenshots, mapped as (X,Y,Z)=(-61-source Z,-source X,-source Y) inches per user axis direction and axle offset. Rear pivot axis assumed normal to the plane through the new pivot and two rocker joints; endpoints one inch either side. All 20 spring-loaded load cases converge. Loads/sizing unchanged. See source tables and notes. Joint identification corrected from latest assembly screenshots: source (-19.477494,11.209784,-2.598527) is the pushrod wheel-side pickup, not the rocker joint. Source (-16.654995,12.099762,-2.529146) is the rocker-to-pushrod joint. Both use (-61-Z,-X,-Y). Rocker planar normal recomputed from corrected joints."
+  "geometry_source_note": "Latest 2026-09-23 front/rear static linkage tables supersede all member endpoint coordinates, including rod endpoints. Table inches map to model (X,Y,-Z), with no additional rear offset. Shock endpoints and rocker pivot centers retain preceding millimeter screenshots. Rocker rod joints follow new inboard rod points; assumed planar pivot axes recomputed. Sources: examples/sources/mk12_linkage_table_updates_2026-09-23.json and mk12_rocker_updates_2026-09-23.json. Left side mirrored from right.",
+  "load_case_note": "Opposite-direction acceleration/cornering and braking/cornering cases swap left/right wheel force vectors and negate their lateral component. Longitudinal and vertical components are retained from the opposite wheel, preserving mirrored load transfer. Both turn directions contribute to all sizing envelopes."
 }

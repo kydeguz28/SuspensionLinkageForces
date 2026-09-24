@@ -17,43 +17,23 @@ Positive axial force means **tension**. Negative axial force means
 
 ## Current coordinates
 
-The main viewer uses `examples/mk12_front.json`. Front wishbone and steering
-hardpoints come from the user-selected `3D Hardpoints Autocross (Anti)` sketch in
-`VD12-KIN-002-FVSA_FRONT.SLDPRT`. The ground-level tire center in `Wheel Front`
-sets the front contact patch at model `[0, 22.5, 0]` inches. The point where the
-steering axis meets the ground is construction geometry, not the contact patch.
+The main viewer uses `examples/mk12_front.json`. All front/rear member endpoints
+use the latest 2026-09-23 static linkage tables, recorded in
+`examples/sources/mk12_linkage_table_updates_2026-09-23.json`. Table inches map
+as `(X,Y,Z) = (table X, table Y, -table Z)`; rear longitudinal values already
+include the axle offset. Left geometry mirrors right. Contact patches remain
+`[0,22.5,0]` front and `[-61,22.5,0]` rear before left-side mirroring.
 
-The SolidWorks API export transforms sketch coordinates into part coordinates,
-converts meters to inches, and maps them into model axes as
-`(X, Y, Z) = (part z, part x, -part y)`. The part's rear reference at z = -61
-and its upward-positive y establish the longitudinal and vertical directions.
-Front-left geometry is mirrored from front-right. The complete sketch-point and
-line export is in `examples/sources/mk12_front_native_sketches.tsv`; the selected
-hardpoints and both coordinate bases are in `examples/sources/mk12_front_hardpoints.csv`.
-
-The front part has no identified rocker, shock, or rod-pickup sketch. Those coordinates retain
-the earlier `mk12 input coords - Sheet1.pdf` values and its assumed mapping
-`(X, Y, Z) = (-sheet z, -sheet x, -sheet y)`. BC Inboard maps to the rocker
-shock pickup, BC Outboard to the rod pickup, and BC Chassis to the pivot center.
-The rocker axis retains its assumed model-X direction and two-inch endpoint
-separation because the PDF supplies only a center point. Loads and sizing remain
-unchanged. The original `mk11_reference.json` remains
-available for workbook comparison tests.
-
-Rear wishbones use `3D HARDPOINTS INBOARD BRAKES`; the rearward tie rod uses
-`ANTI + INBOARD BRAKES`, as selected by the user. The rear pushrod arm pickup and rocker/shock hardpoints come from the later
-user screenshots and supersede the packaging export. The wheel-side pushrod
-point is source `(-19.477494, 11.209784, -2.598527)`; the rocker-side point is
-`(-16.654995, 12.099762, -2.529146)`. Their model mapping is `(-61 - Z, -X, -Y)` in inches,
-following the user-supplied orientation and 61-inch axle offset. Other source
-files retain their separately documented coordinate conversions.
-
-The rear rocker axis is assumed perpendicular to the plane through the new
-pivot and its two joints. Axis endpoints lie one inch either side of the pivot.
-This is a planar-rocker assumption, not a measured axis. Current points are in
-`examples/sources/mk12_rear_hardpoints.csv`; source details are in
-`examples/sources/mk12_rear_import_notes.md`. All 20 spring-loaded cases now
-converge. No current case uses the optional fixed-geometry fallback.
+Shock endpoints and bellcrank pivot centers retain the preceding millimeter
+screenshots in `examples/sources/mk12_rocker_updates_2026-09-23.json`. Their
+source axes are +Z rearward, +Y upward, +X right viewed forward from the rear;
+right-side model mapping is `(-z/25.4+offset,-x/25.4,-y/25.4)` with axle-local
+offsets 0 front and -61 inches rear. The latest tables supersede their rod
+endpoints. Rocker rod joints are synchronized to the new inboard rod points.
+Both pivot axes are inferred normal to each pivot/shock/rod plane, with
+endpoints one inch either side; bearing axes have not been measured.
+Earlier exports remain historical references. All 28 corner/case solutions
+converge without fixed-geometry fallback.
 
 The separate `front-shock-motion-ratio` study remains the Mk11 study; its rigid
 lower-arm pickup assumption needs confirmation before adapting it to the new
@@ -254,3 +234,8 @@ joint bending, fatigue, tabs, welds or the model's idealized arm load path.
 Current snapshot downloads: `reports/joint_bolt_schedule.csv` and
 `reports/joint_bolt_schedule.md`. The JSON and viewer schedules regenerate with
 the solver; these report snapshots must be refreshed after geometry changes.
+
+Cornering loads include both original and mirrored acceleration/braking cases.
+Mirroring swaps left/right wheel loads and reverses the lateral component,
+preserving vertical load transfer. All seven cases (28 corner solutions) feed
+the member, joint-bolt, and chassis-load envelopes.
