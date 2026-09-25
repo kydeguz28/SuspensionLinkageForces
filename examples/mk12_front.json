@@ -125,81 +125,81 @@
     },
     "front": {
       "steering_tie_rod": {
-        "tube_id_in": 0.34,
+        "tube_id_in": 0.3395,
         "tube_od_in": 0.4375,
-        "chassis_jmx": "JMX4",
+        "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       },
       "lower_fore": {
-        "tube_id_in": 0.444,
-        "tube_od_in": 0.5,
-        "chassis_jmx": "JMX4",
-        "wheel_jmx": "JMX4"
+        "tube_id_in": 0.3395,
+        "tube_od_in": 0.4375,
+        "chassis_jmx": "JMX3",
+        "wheel_jmx": "JMX3"
       },
       "lower_aft": {
-        "tube_id_in": 0.34,
+        "tube_id_in": 0.3395,
         "tube_od_in": 0.4375,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       },
       "upper_fore": {
-        "tube_id_in": 0.34,
+        "tube_id_in": 0.3395,
         "tube_od_in": 0.4375,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       },
       "upper_aft": {
-        "tube_id_in": 0.34,
+        "tube_id_in": 0.3395,
         "tube_od_in": 0.4375,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       },
       "pushrod": {
-        "tube_id_in": 0.323,
-        "tube_od_in": 0.5625,
+        "tube_id_in": 0.3395,
+        "tube_od_in": 0.4375,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       }
     },
     "rear": {
       "rear_tie_rod": {
-        "tube_id_in": 0.384,
-        "tube_od_in": 0.5,
+        "tube_id_in": 0.3395,
+        "tube_od_in": 0.4375,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       },
       "lower_fore": {
-        "tube_id_in": 0.402,
-        "tube_od_in": 0.5,
+        "tube_id_in": 0.3395,
+        "tube_od_in": 0.4375,
         "chassis_jmx": "JMX4",
         "wheel_jmx": "JMX4"
       },
       "lower_aft": {
-        "tube_id_in": 0.402,
-        "tube_od_in": 0.5,
-        "chassis_jmx": "JMX5",
-        "wheel_jmx": "JMX5"
+        "tube_id_in": 0.3395,
+        "tube_od_in": 0.4375,
+        "chassis_jmx": "JMX4",
+        "wheel_jmx": "JMX4"
       },
       "upper_fore": {
-        "tube_id_in": 0.34,
+        "tube_id_in": 0.3395,
         "tube_od_in": 0.4375,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       },
       "upper_aft": {
-        "tube_id_in": 0.34,
+        "tube_id_in": 0.3395,
         "tube_od_in": 0.4375,
-        "chassis_jmx": "JMX3",
-        "wheel_jmx": "JMX3"
+        "chassis_jmx": "JMX4",
+        "wheel_jmx": "JMX4"
       },
       "pushrod": {
-        "tube_id_in": 0.444,
-        "tube_od_in": 0.5,
-        "chassis_jmx": "JMX3",
-        "wheel_jmx": "JMX3"
+        "tube_id_in": 0.3395,
+        "tube_od_in": 0.4375,
+        "chassis_jmx": "JMX4",
+        "wheel_jmx": "JMX4"
       }
     },
-    "source_note": "Tube geometry and original inboard JMX selections follow Summary Front/Rear. Each physical tube is now explicitly specified with a rod end at both ends; its outboard JMX is conservatively matched to the inboard size pending final packaging confirmation. JMX safe axial loads are derived from Rod end and plugs using 70 ksi and FSy 1.3."
+    "source_note": "Catalog auto-selection with minimum modeled margin 0.1 across both sides and every load case. Minimum-area catalog tubes and smallest passing JMX size at both ends. Original material strengths and safety factors retained. Rod-end checks remain workbook proxies; physical fit and damper ratings unverified."
   },
   "assemblies": [
     {

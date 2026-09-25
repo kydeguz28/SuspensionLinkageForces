@@ -15,7 +15,7 @@
   "assembly": {
     "name": "front_right",
     "contact_patch": [0.0, 25.5, 0.0],
-    "wheel_center": [0.0, 25.5, -9.0],
+    "wheel_center": [0.0, 25.5, -8.0],
     "members": [
       {"name": "steering_tie_rod", "role": "tie_rod", "application": [2.15, 21.1, -6.89412519], "anchor": [3.9, 8.7, -6.15]},
       {"name": "lower_fore", "application": [-0.15484862, 20.75, -4.62744094], "anchor": [6.95, 7.62636793, -4.395]},

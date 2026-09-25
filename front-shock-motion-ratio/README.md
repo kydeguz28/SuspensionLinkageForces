@@ -2,7 +2,7 @@
 
 This project sweeps prescribed front-wheel vertical travel through the configured double-wishbone, pullrod, rocker, and shock geometry. It solves all six linkage-length constraints plus the requested wheel travel, then reports shock compression and motion ratio.
 
-The default configuration uses an explicit wheel center 9.0 in above the contact patch (an 18 in nominal tire). Replace `assembly.wheel_center` with the measured loaded-radius position for the installed tire before using the results for design release.
+The default configuration uses an explicit wheel center 8.0 in above the contact patch (a 16 in nominal tire). Replace `assembly.wheel_center` with the measured loaded-radius position for the installed tire before using the results for design release.
 
 The configured front shock is 200.0 mm node-to-node at full extension with 47.5 mm of travel, giving a 152.5 mm bottom-out length. The generated study reports node-to-node length and stroke usage at every pose, shades travel outside the physical shock range, and places the rebound preset at the nearest extension-safe solved pose.
 

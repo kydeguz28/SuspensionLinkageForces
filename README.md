@@ -255,3 +255,14 @@ independent ends, mirroring, hardware calculations, and storage.
 Both active front and rear shock-packaging rods are named `pushrod`. The viewer
 migrates older saved/imported `pullrod` tube and JMX keys to `pushrod`, preserving
 existing selections. This naming update does not change geometry or load signs.
+
+## Current auto-selected Mk12 specifications
+
+Run `python auto_spec.py` to select minimum-area catalog tubes and the smallest
+JMX size that meets MS >= +0.10 at both ends across all four corners and all load
+cases. This writes the selected dimensions and ends into `examples/mk12_front.json`,
+regenerates `index.html`, and refreshes `reports/auto_spec.md` and the bolt schedule.
+Material strengths and safety factors are retained. The saved configuration uses
+explicit dimensions (`auto_size_tubes: false`) so exported specs match the selection.
+Damper ratings and physical joint/insert fit remain unverified. Browser-saved tube
+or JMX overrides take precedence over regenerated defaults.

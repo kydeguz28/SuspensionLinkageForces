@@ -94,7 +94,7 @@ class MotionStudyTests(unittest.TestCase):
             places=9,
         )
         self.assertAlmostEqual(
-            spec["extension_limit_wheel_travel_in"], -0.7040631663, places=6
+            spec["extension_limit_wheel_travel_in"], -0.7039954069, places=6
         )
         self.assertIsNone(spec["compression_limit_wheel_travel_in"])
         samples = self.study["samples"]
@@ -117,7 +117,7 @@ class MotionStudyTests(unittest.TestCase):
             )
         )
         ride = next(item for item in samples if abs(item["wheel_travel_in"]) < 1e-12)
-        self.assertAlmostEqual(ride["instantaneous_motion_ratio"], 1.5543557931, places=8)
+        self.assertAlmostEqual(ride["instantaneous_motion_ratio"], 1.5543558533, places=8)
 
     def test_generated_page_embeds_study_and_controls(self):
         with tempfile.TemporaryDirectory() as directory:
