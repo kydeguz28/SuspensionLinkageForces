@@ -6,6 +6,8 @@ const code = source.slice(source.indexOf('      const sizingRows ='),source.inde
 const storage = {};
 const context = vm.createContext({payload, configAssemblies:payload.config.assemblies, localStorage:{getItem:k=>storage[k],setItem:(k,v)=>storage[k]=v}, assert});
 vm.runInContext(code + `
+assert.equal(migrateRodSpecKeys({'front:pullrod':{chassis_jmx:'JMX5'}})['front:pushrod'].chassis_jmx,'JMX5');
+assert.equal(migrateRodSpecKeys({'front_right:pullrod':{tube_od_in:.5}})['front_right:pushrod'].tube_od_in,.5);
 const row = sizingRows.find(r => r.assembly === 'rear_right' && r.member === 'pushrod');
 const opposite = sizingRows.find(r => r.assembly === 'rear_left' && r.member === 'pushrod');
 const originalWheel = row.wheel_jmx;

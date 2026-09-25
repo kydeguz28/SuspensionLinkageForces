@@ -939,7 +939,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
       <div class="methods-hero-inner">
         <p class="methods-kicker">Calculation method · embedded configuration</p>
         <h1 class="methods-title">From tire patch to chassis hardpoint</h1>
-        <p class="methods-deck">The model follows the load path in the same order the hardware carries it. A six-member rigid-upright solve produces axial linkage forces; the push/pull rod then drives a rigid rocker, the rocker drives the shock/spring assembly, and equal-and-opposite reactions are collected at the chassis.</p>
+        <p class="methods-deck">The model follows the load path in the same order the hardware carries it. A six-member rigid-upright solve produces axial linkage forces; the pushrod then drives a rigid rocker, the rocker drives the shock/spring assembly, and equal-and-opposite reactions are collected at the chassis.</p>
         <div class="methods-geometry-controls" aria-label="Methods diagram geometry">
           <div class="field"><label for="methodsAssembly">Diagram corner</label><select id="methodsAssembly"></select></div>
           <div class="field"><label for="methodsLoadCase">Diagram load case</label><select id="methodsLoadCase"></select></div>
@@ -999,7 +999,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
           <div class="stage-marker">03<small>Geometry</small></div>
           <div>
             <h2>Represent six ideal axial members</h2>
-            <p>The upright is connected by exactly six independent force directions: tie/toe rod, lower fore, lower aft, upper fore, upper aft, and pushrod or pullrod. Each is idealized as pin-jointed and carries no bending moment.</p>
+            <p>The upright is connected by exactly six independent force directions: tie/toe rod, lower fore, lower aft, upper fore, upper aft, and pushrod. Each is idealized as pin-jointed and carries no bending moment.</p>
             <div class="equation">û<sub>i</sub> = (r<sub>anchor,i</sub> − r<sub>application,i</sub>) / ‖r<sub>anchor,i</sub> − r<sub>application,i</sub>‖<br>F<sub>i</sub> = N<sub>i</sub> û<sub>i</sub></div>
             <p>With the direction defined from upright to chassis, positive N is tension and negative N is compression. Reversing only the stored member direction reverses the scalar sign but leaves the physical vector unchanged.</p>
             <div class="model-boundary"><strong>Model boundary:</strong> each fore and aft wishbone leg is treated as its own two-force member. Local A-arm bending, tabs, bolts, rod-end misalignment, compliance, fatigue, and joint friction require separate checks.</div>
@@ -1070,7 +1070,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
           <div class="stage-marker">07<small>Output</small></div>
           <div>
             <h2>Apply equal-and-opposite loads to the chassis</h2>
-            <p>At every direct link anchor, the chassis load is equal and opposite to the member force acting on the suspension. The shock load enters at its fixed chassis pickup. The push/pull rod is internal to the suspension-plus-rocker free body, so it is not counted again as a chassis interface.</p>
+            <p>At every direct link anchor, the chassis load is equal and opposite to the member force acting on the suspension. The shock load enters at its fixed chassis pickup. The pushrod is internal to the suspension-plus-rocker free body, so it is not counted again as a chassis interface.</p>
             <ul>
               <li>Wishbone and tie/toe-rod anchors receive axial link reactions.</li>
               <li>The shock chassis pickup receives the axial shock reaction.</li>
@@ -1184,20 +1184,33 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
       const sizingRows = payload.result.assemblies.flatMap(assembly =>
         (assembly.sizing_summary || []).map(row => ({...row, assembly: assembly.name, forceUnits: assembly.force_units || "lbf"}))
       );
+      function migrateRodSpecKeys(specs) {
+        const migrated = {...specs};
+        for (const key of Object.keys(migrated)) {
+          if (!key.endsWith(":pullrod")) continue;
+          const replacement = key.replace(/:pullrod$/, ":pushrod");
+          const supported = sizingRows.some(row => `${row.assembly}:${row.member}` === replacement || `${row.assembly.split("_")[0]}:${row.member}` === replacement);
+          if (supported) {
+            if (!(replacement in migrated)) migrated[replacement] = migrated[key];
+            delete migrated[key];
+          }
+        }
+        return migrated;
+      }
       const tubeSpecStorageKey = "bfr-tube-specs-v1";
       const tubeSpecDefaults = new Map(sizingRows.filter(row => row.member !== "shock").map(row => [
         `${row.assembly}:${row.member}`,
         {tube_od_in: row.configured_tube_od_in, tube_id_in: row.configured_tube_id_in}
       ]));
       let savedTubeSpecs = (() => {
-        try { return JSON.parse(localStorage.getItem(tubeSpecStorageKey) || "{}"); }
+        try { return migrateRodSpecKeys(JSON.parse(localStorage.getItem(tubeSpecStorageKey) || "{}")); }
         catch { return {}; }
       })();
       const jmxVariants = payload.jmx_variants || {};
       const jmxDefaults = new Map(sizingRows.map(row => [sizingRowKey(row), {chassis_jmx: row.chassis_jmx, wheel_jmx: row.wheel_jmx}]));
       const jmxStorageKey = "bfr-jmx-specs-v1";
       let savedJmxSpecs = (() => {
-        try { return JSON.parse(localStorage.getItem(jmxStorageKey) || "{}"); } catch { return {}; }
+        try { return migrateRodSpecKeys(JSON.parse(localStorage.getItem(jmxStorageKey) || "{}")); } catch { return {}; }
       })();
       function axleOf(row) { return configAssemblies.find(a => a.name === row.assembly)?.axle || row.assembly.split("_")[0]; }
       function jmxKey(row) { return `${axleOf(row)}:${row.member}`; }
@@ -1452,7 +1465,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
           ["CHASSIS MOUNT",rocker.shock_chassis_pickup,"#172026"]
         ].map((item,index)=>`<g><circle cx="510" cy="${72+index*48}" r="4" fill="${item[2]}"/><text x="523" y="${68+index*48}" class="cad-label">${item[0]}</text><text x="523" y="${84+index*48}" class="cad-mono">${item[1].map(value=>value.toFixed(2)).join("  ")}</text></g>`).join("");
         const rockerSvgElement=document.getElementById("rockerGeometryVisual");
-        rockerSvgElement.innerHTML=`<title id="rockerVisualTitle">${escapeHtml(assemblyLabel)} CAD-derived rocker and shock projection</title><desc id="rockerVisualDesc">Exact rocker axis, rocker pickups, push or pull rod, and fixed shock chassis pickup shown at the default 3D orientation in an orthographic projection.</desc><defs><marker id="rockerForceArrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="context-stroke"/></marker></defs><text x="22" y="22" class="cad-label">${escapeHtml(assemblyLabel.toUpperCase())} · ${escapeHtml(caseLabel.toUpperCase())}</text><path d="M${pm.x.toFixed(1)} ${pm.y.toFixed(1)}L${rp.x.toFixed(1)} ${rp.y.toFixed(1)}L${sp.x.toFixed(1)} ${sp.y.toFixed(1)}Z" class="cad-rocker-web"/>${methodLine(pa,pb,"cad-structure",COLORS.rocker)}${methodLine(ra,rp,"cad-member",COLORS.pushrod)}${methodLine(sp,sc,"cad-member",COLORS.shock)}${rodForceArrow}${shockForceArrow}${methodNode(pa,COLORS.rocker)}${methodNode(pb,COLORS.rocker)}${methodNode(pm,COLORS.selected,false,7)}${methodNode(rp,COLORS.pushrod)}${methodNode(sp,COLORS.shock)}${methodNode(sc,"#172026",true,7)}<line x1="492" y1="40" x2="492" y2="286" class="cad-divider"/><text x="510" y="39" class="cad-label">PICKUPS · X  Y  Z (${escapeHtml(units)})</text>${coordinateRows}<text x="510" y="282" class="cad-mono">ROD ${Number.isFinite(rodForce)?rodForce.toFixed(1):"—"} · SHOCK ${Number.isFinite(shockForce)?shockForce.toFixed(1):"—"} ${escapeHtml(assembly.force_units||"lbf")}</text>`;
+        rockerSvgElement.innerHTML=`<title id="rockerVisualTitle">${escapeHtml(assemblyLabel)} CAD-derived rocker and shock projection</title><desc id="rockerVisualDesc">Exact rocker axis, rocker pickups, pushrod, and fixed shock chassis pickup shown at the default 3D orientation in an orthographic projection.</desc><defs><marker id="rockerForceArrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="context-stroke"/></marker></defs><text x="22" y="22" class="cad-label">${escapeHtml(assemblyLabel.toUpperCase())} · ${escapeHtml(caseLabel.toUpperCase())}</text><path d="M${pm.x.toFixed(1)} ${pm.y.toFixed(1)}L${rp.x.toFixed(1)} ${rp.y.toFixed(1)}L${sp.x.toFixed(1)} ${sp.y.toFixed(1)}Z" class="cad-rocker-web"/>${methodLine(pa,pb,"cad-structure",COLORS.rocker)}${methodLine(ra,rp,"cad-member",COLORS.pushrod)}${methodLine(sp,sc,"cad-member",COLORS.shock)}${rodForceArrow}${shockForceArrow}${methodNode(pa,COLORS.rocker)}${methodNode(pb,COLORS.rocker)}${methodNode(pm,COLORS.selected,false,7)}${methodNode(rp,COLORS.pushrod)}${methodNode(sp,COLORS.shock)}${methodNode(sc,"#172026",true,7)}<line x1="492" y1="40" x2="492" y2="286" class="cad-divider"/><text x="510" y="39" class="cad-label">PICKUPS · X  Y  Z (${escapeHtml(units)})</text>${coordinateRows}<text x="510" y="282" class="cad-mono">ROD ${Number.isFinite(rodForce)?rodForce.toFixed(1):"—"} · SHOCK ${Number.isFinite(shockForce)?shockForce.toFixed(1):"—"} ${escapeHtml(assembly.force_units||"lbf")}</text>`;
         document.getElementById("rockerGeometryCaption").textContent=`${assemblyLabel} · ${caseLabel}; exact rocker and shock pickups from the active 3D geometry.`;
       }
       function marginStatus(value) {
@@ -1510,7 +1523,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
             member = entry.axle === "front" ? "steering_tie_rod" : "rear_tie_rod";
             if (joint.endsWith("upright")) end = "wheel_jmx";
           } else if (joint.startsWith("A-arm") || joint.startsWith("Pushrod")) {
-            member = entry.axle === "front" ? "pullrod" : "pushrod";
+            member = sizingRows.find(r => axleOf(r) === entry.axle && family(r.member) === "pushrod")?.member;
             if (joint.startsWith("A-arm")) end = "wheel_jmx";
           } else return;
           const row = sizingRows.find(r => axleOf(r) === entry.axle && r.member === member);
@@ -1963,7 +1976,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
       }
 
       function updateLegend(){
-        const items=controls.colorMode.value==="force"?[["Tension",COLORS.tension],["Compression",COLORS.compression],["Applied tire force",COLORS.load]]:[["Upper wishbone",COLORS.upper],["Lower wishbone",COLORS.lower],["Tie / toe rod",COLORS.tie],["Push / pull rod",COLORS.pushrod],["Shock",COLORS.shock],["Rocker + upright",COLORS.rocker]];
+        const items=controls.colorMode.value==="force"?[["Tension",COLORS.tension],["Compression",COLORS.compression],["Applied tire force",COLORS.load]]:[["Upper wishbone",COLORS.upper],["Lower wishbone",COLORS.lower],["Tie / toe rod",COLORS.tie],["Pushrod",COLORS.pushrod],["Shock",COLORS.shock],["Rocker + upright",COLORS.rocker]];
         if(controls.chassisForces.checked)items.push(["Chassis force",COLORS.chassisForce]);
         document.getElementById("legend").innerHTML=items.map(([label,color])=>`<div class="legend-item"><span class="swatch" style="--swatch:${color}"></span><span>${label}</span></div>`).join("");
       }
@@ -2101,8 +2114,8 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         if (!file) return;
         try {
           const documentSpecs = JSON.parse(await file.text());
-          const imported = documentSpecs.tube_specs || {};
-          const jmxImport = documentSpecs.jmx_specs || {};
+          const imported = migrateRodSpecKeys(documentSpecs.tube_specs || {});
+          const jmxImport = migrateRodSpecKeys(documentSpecs.jmx_specs || {});
           if (typeof jmxImport !== "object" || Array.isArray(jmxImport)) throw new Error("Expected a jmx_specs object.");
           for (const [key, ends] of Object.entries(jmxImport)) {
             const row = sizingRows.find(r => jmxKey(r) === key);

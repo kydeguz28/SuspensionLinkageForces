@@ -6,12 +6,12 @@ Current geometry and all seven load cases, including mirrored acceleration/corne
 
 | Axle | Joint | Peak lbf | Single shear minimum | Double shear minimum | Configured bore in | Governing case |
 |---|---|---:|---|---|---:|---|
-| front | A-arm to pushrod / pullrod | 366.0 | AN3 | AN3 | 0.1875 | front_right / case_4_brake_corner |
+| front | A-arm to pushrod | 366.0 | AN3 | AN3 | 0.1875 | front_right / case_4_brake_corner |
 | front | Bellcrank pivot | 301.0 | AN3 | AN3 | TBD | front_left / case_4_brake_corner_mirrored |
 | front | Lower Aft to chassis | 737.9 | AN3 | AN3 | 0.1875 | front_right / case_2_braking |
 | front | Lower Fore to chassis | 814.9 | AN3 | AN3 | 0.25 | front_left / case_2_braking |
 | front | Lower arm to upright (shared) | 852.2 | AN3 | AN3 | TBD | front_left / case_3_accel_corner_mirrored |
-| front | Pushrod / pullrod to bellcrank | 366.0 | AN3 | AN3 | 0.1875 | front_right / case_4_brake_corner |
+| front | Pushrod to bellcrank | 366.0 | AN3 | AN3 | 0.1875 | front_right / case_4_brake_corner |
 | front | Shock to bellcrank | 340.2 | AN3 | AN3 | TBD | front_right / case_4_brake_corner |
 | front | Shock to chassis | 340.2 | AN3 | AN3 | TBD | front_right / case_4_brake_corner |
 | front | Tie rod to chassis | 143.8 | AN3 | AN3 | 0.25 | front_right / case_2_braking |
@@ -19,12 +19,12 @@ Current geometry and all seven load cases, including mirrored acceleration/corne
 | front | Upper Aft to chassis | 307.5 | AN3 | AN3 | 0.1875 | front_right / case_4_brake_corner |
 | front | Upper Fore to chassis | 294.3 | AN3 | AN3 | 0.1875 | front_left / case_2_braking |
 | front | Upper arm to upright (shared) | 294.2 | AN3 | AN3 | TBD | front_right / case_4_brake_corner |
-| rear | A-arm to pushrod / pullrod | 1123.6 | AN3 | AN3 | 0.1875 | rear_right / case_3_accel_corner |
+| rear | A-arm to pushrod | 1123.6 | AN3 | AN3 | 0.1875 | rear_right / case_3_accel_corner |
 | rear | Bellcrank pivot | 536.4 | AN3 | AN3 | TBD | rear_right / case_3_accel_corner |
 | rear | Lower Aft to chassis | 1523.4 | AN4 | AN3 | 0.3125 | rear_right / case_4_brake_corner |
 | rear | Lower Fore to chassis | 1291.7 | AN4 | AN3 | 0.25 | rear_right / case_1_linear_accel |
 | rear | Lower arm to upright (shared) | 1067.0 | AN3 | AN3 | TBD | rear_left / case_3_accel_corner_mirrored |
-| rear | Pushrod / pullrod to bellcrank | 1123.6 | AN3 | AN3 | 0.1875 | rear_right / case_3_accel_corner |
+| rear | Pushrod to bellcrank | 1123.6 | AN3 | AN3 | 0.1875 | rear_right / case_3_accel_corner |
 | rear | Shock to bellcrank | 595.7 | AN3 | AN3 | TBD | rear_left / case_3_accel_corner_mirrored |
 | rear | Shock to chassis | 595.7 | AN3 | AN3 | TBD | rear_left / case_3_accel_corner_mirrored |
 | rear | Tie rod to chassis | 134.2 | AN3 | AN3 | 0.1875 | rear_right / case_1_linear_accel |

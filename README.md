@@ -251,3 +251,7 @@ specs. Reset saved specs restores both tubes and rod ends to configured defaults
 These browser overrides do not rewrite the source JSON or report snapshots.
 Run `node tests/check_jmx_editor.cjs` after regenerating `index.html` to check
 independent ends, mirroring, hardware calculations, and storage.
+
+Both active front and rear shock-packaging rods are named `pushrod`. The viewer
+migrates older saved/imported `pullrod` tube and JMX keys to `pushrod`, preserving
+existing selections. This naming update does not change geometry or load signs.

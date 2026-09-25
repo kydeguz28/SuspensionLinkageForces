@@ -154,7 +154,7 @@
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       },
-      "pullrod": {
+      "pushrod": {
         "tube_id_in": 0.323,
         "tube_od_in": 0.5625,
         "chassis_jmx": "JMX3",
@@ -286,7 +286,7 @@
           ]
         },
         {
-          "name": "pullrod",
+          "name": "pushrod",
           "role": "pushrod",
           "application": [
             -1.03,

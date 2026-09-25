@@ -34,8 +34,8 @@ def build_bolt_schedule(config, result):
             joints = []
             for name, force in forces.items():
                 if roles[name] == 'pushrod':
-                    joints += [('Pushrod / pullrod to bellcrank', abs(force), bore(name, 'chassis'), 'Full rod axial force; confirm bearing bore and tab stack.'),
-                               ('A-arm to pushrod / pullrod', abs(force), bore(name, 'wheel'), 'Full rod force; arm bracket bending and attachment welds require separate checks.')]
+                    joints += [('Pushrod to bellcrank', abs(force), bore(name, 'chassis'), 'Full rod axial force; confirm bearing bore and tab stack.'),
+                               ('A-arm to pushrod', abs(force), bore(name, 'wheel'), 'Full rod force; arm bracket bending and attachment welds require separate checks.')]
                 elif name.startswith(('upper_', 'lower_')):
                     joints.append((name.replace('_', ' ').title() + ' to chassis', abs(force), bore(name, 'chassis'), 'Configured inboard rod-end bore.'))
                 else:
