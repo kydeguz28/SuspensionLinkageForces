@@ -199,7 +199,8 @@
         "wheel_jmx": "JMX4"
       }
     },
-    "source_note": "Catalog auto-selection with minimum modeled margin 0.1 across both sides and every load case. Minimum-area catalog tubes and smallest passing JMX size at both ends. Original material strengths and safety factors retained. Rod-end checks remain workbook proxies; physical fit and damper ratings unverified."
+    "source_note": "Catalog auto-selection with minimum modeled margin 0.1 across both sides and every load case. Minimum-area catalog tubes and smallest passing JMX size at both ends. Original material strengths and safety factors retained. Rod-end checks remain workbook proxies; physical fit and damper ratings unverified.",
+    "spec_revision": "mk12-final-2026-09-25"
   },
   "assemblies": [
     {

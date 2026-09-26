@@ -1197,7 +1197,8 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         }
         return migrated;
       }
-      const tubeSpecStorageKey = "bfr-tube-specs-v1";
+      const specRevision = payload.config.sizing?.spec_revision;
+      const tubeSpecStorageKey = "bfr-tube-specs-v1" + (specRevision ? `:${specRevision}` : "");
       const tubeSpecDefaults = new Map(sizingRows.filter(row => row.member !== "shock").map(row => [
         `${row.assembly}:${row.member}`,
         {tube_od_in: row.configured_tube_od_in, tube_id_in: row.configured_tube_id_in}
@@ -1208,7 +1209,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
       })();
       const jmxVariants = payload.jmx_variants || {};
       const jmxDefaults = new Map(sizingRows.map(row => [sizingRowKey(row), {chassis_jmx: row.chassis_jmx, wheel_jmx: row.wheel_jmx}]));
-      const jmxStorageKey = "bfr-jmx-specs-v1";
+      const jmxStorageKey = "bfr-jmx-specs-v1" + (specRevision ? `:${specRevision}` : "");
       let savedJmxSpecs = (() => {
         try { return migrateRodSpecKeys(JSON.parse(localStorage.getItem(jmxStorageKey) || "{}")); } catch { return {}; }
       })();

@@ -50,6 +50,16 @@ def write_viewer_html(
     if template.count(placeholder) != 1:
         raise ValueError("Viewer template must contain exactly one data placeholder")
     rendered = template.replace(placeholder, payload)
+    if config.get("sizing", {}).get("spec_revision"):
+        rendered = rendered.replace('Governing member loads</h1>', 'Final member specifications</h1>', 1)
+        rendered = rendered.replace(
+            '<p class="sizing-copy">Peak axial force',
+            '<p class="sizing-copy"><strong>Final defaults · 25 September 2026.</strong> '
+            'Selected tubes and rod ends meet modeled MS ≥ +0.10 across all load cases. '
+            'Edits are saved in this browser; use Reset saved specs to restore these defaults. '
+            'Damper ratings and physical joint fit remain unverified.</p>'
+            '<p class="sizing-copy">Peak axial force', 1)
+
     if result.get("joint_bolt_schedule"):
         from bolt_schedule import bolt_schedule_html
         rendered = rendered.replace('<footer class="sizing-foot">',
