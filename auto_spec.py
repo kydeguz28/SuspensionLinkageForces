@@ -42,8 +42,10 @@ def auto_spec(config, target=0.1):
     sizing['auto_size_tubes'] = False
     sizing['source_note'] = (
         f'Catalog auto-selection with minimum modeled margin {target:g} across both '
-        'sides and every load case. Minimum-area catalog tubes and smallest passing '
-        'JMX size at both ends. Original material strengths and safety factors retained. '
+        'sides and every load case. Minimum-weight tubes (minimum area at fixed length and density) and smallest passing '
+        f"JMX size at both ends. Minimum tube OD {sizing.get('minimum_tube_od_in', 0):g} in. "
+        'Original material strengths and safety factors retained. '
+        'McMaster OD/ID pairs are recorded in examples/sources/mcmaster_4130_tubes.json. '
         'Rod-end checks remain workbook proxies; physical fit and damper ratings unverified.'
     )
     result = solve_config(config)
@@ -60,10 +62,12 @@ def main():
     config, result = auto_spec(json.loads(path.read_text()))
     path.write_text(json.dumps(config, indent=2) + '\n', encoding='utf-8')
     write_viewer_html(expand_config(config), result, ROOT / 'index.html')
-    lines = ['# Mk12 automatically selected member specifications', '',
+    lines = ['# Mk12 minimum-weight tube candidates', '',
+             f"Minimum tube OD: {config['sizing'].get('minimum_tube_od_in', 0):g} in.", '',
+             'Objective: minimize tube weight at each fixed member length and common material density. Weight is proportional to A = pi/4 * (OD^2 - ID^2). Actual listed OD/ID pairs are used; nominal wall labels may be rounded. Supplier references identify catalog rows, not a selected purchase length.', '',
              'Target: MS >= +0.10 for every modeled tube, JMX proxy, bolt shear, rod-end shank, and plug check. Existing strengths and safety factors retained. Both sides and all seven cases checked. Dimensions are inches.', '',
-             '| Axle | Member | Tube OD | Wall | Both ends | Bolt bore | Minimum MS | Governing mode |',
-             '|---|---|---:|---:|---|---|---:|---|']
+             '| Axle | Member | Tube OD | Wall | ID | McMaster reference | Weight reduction vs previous tube | Both ends | Bolt bore | Minimum MS | Governing mode |',
+             '|---|---|---:|---:|---:|---|---:|---|---|---:|---|']
     for assembly in result['assemblies']:
         if not assembly['name'].endswith('_right'):
             continue
@@ -71,7 +75,9 @@ def main():
             if row['member'] == 'shock':
                 continue
             bore = config['sizing']['hardware']['bolt_diameter_in'][row['chassis_jmx']]
-            lines.append(f"| {assembly['name'].split('_')[0]} | {row['member']} | {row['tube_od_in']:.4f} | {row['tube_wall_in']:.3f} | {row['chassis_jmx']} | AN{round(16*bore)} | {row['governing_margin']:.3f} | {row['governing_margin_mode']} |")
+            item = next(t for t in config['sizing']['tube_catalog'] if abs(t['tube_od_in']-row['tube_od_in']) < 1e-8 and abs(t['tube_id_in']-row['tube_id_in']) < 1e-8)
+            reduction = 100*(1-(row['tube_od_in']**2-row['tube_id_in']**2)/(.4375**2-.3395**2))
+            lines.append(f"| {assembly['name'].split('_')[0]} | {row['member']} | {row['tube_od_in']:.4f} | {item['wall_thickness_in']:.3f} | {row['tube_id_in']:.4f} | [{item['supplier_reference']}]({item['source_url']}) | {reduction:.1f}% | {row['chassis_jmx']} | AN{round(16*bore)} | {row['governing_margin']:.3f} | {row['governing_margin_mode']} |")
     lines += ['', 'Damper ratings are not supplied. Shared upright joints, shock-eye fit, pivot moment/bending, tab and weld strength, and tube-insert fit are not verified by these member checks. Bolt lengths require measured grip stacks. Browser-saved tube/JMX overrides can supersede these defaults.', '']
     (ROOT / 'reports/auto_spec.md').write_text('\n'.join(lines), encoding='utf-8')
     bolt_lines = ['# AN joint-bolt schedule - preliminary', '',

@@ -11,68 +11,403 @@
     "minimum_tube_margin": 0.1,
     "tube_catalog": [
       {
+        "tube_od_in": 0.25,
+        "tube_id_in": 0.194,
+        "wall_thickness_in": 0.028,
+        "supplier_reference": "89955K439",
+        "source_url": "https://www.mcmaster.com/89955K439/"
+      },
+      {
+        "tube_od_in": 0.375,
+        "tube_id_in": 0.319,
+        "wall_thickness_in": 0.028,
+        "supplier_reference": "89955K469",
+        "source_url": "https://www.mcmaster.com/89955K469/"
+      },
+      {
+        "tube_od_in": 0.5,
+        "tube_id_in": 0.444,
+        "wall_thickness_in": 0.028,
+        "supplier_reference": "89955K479",
+        "source_url": "https://www.mcmaster.com/89955K479/"
+      },
+      {
+        "tube_od_in": 0.625,
+        "tube_id_in": 0.569,
+        "wall_thickness_in": 0.028,
+        "supplier_reference": "89955K489",
+        "source_url": "https://www.mcmaster.com/89955K489/"
+      },
+      {
+        "tube_od_in": 0.75,
+        "tube_id_in": 0.694,
+        "wall_thickness_in": 0.028,
+        "supplier_reference": "89955K438",
+        "source_url": "https://www.mcmaster.com/89955K438/"
+      },
+      {
+        "tube_od_in": 1.0,
+        "tube_id_in": 0.944,
+        "wall_thickness_in": 0.028,
+        "supplier_reference": "89955K499",
+        "source_url": "https://www.mcmaster.com/89955K499/"
+      },
+      {
+        "tube_od_in": 0.1875,
+        "tube_id_in": 0.118,
+        "wall_thickness_in": 0.035,
+        "supplier_reference": "89955K119",
+        "source_url": "https://www.mcmaster.com/89955K119/"
+      },
+      {
+        "tube_od_in": 0.25,
+        "tube_id_in": 0.18,
+        "wall_thickness_in": 0.035,
+        "supplier_reference": "89955K219",
+        "source_url": "https://www.mcmaster.com/89955K219/"
+      },
+      {
+        "tube_od_in": 0.3125,
+        "tube_id_in": 0.243,
+        "wall_thickness_in": 0.035,
+        "supplier_reference": "89955K239",
+        "source_url": "https://www.mcmaster.com/89955K239/"
+      },
+      {
+        "tube_od_in": 0.375,
+        "tube_id_in": 0.305,
+        "wall_thickness_in": 0.035,
+        "supplier_reference": "89955K149",
+        "source_url": "https://www.mcmaster.com/89955K149/"
+      },
+      {
+        "tube_od_in": 0.5,
+        "tube_id_in": 0.43,
+        "wall_thickness_in": 0.035,
+        "supplier_reference": "89955K259",
+        "source_url": "https://www.mcmaster.com/89955K259/"
+      },
+      {
+        "tube_od_in": 0.625,
+        "tube_id_in": 0.555,
+        "wall_thickness_in": 0.035,
+        "supplier_reference": "89955K279",
+        "source_url": "https://www.mcmaster.com/89955K279/"
+      },
+      {
+        "tube_od_in": 0.75,
+        "tube_id_in": 0.68,
+        "wall_thickness_in": 0.035,
+        "supplier_reference": "89955K299",
+        "source_url": "https://www.mcmaster.com/89955K299/"
+      },
+      {
+        "tube_od_in": 0.875,
+        "tube_id_in": 0.805,
+        "wall_thickness_in": 0.035,
+        "supplier_reference": "89955K849",
+        "source_url": "https://www.mcmaster.com/89955K849/"
+      },
+      {
+        "tube_od_in": 1.0,
+        "tube_id_in": 0.93,
+        "wall_thickness_in": 0.035,
+        "supplier_reference": "89955K339",
+        "source_url": "https://www.mcmaster.com/89955K339/"
+      },
+      {
+        "tube_od_in": 1.125,
+        "tube_id_in": 1.055,
+        "wall_thickness_in": 0.035,
+        "supplier_reference": "89955K919",
+        "source_url": "https://www.mcmaster.com/89955K919/"
+      },
+      {
+        "tube_od_in": 1.25,
+        "tube_id_in": 1.18,
+        "wall_thickness_in": 0.035,
+        "supplier_reference": "89955K369",
+        "source_url": "https://www.mcmaster.com/89955K369/"
+      },
+      {
+        "tube_od_in": 1.375,
+        "tube_id_in": 1.305,
+        "wall_thickness_in": 0.035,
+        "supplier_reference": "89955K979",
+        "source_url": "https://www.mcmaster.com/89955K979/"
+      },
+      {
+        "tube_od_in": 1.5,
+        "tube_id_in": 1.43,
+        "wall_thickness_in": 0.035,
+        "supplier_reference": "89955K389",
+        "source_url": "https://www.mcmaster.com/89955K389/"
+      },
+      {
+        "tube_od_in": 0.25,
+        "tube_id_in": 0.152,
+        "wall_thickness_in": 0.049,
+        "supplier_reference": "89955K229",
+        "source_url": "https://www.mcmaster.com/89955K229/"
+      },
+      {
+        "tube_od_in": 0.3125,
+        "tube_id_in": 0.215,
+        "wall_thickness_in": 0.049,
+        "supplier_reference": "89955K249",
+        "source_url": "https://www.mcmaster.com/89955K249/"
+      },
+      {
+        "tube_od_in": 0.375,
+        "tube_id_in": 0.277,
+        "wall_thickness_in": 0.049,
+        "supplier_reference": "89955K159",
+        "source_url": "https://www.mcmaster.com/89955K159/"
+      },
+      {
         "tube_od_in": 0.4375,
-        "wall_thickness_in": 0.049
+        "tube_id_in": 0.34,
+        "wall_thickness_in": 0.049,
+        "supplier_reference": "89955K739",
+        "source_url": "https://www.mcmaster.com/89955K739/"
       },
       {
         "tube_od_in": 0.5,
-        "wall_thickness_in": 0.049
+        "tube_id_in": 0.402,
+        "wall_thickness_in": 0.049,
+        "supplier_reference": "89955K269",
+        "source_url": "https://www.mcmaster.com/89955K269/"
+      },
+      {
+        "tube_od_in": 0.625,
+        "tube_id_in": 0.527,
+        "wall_thickness_in": 0.049,
+        "supplier_reference": "89955K289",
+        "source_url": "https://www.mcmaster.com/89955K289/"
+      },
+      {
+        "tube_od_in": 0.75,
+        "tube_id_in": 0.652,
+        "wall_thickness_in": 0.049,
+        "supplier_reference": "89955K329",
+        "source_url": "https://www.mcmaster.com/89955K329/"
+      },
+      {
+        "tube_od_in": 0.875,
+        "tube_id_in": 0.777,
+        "wall_thickness_in": 0.049,
+        "supplier_reference": "89955K859",
+        "source_url": "https://www.mcmaster.com/89955K859/"
+      },
+      {
+        "tube_od_in": 1.0,
+        "tube_id_in": 0.902,
+        "wall_thickness_in": 0.049,
+        "supplier_reference": "89955K359",
+        "source_url": "https://www.mcmaster.com/89955K359/"
+      },
+      {
+        "tube_od_in": 1.125,
+        "tube_id_in": 1.027,
+        "wall_thickness_in": 0.049,
+        "supplier_reference": "89955K929",
+        "source_url": "https://www.mcmaster.com/89955K929/"
+      },
+      {
+        "tube_od_in": 1.25,
+        "tube_id_in": 1.152,
+        "wall_thickness_in": 0.049,
+        "supplier_reference": "89955K379",
+        "source_url": "https://www.mcmaster.com/89955K379/"
+      },
+      {
+        "tube_od_in": 1.375,
+        "tube_id_in": 1.277,
+        "wall_thickness_in": 0.049,
+        "supplier_reference": "89955K989",
+        "source_url": "https://www.mcmaster.com/89955K989/"
+      },
+      {
+        "tube_od_in": 1.5,
+        "tube_id_in": 1.402,
+        "wall_thickness_in": 0.049,
+        "supplier_reference": "89955K399",
+        "source_url": "https://www.mcmaster.com/89955K399/"
+      },
+      {
+        "tube_od_in": 1.75,
+        "tube_id_in": 1.652,
+        "wall_thickness_in": 0.049,
+        "supplier_reference": "89955K189",
+        "source_url": "https://www.mcmaster.com/89955K189/"
+      },
+      {
+        "tube_od_in": 2.0,
+        "tube_id_in": 1.902,
+        "wall_thickness_in": 0.049,
+        "supplier_reference": "89955K429",
+        "source_url": "https://www.mcmaster.com/89955K429/"
+      },
+      {
+        "tube_od_in": 0.375,
+        "tube_id_in": 0.259,
+        "wall_thickness_in": 0.058,
+        "supplier_reference": "89955K118",
+        "source_url": "https://www.mcmaster.com/89955K118/"
+      },
+      {
+        "tube_od_in": 0.4375,
+        "tube_id_in": 0.322,
+        "wall_thickness_in": 0.058,
+        "supplier_reference": "89955K128",
+        "source_url": "https://www.mcmaster.com/89955K128/"
       },
       {
         "tube_od_in": 0.5,
-        "wall_thickness_in": 0.065
-      },
-      {
-        "tube_od_in": 0.5625,
-        "wall_thickness_in": 0.049
-      },
-      {
-        "tube_od_in": 0.5625,
-        "wall_thickness_in": 0.065
+        "tube_id_in": 0.384,
+        "wall_thickness_in": 0.058,
+        "supplier_reference": "89955K138",
+        "source_url": "https://www.mcmaster.com/89955K138/"
       },
       {
         "tube_od_in": 0.625,
-        "wall_thickness_in": 0.049
-      },
-      {
-        "tube_od_in": 0.625,
-        "wall_thickness_in": 0.065
-      },
-      {
-        "tube_od_in": 0.625,
-        "wall_thickness_in": 0.083
+        "tube_id_in": 0.509,
+        "wall_thickness_in": 0.058,
+        "supplier_reference": "89955K148",
+        "source_url": "https://www.mcmaster.com/89955K148/"
       },
       {
         "tube_od_in": 0.75,
-        "wall_thickness_in": 0.049
-      },
-      {
-        "tube_od_in": 0.75,
-        "wall_thickness_in": 0.065
-      },
-      {
-        "tube_od_in": 0.75,
-        "wall_thickness_in": 0.083
+        "tube_id_in": 0.634,
+        "wall_thickness_in": 0.058,
+        "supplier_reference": "89955K158",
+        "source_url": "https://www.mcmaster.com/89955K158/"
       },
       {
         "tube_od_in": 0.875,
-        "wall_thickness_in": 0.049
-      },
-      {
-        "tube_od_in": 0.875,
-        "wall_thickness_in": 0.065
-      },
-      {
-        "tube_od_in": 0.875,
-        "wall_thickness_in": 0.083
+        "tube_id_in": 0.759,
+        "wall_thickness_in": 0.058,
+        "supplier_reference": "89955K168",
+        "source_url": "https://www.mcmaster.com/89955K168/"
       },
       {
         "tube_od_in": 1.0,
-        "wall_thickness_in": 0.065
+        "tube_id_in": 0.884,
+        "wall_thickness_in": 0.058,
+        "supplier_reference": "89955K178",
+        "source_url": "https://www.mcmaster.com/89955K178/"
+      },
+      {
+        "tube_od_in": 1.125,
+        "tube_id_in": 1.009,
+        "wall_thickness_in": 0.058,
+        "supplier_reference": "89955K188",
+        "source_url": "https://www.mcmaster.com/89955K188/"
+      },
+      {
+        "tube_od_in": 1.25,
+        "tube_id_in": 1.134,
+        "wall_thickness_in": 0.058,
+        "supplier_reference": "89955K198",
+        "source_url": "https://www.mcmaster.com/89955K198/"
+      },
+      {
+        "tube_od_in": 1.375,
+        "tube_id_in": 1.259,
+        "wall_thickness_in": 0.058,
+        "supplier_reference": "89955K218",
+        "source_url": "https://www.mcmaster.com/89955K218/"
+      },
+      {
+        "tube_od_in": 1.5,
+        "tube_id_in": 1.384,
+        "wall_thickness_in": 0.058,
+        "supplier_reference": "89955K228",
+        "source_url": "https://www.mcmaster.com/89955K228/"
+      },
+      {
+        "tube_od_in": 1.75,
+        "tube_id_in": 1.634,
+        "wall_thickness_in": 0.058,
+        "supplier_reference": "89955K238",
+        "source_url": "https://www.mcmaster.com/89955K238/"
+      },
+      {
+        "tube_od_in": 0.25,
+        "tube_id_in": 0.12,
+        "wall_thickness_in": 0.065,
+        "supplier_reference": "89955K519",
+        "source_url": "https://www.mcmaster.com/89955K519/"
+      },
+      {
+        "tube_od_in": 0.3125,
+        "tube_id_in": 0.183,
+        "wall_thickness_in": 0.065,
+        "supplier_reference": "89955K539",
+        "source_url": "https://www.mcmaster.com/89955K539/"
+      },
+      {
+        "tube_od_in": 0.375,
+        "tube_id_in": 0.245,
+        "wall_thickness_in": 0.065,
+        "supplier_reference": "89955K449",
+        "source_url": "https://www.mcmaster.com/89955K449/"
+      },
+      {
+        "tube_od_in": 0.4375,
+        "tube_id_in": 0.308,
+        "wall_thickness_in": 0.065,
+        "supplier_reference": "89955K749",
+        "source_url": "https://www.mcmaster.com/89955K749/"
+      },
+      {
+        "tube_od_in": 0.5,
+        "tube_id_in": 0.37,
+        "wall_thickness_in": 0.065,
+        "supplier_reference": "89955K559",
+        "source_url": "https://www.mcmaster.com/89955K559/"
+      },
+      {
+        "tube_od_in": 0.5625,
+        "tube_id_in": 0.433,
+        "wall_thickness_in": 0.065,
+        "supplier_reference": "89955K789",
+        "source_url": "https://www.mcmaster.com/89955K789/"
+      },
+      {
+        "tube_od_in": 0.625,
+        "tube_id_in": 0.495,
+        "wall_thickness_in": 0.065,
+        "supplier_reference": "89955K579",
+        "source_url": "https://www.mcmaster.com/89955K579/"
+      },
+      {
+        "tube_od_in": 0.75,
+        "tube_id_in": 0.62,
+        "wall_thickness_in": 0.065,
+        "supplier_reference": "89955K599",
+        "source_url": "https://www.mcmaster.com/89955K599/"
+      },
+      {
+        "tube_od_in": 0.875,
+        "tube_id_in": 0.745,
+        "wall_thickness_in": 0.065,
+        "supplier_reference": "89955K869",
+        "source_url": "https://www.mcmaster.com/89955K869/"
       },
       {
         "tube_od_in": 1.0,
-        "wall_thickness_in": 0.083
+        "tube_id_in": 0.87,
+        "wall_thickness_in": 0.065,
+        "supplier_reference": "89955K639",
+        "source_url": "https://www.mcmaster.com/89955K639/"
+      },
+      {
+        "tube_od_in": 1.125,
+        "tube_id_in": 0.995,
+        "wall_thickness_in": 0.065,
+        "supplier_reference": "89955K939",
+        "source_url": "https://www.mcmaster.com/89955K939/"
       }
     ],
     "material": {
@@ -125,82 +460,83 @@
     },
     "front": {
       "steering_tie_rod": {
-        "tube_id_in": 0.3395,
-        "tube_od_in": 0.4375,
+        "tube_id_in": 0.319,
+        "tube_od_in": 0.375,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       },
       "lower_fore": {
-        "tube_id_in": 0.3395,
-        "tube_od_in": 0.4375,
+        "tube_id_in": 0.319,
+        "tube_od_in": 0.375,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       },
       "lower_aft": {
-        "tube_id_in": 0.3395,
-        "tube_od_in": 0.4375,
+        "tube_id_in": 0.305,
+        "tube_od_in": 0.375,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       },
       "upper_fore": {
-        "tube_id_in": 0.3395,
-        "tube_od_in": 0.4375,
+        "tube_id_in": 0.319,
+        "tube_od_in": 0.375,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       },
       "upper_aft": {
-        "tube_id_in": 0.3395,
-        "tube_od_in": 0.4375,
+        "tube_id_in": 0.319,
+        "tube_od_in": 0.375,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       },
       "pushrod": {
-        "tube_id_in": 0.3395,
-        "tube_od_in": 0.4375,
+        "tube_id_in": 0.319,
+        "tube_od_in": 0.375,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       }
     },
     "rear": {
       "rear_tie_rod": {
-        "tube_id_in": 0.3395,
-        "tube_od_in": 0.4375,
+        "tube_id_in": 0.319,
+        "tube_od_in": 0.375,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       },
       "lower_fore": {
-        "tube_id_in": 0.3395,
-        "tube_od_in": 0.4375,
+        "tube_id_in": 0.444,
+        "tube_od_in": 0.5,
         "chassis_jmx": "JMX4",
         "wheel_jmx": "JMX4"
       },
       "lower_aft": {
-        "tube_id_in": 0.3395,
-        "tube_od_in": 0.4375,
+        "tube_id_in": 0.444,
+        "tube_od_in": 0.5,
         "chassis_jmx": "JMX4",
         "wheel_jmx": "JMX4"
       },
       "upper_fore": {
-        "tube_id_in": 0.3395,
-        "tube_od_in": 0.4375,
+        "tube_id_in": 0.319,
+        "tube_od_in": 0.375,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       },
       "upper_aft": {
-        "tube_id_in": 0.3395,
-        "tube_od_in": 0.4375,
+        "tube_id_in": 0.305,
+        "tube_od_in": 0.375,
         "chassis_jmx": "JMX4",
         "wheel_jmx": "JMX4"
       },
       "pushrod": {
-        "tube_id_in": 0.3395,
-        "tube_od_in": 0.4375,
+        "tube_id_in": 0.319,
+        "tube_od_in": 0.375,
         "chassis_jmx": "JMX4",
         "wheel_jmx": "JMX4"
       }
     },
-    "source_note": "Catalog auto-selection with minimum modeled margin 0.1 across both sides and every load case. Minimum-area catalog tubes and smallest passing JMX size at both ends. Original material strengths and safety factors retained. Rod-end checks remain workbook proxies; physical fit and damper ratings unverified.",
-    "spec_revision": "mk12-final-2026-09-25"
+    "source_note": "Catalog auto-selection with minimum modeled margin 0.1 across both sides and every load case. Minimum-weight tubes (minimum area at fixed length and density) and smallest passing JMX size at both ends. Minimum tube OD 0.375 in. Original material strengths and safety factors retained. McMaster OD/ID pairs are recorded in examples/sources/mcmaster_4130_tubes.json. Rod-end checks remain workbook proxies; physical fit and damper ratings unverified.",
+    "spec_revision": "mk12-lightest-min375-2026-09-26",
+    "minimum_tube_od_in": 0.375
   },
   "assemblies": [
     {

@@ -778,6 +778,8 @@ def build_sizing_summary(
         if auto_size_tubes:
             for item in tube_catalog:
                 outside = float(item["tube_od_in"])
+                if outside < float(sizing.get("minimum_tube_od_in", 0.0)):
+                    continue
                 if "tube_id_in" in item:
                     inside = float(item["tube_id_in"])
                 else:

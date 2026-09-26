@@ -15,12 +15,20 @@ class AutoSpecTests(unittest.TestCase):
         self.assertEqual(selected['sizing']['material'], original['sizing']['material'])
         self.assertEqual(selected['sizing']['hardware'], original['sizing']['hardware'])
         self.assertEqual(len(result['assemblies']), 4)
+        # A larger thin-wall tube must beat a smaller heavy-wall tube by weight.
+        rear = selected['sizing']['rear']['lower_fore']
+        self.assertEqual(rear['tube_od_in'], 0.5)
+        self.assertEqual(rear['tube_id_in'], 0.444)
+        self.assertLess(rear['tube_od_in']**2 - rear['tube_id_in']**2,
+                        0.4375**2 - 0.34**2)
+
         for assembly in result['assemblies']:
             self.assertEqual(len(assembly['load_cases']), 7)
             for row in assembly['sizing_summary']:
                 if row['member'] == 'shock':
                     self.assertIsNone(row['governing_margin'])
                     continue
+                self.assertGreaterEqual(row['tube_od_in'], 0.375)
                 for kind in ('tube_checks', 'jmx_checks', 'hardware_checks'):
                     self.assertTrue(row[kind])
                     for check in row[kind]:
