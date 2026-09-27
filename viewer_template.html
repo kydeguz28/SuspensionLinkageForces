@@ -147,6 +147,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
     .sizing-metric strong { font: 800 20px/1 Consolas, monospace; }
     .sizing-metric span { color: var(--muted); font-size: 12px; }
     .sizing-table-wrap { margin-top: 22px; overflow-x: auto; border-top: 2px solid var(--ink); border-bottom: 1px solid #8f9da2; }
+    #plugsView .sizing-table { min-width: 1100px; }
     .sizing-table { width: 100%; min-width: 1250px; border-collapse: collapse; }
     .sizing-table th {
       position: sticky;
@@ -632,7 +633,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
       .sizing-metric { padding: 5px 12px; }
       .sizing-foot { grid-template-columns: 1fr; }
       .sizing-table-wrap { overflow: visible; }
-      .sizing-table { min-width: 0; }
+      .sizing-table, #plugsView .sizing-table { min-width: 0; }
       .sizing-table thead { display: none; }
       .sizing-table tbody { display: grid; }
       .sizing-table tbody tr {
@@ -703,6 +704,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
     <div class="mode-tabs" role="tablist" aria-label="Analysis view">
       <button class="mode-tab" id="geometryTab" type="button" role="tab" aria-controls="geometryView" aria-selected="true">3D Geometry</button>
       <button class="mode-tab" id="sizingTab" type="button" role="tab" aria-controls="sizingView" aria-selected="false">Member Sizing</button>
+      <button class="mode-tab" id="plugsTab" type="button" role="tab" aria-controls="plugsView" aria-selected="false">Plugs</button>
       <button class="mode-tab" id="chassisTab" type="button" role="tab" aria-controls="chassisView" aria-selected="false">Chassis Loads</button>
       <button class="mode-tab" id="methodsTab" type="button" role="tab" aria-controls="methodsView" aria-selected="false">Methods</button>
     </div>
@@ -878,6 +880,36 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         <p><strong>Margin convention:</strong> MS = allowable ÷ applied − 1. Negative is a predicted failure; zero is the allowable boundary. Tube checks include yield, ultimate, and Euler buckling with the workbook’s safety factors.</p>
         <p><strong>JMX scope:</strong> initial selections follow Manufacturing Summary; selectors override them in this browser. JMX margin uses the workbook-derived axial tensile allowable as a screening proxy; verify final rod-end radial ratings, misalignment, threads, bolts, tabs, fatigue, and manufacturer data before release.</p>
       </footer>
+    </div>
+  </section>
+
+  <section class="sizing-view" id="plugsView" role="tabpanel" aria-labelledby="plugsTab" hidden>
+    <div class="sizing-shell">
+      <header class="sizing-head">
+        <div><h1 class="sizing-title">Tube plugs &amp; thread engagement</h1>
+          <p class="sizing-copy">One plug at each end of every linkage tube. JMX selections follow Member Sizing, including browser overrides. Each end carries the full member force.</p>
+          <p class="sizing-copy">Proposed engagement starts at the workbook minimum rounded up to whole threads. Edit each end independently; these are design dimensions, not measured installed engagement.</p>
+        </div>
+        <div class="sizing-filters">
+          <div class="field"><label for="plugCorner">Corner</label><select id="plugCorner"></select></div>
+          <div class="field"><label for="plugEnd">Tube end</label><select id="plugEnd"><option value="all">Both ends</option><option value="chassis_jmx">Inboard / rocker</option><option value="wheel_jmx">Outboard / arm</option></select></div>
+          <button type="button" id="resetPlugSpecs">Reset plug lengths</button>
+        </div>
+      </header>
+      <p class="sizing-copy" id="plugSummary" aria-live="polite"></p>
+      <div class="sizing-table-wrap"><table class="sizing-table">
+        <caption>Minimum engagement and estimated mass per plug. All dimensions in inches; weight in pounds.</caption>
+        <thead><tr><th>Corner / member</th><th>End</th><th>JMX / thread</th><th>Tube OD / ID</th><th>Minimum engagement</th><th>Proposed engagement</th><th>Engagement margin</th><th>Insert radial wall</th><th>Plug weight</th><th>Check</th></tr></thead>
+        <tbody id="plugTableBody"></tbody>
+      </table></div>
+      <details class="sizing-foot"><summary>Workbook equations and assumptions</summary>
+        <p>Source: <strong>Minimum Thread Engagement</strong>, rows 9–11 of Mk11 Susp Linkage Forces (1).xlsx. Thread mapping: JMX3 → 10-32; JMX4 → 1/4-28; JMX5 → 5/16-24.</p>
+        <p>Tensile area A<sub>t</sub> = π/4 × (d − 0.9743/n)².<br>Base engagement L<sub>e</sub> = 2A<sub>t</sub> / [π n D<sub>1,max</sub> (1/(2n) + 0.57735(d<sub>2,min</sub> − D<sub>1,max</sub>))].<br>Required engagement = 1.5 L<sub>e</sub>. Proposed default = ceil(required × n) / n, rounded upward to 0.00001 in. Margin = proposed / required − 1.</p>
+        <p>d is the worksheet external major diameter; n is threads per inch; D<sub>1,max</sub> is maximum internal minor diameter; d<sub>2,min</sub> is minimum external pitch diameter. JMX3 retains the sheet’s d = 0.1935 for parity (nominal #10 is 0.190). These source dimensions require confirmation against the selected thread class.</p>
+        <p>Cap thickness = 0.130; density = 0.284 lb/in³. Cap OD follows tube OD; insert OD follows tube ID. Approximate plug weight = ρπ/4 × [(OD² − d²) × 0.130 + (ID² − d²) × (proposed engagement − 0.130)]. Radial wall = (ID − d)/2.</p>
+        <p>The weight formula consistently uses annular volumes and current tube dimensions. This corrects the sheet’s inconsistent E17 cap expression, E26 density reference, and old front tube references. Circular mass estimates omit hex flats, thread helix, chamfers and welds.</p>
+        <p>Engagement is the workbook’s thread-strength criterion, not a load-scaled stripping calculation. Positive radial wall checks geometric clearance only; it does not validate insert strength, minimum machining wall, welds or material-strength mismatch. Verify thread stripping for the actual plug and rod-end materials before manufacture.</p>
+      </details>
     </div>
   </section>
 
@@ -1160,6 +1192,8 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
       const resultByName = new Map(payload.result.assemblies.map(a => [a.name, a]));
       const geometryView = document.getElementById("geometryView");
       const sizingView = document.getElementById("sizingView");
+      const plugsView = document.getElementById("plugsView");
+      const plugsTab = document.getElementById("plugsTab");
       const chassisView = document.getElementById("chassisView");
       const methodsView = document.getElementById("methodsView");
       const geometryTab = document.getElementById("geometryTab");
@@ -1482,13 +1516,70 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
           }
         }
       }
+      const plugThreadData = payload.plug_thread_data;
+      const plugStorageKey = "bfr-plug-lengths-v1:" + (specRevision || "default");
+      let savedPlugLengths = (() => {
+        try { const value = JSON.parse(localStorage.getItem(plugStorageKey) || "{}"); return value && typeof value === "object" && !Array.isArray(value) ? value : {}; }
+        catch { return {}; }
+      })();
+      function plugKey(row, end) { return `${sizingRowKey(row)}:${end}`; }
+      function calculatePlug(row, end, specified) {
+        const t = plugThreadData?.threads?.[row[end]];
+        if (!t) return {valid:false, status:"Thread data unavailable"};
+        const d=t.major_diameter_in,n=t.tpi,D=t.internal_minor_max_in,p=t.external_pitch_min_in;
+        const area=Math.PI/4*(d-0.9743/n)**2;
+        const base=2*area/(Math.PI*n*D*(1/(2*n)+0.57735*(p-D)));
+        const required=base*plugThreadData.engagement_factor;
+        const defaultLength=Math.ceil((Math.ceil(required*n)/n)*1e5)/1e5;
+        const length=specified === undefined ? defaultLength : specified;
+        const cap=plugThreadData.cap_length_in,od=row.tube_od_in,id=row.tube_id_in;
+        const radialWall=(id-d)/2;
+        const geometryValid=Number.isFinite(od)&&Number.isFinite(id)&&od>id&&id>d;
+        const lengthValid=Number.isFinite(length)&&length>=cap;
+        const valid=geometryValid&&lengthValid;
+        const weight=valid ? plugThreadData.density_lb_in3*Math.PI/4*((od*od-d*d)*cap+(id*id-d*d)*(length-cap)) : null;
+        const margin=lengthValid ? length/required-1 : null;
+        const status=!geometryValid ? "Thread does not fit insert" : !lengthValid ? "Length must cover 0.130 cap" : margin < -1e-10 ? "Engagement too short" : "Meets engagement; fit screening only";
+        return {valid,status,area,base,required,defaultLength,length,margin,radialWall,weight,thread:t.thread,tpi:n};
+      }
+      function renderPlugs() {
+        const corner=document.getElementById("plugCorner").value;
+        const endFilter=document.getElementById("plugEnd").value;
+        let count=0,total=0,invalid=0,short=0;
+        const rows=[];
+        for (const row of sizingRows) {
+          if(row.member==="shock" || (corner!=="all"&&row.assembly!==corner))continue;
+          for(const end of ["chassis_jmx","wheel_jmx"]) {
+            if(endFilter!=="all"&&endFilter!==end)continue;
+            const key=plugKey(row,end),plug=calculatePlug(row,end,savedPlugLengths[key]);
+            count++; if(!plug.valid)invalid++; else total+=plug.weight;
+            if(plug.margin!==null&&plug.margin<0)short++;
+            const name=`${labelName(row.assembly)} ${labelName(row.member)} ${end==="chassis_jmx"?"inboard":"outboard"}`;
+            const values=[`<strong>${escapeHtml(labelName(row.member))}</strong><br>${escapeHtml(labelName(row.assembly))}`,
+              end==="chassis_jmx"?"Inboard / rocker":"Outboard / arm",
+              `${escapeHtml(row[end])}<br>${escapeHtml(plug.thread||"Unavailable")}`,
+              `${calcNumber(row.tube_od_in,4)} / ${calcNumber(row.tube_id_in,4)}`,
+              Number.isFinite(plug.required)?`${plug.required.toFixed(4)}<br>${(plug.required*plug.tpi).toFixed(2)} threads`:"—",
+              Number.isFinite(plug.required)?`<input type="number" required min="0.130" step="any" value="${Number.isFinite(plug.length)?plug.length:""}" data-plug-length="${escapeHtml(key)}" aria-label="${escapeHtml(name)} proposed engagement in inches" style="width:7rem"><br>${Number.isFinite(plug.length)?(plug.length*plug.tpi).toFixed(2):"—"} threads`:"—",
+              calcNumber(plug.margin,3),calcNumber(plug.radialWall,4),calcNumber(plug.weight,5),escapeHtml(plug.status)];
+            const labels=["Corner / member","End","JMX / thread","Tube OD / ID","Minimum engagement","Proposed engagement","Engagement margin","Insert radial wall","Plug weight","Check"];
+            rows.push(`<tr>${values.map((v,i)=>`<td data-label="${labels[i]}">${v}</td>`).join("")}</tr>`);
+          }
+        }
+        document.getElementById("plugTableBody").innerHTML=rows.join("");
+        document.getElementById("plugSummary").textContent=`${count} plugs shown · ${invalid?"Partial estimated weight":"Estimated weight"}: ${total.toFixed(4)} lb · ${short} below minimum engagement · ${invalid} with unavailable weight. Includes both physical sides when all corners are shown.`;
+      }
+
       function setAnalysisView(view) {
         const geometryActive = view === "geometry";
         const sizingActive = view === "sizing";
+        const plugsActive = view === "plugs";
         const chassisActive = view === "chassis";
         const methodsActive = view === "methods";
         geometryView.hidden = !geometryActive;
         sizingView.hidden = !sizingActive;
+        plugsView.hidden = !plugsActive;
+        plugsTab.setAttribute("aria-selected", String(plugsActive));
         chassisView.hidden = !chassisActive;
         methodsView.hidden = !methodsActive;
         geometryTab.setAttribute("aria-selected", String(geometryActive));
@@ -1496,6 +1587,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         chassisTab.setAttribute("aria-selected", String(chassisActive));
         methodsTab.setAttribute("aria-selected", String(methodsActive));
         if (sizingActive) renderSizing();
+        else if (plugsActive) renderPlugs();
         else if (chassisActive) renderChassisLoads();
         else if (geometryActive) requestAnimationFrame(resize);
         else if (methodsActive) {
@@ -2016,6 +2108,7 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
       for(const control of [controls.colorMode,controls.labels,controls.nodes,controls.axes,controls.chassisForces])control.addEventListener("change",render);
       geometryTab.addEventListener("click",()=>setAnalysisView("geometry"));
       sizingTab.addEventListener("click",()=>setAnalysisView("sizing"));
+      plugsTab.addEventListener("click",()=>setAnalysisView("plugs"));
       chassisTab.addEventListener("click",()=>setAnalysisView("chassis"));
       methodsTab.addEventListener("click",()=>setAnalysisView("methods"));
       const syncAnalysisViewFromHash = () => {
@@ -2155,6 +2248,17 @@ FORM: Read-mode load-path trace inside the established optical inspection bench;
         resize();
         if (!methodsView.hidden) requestAnimationFrame(centerMethodVisuals);
       });
+
+      document.getElementById("plugCorner").innerHTML='<option value="all">All four corners</option>'+configAssemblies.map(a=>`<option value="${escapeHtml(a.name)}">${escapeHtml(labelName(a.name))}</option>`).join("");
+      for(const id of ["plugCorner","plugEnd"])document.getElementById(id).addEventListener("change",renderPlugs);
+      document.getElementById("plugTableBody").addEventListener("change",event=>{
+        const input=event.target.closest("[data-plug-length]");if(!input)return;
+        if(!input.checkValidity()||input.value.trim()===""){input.reportValidity();return;}
+        const key=input.dataset.plugLength;savedPlugLengths[key]=Number(input.value);
+        localStorage.setItem(plugStorageKey,JSON.stringify(savedPlugLengths));renderPlugs();
+        [...document.querySelectorAll("[data-plug-length]")].find(el=>el.dataset.plugLength===key)?.focus();
+      });
+      document.getElementById("resetPlugSpecs").addEventListener("click",()=>{savedPlugLengths={};localStorage.setItem(plugStorageKey,"{}");renderPlugs();});
 
       populateControls();
       renderMethodsMetadata();

@@ -1,0 +1,42 @@
+{
+  "source_workbook": "Mk11 Susp Linkage Forces  (1).xlsx",
+  "source_sheet": "Minimum Thread Engagement",
+  "engagement_factor": 1.5,
+  "density_lb_in3": 0.284,
+  "cap_length_in": 0.13,
+  "threads": {
+    "JMX3": {
+      "thread": "10-32",
+      "major_diameter_in": 0.1935,
+      "tpi": 32,
+      "internal_minor_max_in": 0.1641,
+      "external_pitch_min_in": 0.1674,
+      "source_row": 9,
+      "cached_minimum_in": 0.216607118
+    },
+    "JMX4": {
+      "thread": "1/4-28",
+      "major_diameter_in": 0.25,
+      "tpi": 28,
+      "internal_minor_max_in": 0.219,
+      "external_pitch_min_in": 0.2243,
+      "source_row": 10,
+      "cached_minimum_in": 0.2708049746
+    },
+    "JMX5": {
+      "thread": "5/16-24",
+      "major_diameter_in": 0.3125,
+      "tpi": 24,
+      "internal_minor_max_in": 0.2754,
+      "external_pitch_min_in": 0.2827,
+      "source_row": 11,
+      "cached_minimum_in": 0.3349229895
+    }
+  },
+  "notes": [
+    "JMX3 uses worksheet B9 = 0.1935 in for workbook parity, not nominal #10 diameter 0.190 in.",
+    "Engagement develops the worksheet tensile area; it is not calculated by scaling the current axial load.",
+    "Mass uses consistent annular cap and insert volumes. Workbook E17 uses a different expression; E26 references B10 instead of density B6. Front insert formulas reference Old Summary Front. These are replaced with current tube dimensions and common geometry.",
+    "Circular plug approximation excludes hex flats, thread helix, chamfers, welds and machining tolerances."
+  ]
+}

@@ -44,7 +44,7 @@ def write_viewer_html(
         config = expand_config(config)
     template = TEMPLATE_PATH.read_text(encoding="utf-8")
     payload = json.dumps(
-        {"config": config, "result": result, "jmx_variants": jmx_variants(config, result)}, separators=(",", ":"), ensure_ascii=False
+        {"config": config, "result": result, "jmx_variants": jmx_variants(config, result), "plug_thread_data": json.loads((Path(__file__).parent / "examples/sources/minimum_thread_engagement.json").read_text())}, separators=(",", ":"), ensure_ascii=False
     ).replace("</", "<\\/")
     placeholder = "__SUSPENSION_DATA__"
     if template.count(placeholder) != 1:

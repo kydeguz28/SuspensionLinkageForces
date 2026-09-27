@@ -266,3 +266,22 @@ Material strengths and safety factors are retained. The saved configuration uses
 explicit dimensions (`auto_size_tubes: false`) so exported specs match the selection.
 Damper ratings and physical joint/insert fit remain unverified. Browser-saved tube
 or JMX overrides take precedence over regenerated defaults.
+
+## Plug thread engagement
+
+The **Plugs** tab maps each physical tube end to its current JMX3/4/5 selection.
+It reproduces the supplied workbook's Minimum Thread Engagement rows 9–11,
+including the 1.5 engagement factor and source thread dimensions. Defaults round
+up to full threads and then five decimal places. Proposed lengths are editable
+and saved independently per corner/end in this browser. JMX and tube overrides
+from Member Sizing update the plug calculations when the tab opens.
+
+Cap thickness is 0.130 in and density is 0.284 lb/in³. Weight uses annular cap and
+insert volumes with current tube OD/ID, correcting the workbook's inconsistent
+E17/E26 formulas and historical front references. Missing thread data or impossible
+insert geometry does not produce a valid weight. Positive insert wall is only a
+geometric screen, not strength or weld validation. Thread/material assumptions and
+equations are documented in the tab and `examples/sources/minimum_thread_engagement.json`.
+
+Run `node tests/check_plug_editor.cjs` after regenerating `index.html` to verify
+workbook parity, per-end selection, mass calculations and invalid-input handling.
