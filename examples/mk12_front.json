@@ -468,17 +468,17 @@
       "lower_fore": {
         "tube_id_in": 0.319,
         "tube_od_in": 0.375,
-        "chassis_jmx": "JMX3",
-        "wheel_jmx": "JMX3"
+        "chassis_jmx": "JMX4",
+        "wheel_jmx": "JMX4"
       },
       "lower_aft": {
-        "tube_id_in": 0.305,
-        "tube_od_in": 0.375,
+        "tube_id_in": 0.444,
+        "tube_od_in": 0.5,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       },
       "upper_fore": {
-        "tube_id_in": 0.319,
+        "tube_id_in": 0.305,
         "tube_od_in": 0.375,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
@@ -490,8 +490,8 @@
         "wheel_jmx": "JMX3"
       },
       "pushrod": {
-        "tube_id_in": 0.319,
-        "tube_od_in": 0.375,
+        "tube_id_in": 0.444,
+        "tube_od_in": 0.5,
         "chassis_jmx": "JMX3",
         "wheel_jmx": "JMX3"
       }
@@ -522,7 +522,7 @@
         "wheel_jmx": "JMX3"
       },
       "upper_aft": {
-        "tube_id_in": 0.305,
+        "tube_id_in": 0.319,
         "tube_od_in": 0.375,
         "chassis_jmx": "JMX4",
         "wheel_jmx": "JMX4"
@@ -561,11 +561,11 @@
           "role": "tie_rod",
           "application": [
             2.25,
-            19,
-            -5.97
+            19.000000000000004,
+            -5.970000000000001
           ],
           "anchor": [
-            3.15,
+            3.151141732283465,
             8.7,
             -4.79
           ]
@@ -573,97 +573,97 @@
         {
           "name": "lower_fore",
           "application": [
-            -0.29,
-            21,
-            -4.6
+            -0.2904724409448819,
+            20.99724409448819,
+            -4.6000000000000005
           ],
           "anchor": [
-            5,
-            11.19,
-            -3.37
+            7.000000000000001,
+            8.020078740157482,
+            -3.5425196850393705
           ]
         },
         {
           "name": "lower_aft",
           "application": [
-            -0.29,
-            21,
-            -4.6
+            -0.2904724409448819,
+            20.99724409448819,
+            -4.6000000000000005
           ],
           "anchor": [
-            -5,
-            11.19,
-            -4.23
+            -2.5,
+            8.020078740157482,
+            -3.5425196850393705
           ]
         },
         {
           "name": "upper_fore",
           "application": [
-            -1.03,
-            20.09,
+            -1.026220472440945,
+            20.08744094488189,
             -11.6
           ],
           "anchor": [
-            7,
-            11.19,
-            -10.08
+            7.000000000000001,
+            9.022795275590552,
+            -10.15279527559055
           ]
         },
         {
           "name": "upper_aft",
           "application": [
-            -1.03,
-            20.09,
+            -1.026220472440945,
+            20.08744094488189,
             -11.6
           ],
           "anchor": [
-            -5,
-            11.19,
-            -8.64
+            -2.5,
+            9.022795275590552,
+            -8.133503937007875
           ]
         },
         {
           "name": "pushrod",
           "role": "pushrod",
           "application": [
-            -1.03,
-            18.27,
-            -11.61
+            -0.2904724409448819,
+            19.045629921259845,
+            -5.440629921259843
           ],
           "anchor": [
-            -2.29,
-            8.93,
-            -22.11
+            -0.29035433070866146,
+            10.944055118110237,
+            -22.374960629921258
           ]
         }
       ],
       "rocker": {
         "pivot_axis": [
           [
-            -3.25603877536634,
-            6.9511643616477565,
-            -21.750242984384897
+            -0.04047244094488189,
+            8.308346456692915,
+            -22.480866141732285
           ],
           [
-            -1.2706147679407471,
-            6.948788394257757,
-            -21.991253078607237
+            -0.5404724409448819,
+            8.308346456692915,
+            -22.480866141732285
           ]
         ],
         "pushrod_pickup": [
-          -2.29,
-          8.93,
-          -22.11
-        ],
-        "shock_pickup": [
-          -2.475405511811024,
-          8.334645669291339,
-          -23.631488188976377
+          -0.29035433070866146,
+          10.944055118110237,
+          -22.374960629921258
         ],
         "shock_chassis_pickup": [
-          -2.475405511811024,
-          0.7500000000000001,
-          -23.631488188976377
+          -0.2904724409448819,
+          1.5000787401574802,
+          -23.480905511811024
+        ],
+        "shock_pickup": [
+          -0.2904724409448819,
+          8.89476377952756,
+          -25.16759842519685
         ]
       },
       "load_cases": [
@@ -818,110 +818,110 @@
           "name": "rear_tie_rod",
           "role": "tie_rod",
           "application": [
-            -64.17,
-            20.74,
-            -9.26
+            -64.54996062992126,
+            20.351771653543306,
+            -9.254448818897638
           ],
           "anchor": [
-            -59.88,
-            11.92,
-            -9.12
+            -59.872637795275594,
+            11.633070866141734,
+            -9.158188976377954
           ]
         },
         {
           "name": "lower_fore",
           "application": [
-            -60.26,
-            20.86,
+            -60.25728346456693,
+            20.864291338582678,
             -4.45
           ],
           "anchor": [
-            -53,
+            -53.39370078740158,
             12.25,
-            -5.67
+            -5.621259842519685
           ]
         },
         {
           "name": "lower_aft",
           "application": [
-            -60.26,
-            20.86,
+            -60.25728346456693,
+            20.864291338582678,
             -4.45
           ],
           "anchor": [
-            -59.5,
+            -59.89370078740158,
             12.25,
-            -4.93
+            -4.888425196850394
           ]
         },
         {
           "name": "upper_fore",
           "application": [
             -58.35,
-            20.54,
-            -10.55
+            20.53763779527559,
+            -10.54952755905512
           ],
           "anchor": [
-            -53,
+            -53.39370078740158,
             12.25,
-            -10.26
+            -10.226653543307087
           ]
         },
         {
           "name": "upper_aft",
           "application": [
             -58.35,
-            20.54,
-            -10.55
+            20.53763779527559,
+            -10.54952755905512
           ],
           "anchor": [
-            -59,
+            -59.39370078740158,
             12.25,
-            -9.79
+            -9.758937007874017
           ]
         },
         {
           "name": "pushrod",
           "role": "pushrod",
           "application": [
-            -58.4,
-            19.48,
-            -11.21
+            -58.390433070866145,
+            18.987795275590553,
+            -11.068070866141733
           ],
           "anchor": [
-            -58.46,
-            16.39,
-            -12.01
+            -58.49023622047244,
+            13.700984251968505,
+            -12.346062992125985
           ]
         }
       ],
       "rocker": {
         "pivot_axis": [
           [
-            -59.394677928177295,
-            12.178764829686108,
-            -11.083687766999594
+            -58.691220472440946,
+            12.00507874015748,
+            -11.709685039370079
           ],
           [
-            -57.400818134814834,
-            12.176707611258776,
-            -11.240272862921666
+            -58.19271653543307,
+            12.00507874015748,
+            -11.748543307086615
           ]
         ],
         "pushrod_pickup": [
-          -58.46,
-          16.39,
-          -12.01
-        ],
-        "shock_pickup": [
-          -58.703240157480316,
-          14.368665354330709,
-          -15.080716535433073
+          -58.49023622047244,
+          13.700984251968505,
+          -12.346062992125985
         ],
         "shock_chassis_pickup": [
-          -58.75216141732283,
-          6.898433070866142,
-          -15.708240157480317
+          -58.64236220472441,
+          7.458503937007874,
+          -14.29996062992126
+        ],
+        "shock_pickup": [
+          -58.680944881889765,
+          14.938740157480316,
+          -14.794881889763781
         ]
       },
       "load_cases": [
@@ -1056,6 +1056,6 @@
       ]
     }
   ],
-  "geometry_source_note": "Latest 2026-09-23 front/rear static linkage tables supersede all member endpoint coordinates, including rod endpoints. Table inches map to model (X,Y,-Z), with no additional rear offset. Shock endpoints and rocker pivot centers retain preceding millimeter screenshots. Rocker rod joints follow new inboard rod points; assumed planar pivot axes recomputed. Sources: examples/sources/mk12_linkage_table_updates_2026-09-23.json and mk12_rocker_updates_2026-09-23.json. Left side mirrored from right.",
+  "geometry_source_note": "Updated from user screenshots 2026-10-23: image 1 front, image 2 rear, in mm. Model inches = (source X/25.4 + axle offset, source Y/25.4, -source Z/25.4), with front offset 0 and rear -61. Left side mirrors right. Supplied pivot endpoints replace inferred axes; contact patches retained. Source: examples/sources/mk12_geometry_updates_2026-10-23.json.",
   "load_case_note": "Opposite-direction acceleration/cornering and braking/cornering cases swap left/right wheel force vectors and negate their lateral component. Longitudinal and vertical components are retained from the opposite wheel, preserving mirrored load transfer. Both turn directions contribute to all sizing envelopes."
 }

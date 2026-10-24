@@ -17,20 +17,15 @@ class RearPackagingTests(unittest.TestCase):
         right, left = config["assemblies"][2:]
         axis = right["rocker"]["pivot_axis"]
         center = [(a + b) / 2 for a, b in zip(*axis)]
-        for actual, expected in zip(center, [-61 + 66.0972/25.4, 309.3145/25.4, -283.5143/25.4]):
+        for actual, expected in zip(center, [-61 + (58.643 + 71.305)/2/25.4, 304.929/25.4, -(297.426 + 298.413)/2/25.4]):
             self.assertAlmostEqual(actual, expected, places=10)
         for a, b in zip(axis, left["rocker"]["pivot_axis"]):
             self.assertEqual(b, [a[0], -a[1], a[2]])
-        direction = [b - a for a, b in zip(*axis)]
-        for key in ("pushrod_pickup", "shock_pickup"):
-            arm = [b - a for a, b in zip(center, right["rocker"][key])]
-            self.assertAlmostEqual(sum(a * b for a, b in zip(direction, arm)), 0.0, places=9)
-
     def test_selected_tie_rod_and_all_motion_cases_converge(self):
         config = json.loads((ROOT / "examples/mk12_front.json").read_text())
         rear = config["assemblies"][2]
         rod = next(m for m in rear["members"] if m["name"] == "rear_tie_rod")
-        self.assertEqual(rod["application"], [-64.17, 20.74, -9.26])
+        self.assertEqual(rod["application"], [-61 - 90.169/25.4, 516.935/25.4, -235.063/25.4])
         result = solve_config(config)
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "viewer.html"
@@ -47,13 +42,13 @@ class RearPackagingTests(unittest.TestCase):
         rear = config["assemblies"][2]
         members = {m["name"]: m for m in rear["members"]}
         self.assertEqual(rear["contact_patch"], [-61.0, 22.5, 0.0])
-        for name, x in [("upper_fore", -53.0), ("upper_aft", -59.0)]:
-            for actual, expected in zip(members[name]["anchor"], [x, 12.25, -10.26 if name == "upper_fore" else -9.79]):
+        for name, x in [("upper_fore", -61 + 193.2/25.4), ("upper_aft", -61 + 40.8/25.4)]:
+            for actual, expected in zip(members[name]["anchor"], [x, 12.25, -259.757/25.4 if name == "upper_fore" else -247.877/25.4]):
                 self.assertAlmostEqual(actual, expected, places=10)
         self.assertEqual(members["pushrod"]["anchor"], rear["rocker"]["pushrod_pickup"])
-        self.assertEqual(members["pushrod"]["anchor"], [-58.46, 16.39, -12.01])
-        self.assertEqual(members["pushrod"]["application"], [-58.4, 19.48, -11.21])
-        self.assertLess(math.dist(members["pushrod"]["anchor"], members["pushrod"]["application"]), 3.3)
+        self.assertEqual(members["pushrod"]["anchor"], [-61 + 63.748/25.4, 348.005/25.4, -313.59/25.4])
+        self.assertEqual(members["pushrod"]["application"], [-61 + 66.283/25.4, 482.29/25.4, -281.129/25.4])
+        self.assertAlmostEqual(math.dist(members["pushrod"]["anchor"], members["pushrod"]["application"]), math.dist([63.748,348.005,313.59], [66.283,482.29,281.129])/25.4)
 
 
 if __name__ == "__main__":

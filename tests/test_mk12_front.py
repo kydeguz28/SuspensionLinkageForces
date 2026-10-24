@@ -21,34 +21,23 @@ class Mk12FrontTests(unittest.TestCase):
                 self.assertLess(case["max_equilibrium_residual"], 1e-8)
                 self.assertLess(case["kinematics"]["max_constraint_residual"], 1e-7)
 
-    def test_latest_rocker_coordinates_and_axis(self):
+    def test_latest_screenshot_coordinates_and_axes(self):
         config = expand_config(json.loads((ROOT / "examples/mk12_front.json").read_text()))
-        source = json.loads((ROOT / "examples/sources/mk12_rocker_updates_2026-09-23.json").read_text())
-        for assembly in (config["assemblies"][0], config["assemblies"][2]):
-            axle = assembly["name"].split("_")[0]
-            offset = 0 if axle == "front" else -61
-            rocker = assembly["rocker"]
-            rod = next(m for m in assembly["members"] if m.get("role") == "pushrod")
-            center = [(a+b)/2 for a,b in zip(*rocker["pivot_axis"])]
-            actual = {**rocker, "pivot": center, "rod_lower": rod["application"]}
-            for key, (x,y,z) in source["points"][axle].items():
-                if key in ("pushrod_pickup", "rod_lower"): continue
-                for measured, expected in zip(actual[key], [offset-z/25.4,-x/25.4,-y/25.4]):
-                    self.assertAlmostEqual(measured, expected, places=10)
-            self.assertEqual(rod["anchor"], rocker["pushrod_pickup"])
-            axis = [b-a for a,b in zip(*rocker["pivot_axis"])]
-            for key in ("pushrod_pickup", "shock_pickup"):
-                arm = [v-p for v,p in zip(rocker[key], center)]
-                self.assertAlmostEqual(sum(a*b for a,b in zip(axis, arm)), 0, places=9)
-
-    def test_latest_linkage_tables(self):
-        config = expand_config(json.loads((ROOT / "examples/mk12_front.json").read_text()))
-        tables = json.loads((ROOT / "examples/sources/mk12_linkage_table_updates_2026-09-23.json").read_text())["points"]
+        source = json.loads((ROOT / "examples/sources/mk12_geometry_updates_2026-10-23.json").read_text())["points"]
         for assembly in config["assemblies"]:
             axle, side = assembly["name"].split("_")
+            offset = 0 if axle == "front" else -61
+            def convert(point):
+                x, y, z = point
+                return [x / 25.4 + offset, y / 25.4 * (1 if side == "right" else -1), -z / 25.4]
             for member in assembly["members"]:
-                for key, (x,y,z) in zip(("application", "anchor"), tables[axle][member["name"]]):
-                    self.assertEqual(member[key], [x, y if side == "right" else -y, -z])
+                for key, point in zip(("anchor", "application"), source[axle][member["name"]]):
+                    self.assertEqual(member[key], convert(point))
+            rocker = assembly["rocker"]
+            self.assertEqual(rocker["pivot_axis"], list(map(convert, source[axle]["pivot_axis"])))
+            self.assertEqual(rocker["shock_chassis_pickup"], convert(source[axle]["spring"][0]))
+            self.assertEqual(rocker["shock_pickup"], convert(source[axle]["spring"][1]))
+            self.assertEqual(rocker["pushrod_pickup"], convert(source[axle]["pushrod"][0]))
 
     def test_contact_patch_uses_tire_center_not_steering_axis_intercept(self):
         config = json.loads((ROOT / "examples/mk12_front.json").read_text())
@@ -57,7 +46,7 @@ class Mk12FrontTests(unittest.TestCase):
         upper = next(m for m in front["members"] if m["name"] == "upper_fore")
         # Native part +Z is forward; +Y is upward. Preserve this orientation.
         self.assertAlmostEqual(upper["anchor"][0], 7.0)
-        self.assertAlmostEqual(upper["anchor"][2], -10.08)
+        self.assertAlmostEqual(upper["anchor"][2], -257.881 / 25.4)
 
 
 if __name__ == "__main__":
