@@ -560,80 +560,80 @@
           "name": "steering_tie_rod",
           "role": "tie_rod",
           "application": [
-            2.25,
-            19.000000000000004,
-            -5.970000000000001
+            2.5,
+            20.472,
+            -7.63
           ],
           "anchor": [
-            3.151141732283465,
+            2.5,
             8.7,
-            -4.79
+            -5.841
           ]
         },
         {
           "name": "lower_fore",
           "application": [
-            -0.2904724409448819,
-            20.99724409448819,
-            -4.6000000000000005
+            -0.29,
+            20.997,
+            -4.6
           ],
           "anchor": [
-            7.000000000000001,
-            8.020078740157482,
-            -3.5425196850393705
+            7,
+            8.414,
+            -3.55
           ]
         },
         {
           "name": "lower_aft",
           "application": [
-            -0.2904724409448819,
-            20.99724409448819,
-            -4.6000000000000005
+            -0.29,
+            20.997,
+            -4.6
           ],
           "anchor": [
             -2.5,
-            8.020078740157482,
-            -3.5425196850393705
+            8.414,
+            -3.55
           ]
         },
         {
           "name": "upper_fore",
           "application": [
-            -1.026220472440945,
-            20.08744094488189,
+            -1.026,
+            20.087,
             -11.6
           ],
           "anchor": [
-            7.000000000000001,
-            9.022795275590552,
-            -10.15279527559055
+            7,
+            9.416,
+            -10.004
           ]
         },
         {
           "name": "upper_aft",
           "application": [
-            -1.026220472440945,
-            20.08744094488189,
+            -1.026,
+            20.087,
             -11.6
           ],
           "anchor": [
             -2.5,
-            9.022795275590552,
-            -8.133503937007875
+            9.416,
+            -8.329
           ]
         },
         {
           "name": "pushrod",
           "role": "pushrod",
           "application": [
-            -0.2904724409448819,
-            19.045629921259845,
-            -5.440629921259843
+            -0.29,
+            19.046,
+            -5.441
           ],
           "anchor": [
-            -0.29035433070866146,
-            10.944055118110237,
-            -22.374960629921258
+            -0.29,
+            10.994,
+            -22.375
           ]
         }
       ],
@@ -651,9 +651,9 @@
           ]
         ],
         "pushrod_pickup": [
-          -0.29035433070866146,
-          10.944055118110237,
-          -22.374960629921258
+          -0.29,
+          10.994,
+          -22.375
         ],
         "shock_chassis_pickup": [
           -0.2904724409448819,
@@ -818,80 +818,80 @@
           "name": "rear_tie_rod",
           "role": "tie_rod",
           "application": [
-            -64.54996062992126,
-            20.351771653543306,
-            -9.254448818897638
+            -64.55,
+            20.352,
+            -9.254
           ],
           "anchor": [
-            -59.872637795275594,
-            11.633070866141734,
-            -9.158188976377954
+            -59.873,
+            11.633,
+            -9.158
           ]
         },
         {
           "name": "lower_fore",
           "application": [
-            -60.25728346456693,
-            20.864291338582678,
+            -60.257,
+            20.864,
             -4.45
           ],
           "anchor": [
-            -53.39370078740158,
+            -53.394,
             12.25,
-            -5.621259842519685
+            -5.621
           ]
         },
         {
           "name": "lower_aft",
           "application": [
-            -60.25728346456693,
-            20.864291338582678,
+            -60.257,
+            20.864,
             -4.45
           ],
           "anchor": [
-            -59.89370078740158,
+            -59.894,
             12.25,
-            -4.888425196850394
+            -4.888
           ]
         },
         {
           "name": "upper_fore",
           "application": [
             -58.35,
-            20.53763779527559,
-            -10.54952755905512
+            20.538,
+            -10.55
           ],
           "anchor": [
-            -53.39370078740158,
+            -53.394,
             12.25,
-            -10.226653543307087
+            -10.227
           ]
         },
         {
           "name": "upper_aft",
           "application": [
             -58.35,
-            20.53763779527559,
-            -10.54952755905512
+            20.538,
+            -10.55
           ],
           "anchor": [
-            -59.39370078740158,
+            -59.394,
             12.25,
-            -9.758937007874017
+            -9.759
           ]
         },
         {
           "name": "pushrod",
           "role": "pushrod",
           "application": [
-            -58.390433070866145,
-            18.987795275590553,
-            -11.068070866141733
+            -58.39,
+            18.988,
+            -11.068
           ],
           "anchor": [
-            -58.49023622047244,
-            13.700984251968505,
-            -12.346062992125985
+            -58.49,
+            13.701,
+            -12.346
           ]
         }
       ],
@@ -909,9 +909,9 @@
           ]
         ],
         "pushrod_pickup": [
-          -58.49023622047244,
-          13.700984251968505,
-          -12.346062992125985
+          -58.49,
+          13.701,
+          -12.346
         ],
         "shock_chassis_pickup": [
           -58.64236220472441,
@@ -1056,6 +1056,6 @@
       ]
     }
   ],
-  "geometry_source_note": "Updated from user screenshots 2026-10-23: image 1 front, image 2 rear, in mm. Model inches = (source X/25.4 + axle offset, source Y/25.4, -source Z/25.4), with front offset 0 and rear -61. Left side mirrors right. Supplied pivot endpoints replace inferred axes; contact patches retained. Source: examples/sources/mk12_geometry_updates_2026-10-23.json.",
+  "geometry_source_note": "Static linkage endpoints: examples/sources/mk12_linkage_table_updates_2026-11-01.json. Right-side model inches = (X,Y,-Z); rear X already includes axle offset. Left mirrors right. Rocker pushrod pickups follow inboard endpoints. Spring and pivot points retained from examples/sources/mk12_geometry_updates_2026-10-23.json.",
   "load_case_note": "Opposite-direction acceleration/cornering and braking/cornering cases swap left/right wheel force vectors and negate their lateral component. Longitudinal and vertical components are retained from the opposite wheel, preserving mirrored load transfer. Both turn directions contribute to all sizing envelopes."
 }

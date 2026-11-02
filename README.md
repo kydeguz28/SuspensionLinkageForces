@@ -17,12 +17,12 @@ Positive axial force means **tension**. Negative axial force means
 
 ## Current coordinates
 
-The main viewer uses `examples/mk12_front.json`, updated from the two supplied
-2026-10-23 screenshots (image 1 front, image 2 rear). All suspension and rocker
-coordinates are transcribed in `examples/sources/mk12_geometry_updates_2026-10-23.json`.
-Screenshot millimeters map to model inches as `(X/25.4 + offset, Y/25.4, -Z/25.4)`,
-with offsets 0 front and -61 rear. Left geometry mirrors right. The supplied
-Rocker Pivot 1 and 2 coordinates now define each bearing axis directly.
+The main viewer uses `examples/mk12_front.json`. The front and rear static linkage
+tables are recorded in `examples/sources/mk12_linkage_table_updates_2026-11-01.json`.
+They give vehicle coordinates in inches. The model uses (X, Y, -Z) on the right
+and mirrors Y on the left; rear X already includes the axle offset. The rocker
+pushrod pickup follows the inboard pushrod endpoint. Spring mounts and rocker
+pivot axes retain the geometry from `examples/sources/mk12_geometry_updates_2026-10-23.json`.
 Contact patches remain `[0,22.5,0]` front and `[-61,22.5,0]` rear before mirroring.
 Earlier source exports remain historical references.
 

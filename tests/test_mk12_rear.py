@@ -1,5 +1,4 @@
 import json
-import math
 import unittest
 from pathlib import Path
 
@@ -25,7 +24,7 @@ class RearPackagingTests(unittest.TestCase):
         config = json.loads((ROOT / "examples/mk12_front.json").read_text())
         rear = config["assemblies"][2]
         rod = next(m for m in rear["members"] if m["name"] == "rear_tie_rod")
-        self.assertEqual(rod["application"], [-61 - 90.169/25.4, 516.935/25.4, -235.063/25.4])
+        self.assertEqual(rod["application"], [-64.55, 20.352, -9.254])
         result = solve_config(config)
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "viewer.html"
@@ -42,13 +41,12 @@ class RearPackagingTests(unittest.TestCase):
         rear = config["assemblies"][2]
         members = {m["name"]: m for m in rear["members"]}
         self.assertEqual(rear["contact_patch"], [-61.0, 22.5, 0.0])
-        for name, x in [("upper_fore", -61 + 193.2/25.4), ("upper_aft", -61 + 40.8/25.4)]:
-            for actual, expected in zip(members[name]["anchor"], [x, 12.25, -259.757/25.4 if name == "upper_fore" else -247.877/25.4]):
+        for name, x in [("upper_fore", -53.394), ("upper_aft", -59.394)]:
+            for actual, expected in zip(members[name]["anchor"], [x, 12.25, -10.227 if name == "upper_fore" else -9.759]):
                 self.assertAlmostEqual(actual, expected, places=10)
         self.assertEqual(members["pushrod"]["anchor"], rear["rocker"]["pushrod_pickup"])
-        self.assertEqual(members["pushrod"]["anchor"], [-61 + 63.748/25.4, 348.005/25.4, -313.59/25.4])
-        self.assertEqual(members["pushrod"]["application"], [-61 + 66.283/25.4, 482.29/25.4, -281.129/25.4])
-        self.assertAlmostEqual(math.dist(members["pushrod"]["anchor"], members["pushrod"]["application"]), math.dist([63.748,348.005,313.59], [66.283,482.29,281.129])/25.4)
+        self.assertEqual(members["pushrod"]["anchor"], [-58.49, 13.701, -12.346])
+        self.assertEqual(members["pushrod"]["application"], [-58.39, 18.988, -11.068])
 
 
 if __name__ == "__main__":
